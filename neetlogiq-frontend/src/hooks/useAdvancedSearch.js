@@ -52,7 +52,7 @@ export const useAdvancedSearch = (collegesData = []) => {
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
-    };
+    }; // eslint-disable-line react-hooks/exhaustive-deps
   }, [collegesData]);
 
   // Perform advanced search
