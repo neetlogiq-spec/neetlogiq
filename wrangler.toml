@@ -1,0 +1,17 @@
+name = "neetlogiq-backend"
+main = "src/index.js"
+compatibility_date = "2024-01-15"
+
+# D1 Database configuration
+[[d1_databases]]
+binding = "DB"
+database_name = "neetlogiq-db"
+database_id = "your-database-id-here" # You'll get this when you create the D1 database
+
+# Environment variables
+[vars]
+ENVIRONMENT = "production"
+
+# CORS configuration
+[env.production.vars]
+ENVIRONMENT = "production"

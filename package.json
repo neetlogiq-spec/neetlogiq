@@ -1,66 +1,19 @@
 {
-  "name": "neetlogiq-platform",
-  "version": "3.0.0",
-  "description": "NeetLogIQ - Intelligent Medical College Counseling Platform with AI-powered insights, advanced analytics, and enterprise-grade performance",
-  "private": true,
-  "workspaces": [
-    "backend",
-    "neetlogiq-frontend"
-  ],
+  "name": "neetlogiq-backend",
+  "version": "1.0.0",
+  "description": "NEET Logiq backend API using Cloudflare Workers and D1",
+  "main": "src/index.js",
   "scripts": {
-    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
-    "start:backend": "cd backend && npm start",
-    "start:frontend": "cd neetlogiq-frontend && npm run dev",
-    "build": "cd neetlogiq-frontend && npm run build",
-    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
-    "dev:backend": "cd backend && npm run dev",
-    "dev:frontend": "cd neetlogiq-frontend && npm run dev",
-    "install:all": "npm install && cd backend && npm install && cd ../neetlogiq-frontend && npm install",
-    "db:setup": "cd backend && npm run db:setup",
-    "db:migrate": "cd backend && npm run db:migrate",
-    "db:seed": "cd backend && npm run db:seed",
-    "test": "npm run test:backend && npm run test:frontend",
-    "test:backend": "cd backend && npm test",
-    "test:frontend": "cd neetlogiq-frontend && npm test",
-    "lint": "npm run lint:backend && npm run lint:frontend",
-    "lint:backend": "cd backend && npm run lint",
-    "lint:frontend": "cd neetlogiq-frontend && npm run lint",
-    "format": "prettier --write \"**/*.{js,jsx,ts,tsx,json,css,md}\"",
-    "prepare": "echo 'Skipping husky install'",
-    "dev-tool": "node tools/cli/dev-tool.js",
-    "dev:frontend-only": "cd neetlogiq-frontend && npm run dev",
-    "dev:backend-only": "cd backend && npm run dev",
-    "dev:clean": "npm run dev-tool stop && sleep 2 && npm run dev-tool start"
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "db:create": "wrangler d1 create neetlogiq-db",
+    "db:migrate": "wrangler d1 migrations apply neetlogiq-db",
+    "db:seed": "wrangler d1 execute neetlogiq-db --file=./migrations/seed.sql"
+  },
+  "dependencies": {
+    "itty-cors": "^2.0.0"
   },
   "devDependencies": {
-    "concurrently": "^8.2.2",
-    "husky": "^8.0.3",
-    "prettier": "^3.0.3"
-  },
-  "engines": {
-    "node": ">=18.0.0",
-    "npm": ">=8.0.0"
-  },
-  "keywords": [
-    "medical",
-    "college",
-    "counseling",
-    "education",
-    "react",
-    "nodejs",
-    "sqlite",
-    "analytics"
-  ],
-  "author": "Medical Education Team",
-  "license": "MIT",
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.60.0",
-    "ai": "^5.0.26",
-    "anthropic": "^0.0.0",
-    "commander": "^14.0.0",
-    "openai": "^5.16.0"
-  },
-  "bin": {
-    "medguide-dev": "tools/cli/dev-tool.js"
+    "wrangler": "^3.0.0"
   }
 }
