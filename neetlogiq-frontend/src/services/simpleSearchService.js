@@ -23,7 +23,7 @@ class SimpleSearchService {
         return true;
       } else {
         // Load college data from backend
-        const response = await fetch('http://localhost:5002/api/colleges?limit=10000');
+        const response = await fetch('https://neetlogiq-backend.neetlogiq.workers.dev/api/colleges?limit=10000');
         const data = await response.json();
         
         if (data.data && Array.isArray(data.data)) {

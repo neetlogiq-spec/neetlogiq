@@ -14,9 +14,13 @@ export const GOOGLE_CONFIG = {
 
 // Backend API configuration
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:5002',
+  BASE_URL: process.env.REACT_APP_API_URL || 'https://neetlogiq-backend.neetlogiq.workers.dev',
   ENDPOINTS: {
     AUTH: '/api/auth',
     USER: '/api/user',
+    COLLEGES: '/api/colleges',
+    COURSES: '/api/courses',
+    CUTOFFS: '/api/cutoffs',
+    SEARCH: '/api/search',
   },
 };

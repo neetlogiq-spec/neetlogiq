@@ -406,7 +406,7 @@ const Colleges = () => {
       console.log(`🔍 Fetching courses for college ID: ${collegeId}`);
       
       // Use the specific college courses endpoint
-      const response = await fetch(`http://localhost:5002/api/courses/college/${collegeId}`);
+      const response = await fetch(`https://neetlogiq-backend.neetlogiq.workers.dev/api/courses?college_id=${collegeId}`);
       
       if (response.ok) {
         const data = await response.json();

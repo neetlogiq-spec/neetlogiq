@@ -60,7 +60,7 @@ const Courses = () => {
         params.append('search', newFilters.search);
       }
       
-      const response = await fetch(`http://localhost:5002/api/courses?${params}`);
+      const response = await fetch(`https://neetlogiq-backend.neetlogiq.workers.dev/api/courses?${params}`);
       const data = await response.json();
       
       console.log('🔍 Courses API Response:', data);
@@ -321,7 +321,7 @@ const Courses = () => {
                         limit: 1000 // Get more results for search
                       });
                       
-                      const response = await fetch(`http://localhost:5002/api/courses?${searchParams}`);
+                      const response = await fetch(`https://neetlogiq-backend.neetlogiq.workers.dev/api/courses?${searchParams}`);
                       const data = await response.json();
                       
                       if (data.data) {

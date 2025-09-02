@@ -6,7 +6,7 @@ compatibility_date = "2024-01-15"
 [[d1_databases]]
 binding = "DB"
 database_name = "neetlogiq-db"
-database_id = "your-database-id-here" # You'll get this when you create the D1 database
+database_id = "fd98253c-ecfb-4ec6-a221-45ddfd5edde0"
 
 # Environment variables
 [vars]

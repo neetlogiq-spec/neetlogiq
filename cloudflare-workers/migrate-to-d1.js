@@ -4,7 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Database path
-const dbPath = path.join(__dirname, 'backend', 'unified.db');
+const dbPath = path.join(__dirname, '..', 'backend', 'database', 'clean-unified.db');
 
 // Check if database exists
 if (!fs.existsSync(dbPath)) {

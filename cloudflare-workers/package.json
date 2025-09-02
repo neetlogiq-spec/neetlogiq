@@ -11,7 +11,7 @@
     "db:seed": "wrangler d1 execute neetlogiq-db --file=./migrations/seed.sql"
   },
   "dependencies": {
-    "itty-cors": "^2.0.0"
+    "itty-router": "^4.0.0"
   },
   "devDependencies": {
     "wrangler": "^3.0.0"
