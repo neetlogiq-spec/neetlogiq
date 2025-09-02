@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Sign-in Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+        }
+        
+        .header {
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            color: #666;
+            margin: 0;
+        }
+        
+        .google-signin-container {
+            margin: 30px 0;
+        }
+        
+        .status {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: 500;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .user-info {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 20px;
+            text-align: left;
+        }
+        
+        .user-info h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        
+        .user-info p {
+            margin: 5px 0;
+            color: #666;
+        }
+        
+        .user-info img {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            margin-right: 15px;
+            float: left;
+        }
+        
+        .clearfix::after {
+            content: "";
+            display: table;
+            clear: both;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Google Sign-in Test</h1>
+            <p>Test Google OAuth integration for neetlogiq.com</p>
+        </div>
+        
+        <div id="status" class="status info">
+            Loading Google Sign-in...
+        </div>
+        
+        <div id="google-signin-container" class="google-signin-container">
+            <!-- Google Sign-in button will be rendered here -->
+        </div>
+        
+        <div id="user-info" class="user-info" style="display: none;">
+            <h3>✅ Sign-in Successful!</h3>
+            <div id="user-details"></div>
+        </div>
+    </div>
+
+    <script>
+        // Google Client ID
+        const GOOGLE_CLIENT_ID = '1010076677532-0nqc9aqdev36oe5bvnfa39hdlv86rpp2.apps.googleusercontent.com';
+        
+        const statusDiv = document.getElementById('status');
+        const userInfoDiv = document.getElementById('user-info');
+        const userDetailsDiv = document.getElementById('user-details');
+        
+        function updateStatus(message, type = 'info') {
+            statusDiv.textContent = message;
+            statusDiv.className = `status ${type}`;
+        }
+        
+        function showUserInfo(userData) {
+            userDetailsDiv.innerHTML = `
+                <img src="${userData.image}" alt="Profile Picture">
+                <div class="clearfix">
+                    <p><strong>Name:</strong> ${userData.name}</p>
+                    <p><strong>Email:</strong> ${userData.email}</p>
+                    <p><strong>ID:</strong> ${userData.id}</p>
+                </div>
+            `;
+            userInfoDiv.style.display = 'block';
+        }
+        
+        function handleGoogleSuccess(response) {
+            console.log('Google login success:', response);
+            
+            try {
+                // Decode the JWT token to get user information
+                const payload = JSON.parse(atob(response.credential.split('.')[1]));
+                
+                const userData = {
+                    id: payload.sub,
+                    name: payload.name,
+                    email: payload.email,
+                    image: payload.picture,
+                    givenName: payload.given_name,
+                    familyName: payload.family_name,
+                };
+                
+                updateStatus('✅ Google Sign-in successful!', 'success');
+                showUserInfo(userData);
+                
+                // Store user data in localStorage
+                localStorage.setItem('user', JSON.stringify(userData));
+                
+            } catch (error) {
+                console.error('Error parsing Google response:', error);
+                updateStatus('❌ Error parsing Google response', 'error');
+            }
+        }
+        
+        function handleGoogleFailure(error) {
+            console.error('Google login failed:', error);
+            updateStatus('❌ Google Sign-in failed: ' + error.error, 'error');
+        }
+        
+        // Load Google Identity Services script
+        function loadGoogleScript() {
+            const script = document.createElement('script');
+            script.src = 'https://accounts.google.com/gsi/client';
+            script.async = true;
+            script.defer = true;
+            document.head.appendChild(script);
+            
+            script.onload = () => {
+                if (window.google) {
+                    window.google.accounts.id.initialize({
+                        client_id: GOOGLE_CLIENT_ID,
+                        callback: handleGoogleSuccess,
+                        auto_select: false,
+                        cancel_on_tap_outside: true,
+                    });
+                    
+                    const container = document.getElementById('google-signin-container');
+                    if (container) {
+                        window.google.accounts.id.renderButton(container, {
+                            theme: 'outline',
+                            size: 'large',
+                            text: 'signin_with',
+                            shape: 'rectangular',
+                            logo_alignment: 'left',
+                            width: 280,
+                        });
+                    }
+                    
+                    updateStatus('✅ Google Sign-in ready! Click the button above to test.', 'success');
+                } else {
+                    updateStatus('❌ Failed to load Google Identity Services', 'error');
+                }
+            };
+            
+            script.onerror = () => {
+                updateStatus('❌ Failed to load Google script', 'error');
+            };
+        }
+        
+        // Check if user is already signed in
+        function checkExistingUser() {
+            const savedUser = localStorage.getItem('user');
+            if (savedUser) {
+                try {
+                    const userData = JSON.parse(savedUser);
+                    updateStatus('✅ User already signed in!', 'success');
+                    showUserInfo(userData);
+                } catch (error) {
+                    localStorage.removeItem('user');
+                }
+            }
+        }
+        
+        // Initialize
+        checkExistingUser();
+        loadGoogleScript();
+    </script>
+</body>
+</html>
