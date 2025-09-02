@@ -1,19 +1,14 @@
 {
-  "name": "neetlogiq-backend",
+  "name": "neetlogiq",
   "version": "1.0.0",
-  "description": "NEET Logiq backend API using Cloudflare Workers and D1",
-  "main": "src/index.js",
+  "description": "NEET Logiq - Medical College Search Platform",
+  "private": true,
   "scripts": {
-    "dev": "wrangler dev",
-    "deploy": "wrangler deploy",
-    "db:create": "wrangler d1 create neetlogiq-db",
-    "db:migrate": "wrangler d1 migrations apply neetlogiq-db",
-    "db:seed": "wrangler d1 execute neetlogiq-db --file=./migrations/seed.sql"
+    "build": "cd neetlogiq-frontend && npm run build",
+    "start": "cd neetlogiq-frontend && npm start",
+    "install-frontend": "cd neetlogiq-frontend && npm install"
   },
-  "dependencies": {
-    "itty-cors": "^2.0.0"
-  },
-  "devDependencies": {
-    "wrangler": "^3.0.0"
-  }
+  "workspaces": [
+    "neetlogiq-frontend"
+  ]
 }

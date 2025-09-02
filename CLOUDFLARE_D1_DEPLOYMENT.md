@@ -46,12 +46,14 @@ Update the `database_id` in `wrangler.toml` with the ID from step 3.
 ## Step 5: Run Database Migrations
 
 ```bash
+cd cloudflare-workers
 wrangler d1 migrations apply neetlogiq-db
 ```
 
 ## Step 6: Export Data from SQLite
 
 ```bash
+cd cloudflare-workers
 node migrate-to-d1.js
 ```
 
@@ -60,6 +62,8 @@ This will create SQL files in the `migrations/` directory.
 ## Step 7: Import Data to D1
 
 ```bash
+cd cloudflare-workers
+
 # Import colleges data
 wrangler d1 execute neetlogiq-db --file=./migrations/colleges_data.sql
 
@@ -73,12 +77,14 @@ wrangler d1 execute neetlogiq-db --file=./migrations/cutoffs_data.sql
 ## Step 8: Install Dependencies
 
 ```bash
+cd cloudflare-workers
 npm install
 ```
 
 ## Step 9: Deploy to Cloudflare Workers
 
 ```bash
+cd cloudflare-workers
 wrangler deploy
 ```
 
