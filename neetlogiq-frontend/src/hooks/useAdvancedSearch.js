@@ -14,6 +14,7 @@ export const useAdvancedSearch = (collegesData = []) => {
   const retryTimeoutRef = useRef(null);
 
   // Initialize the search service
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
     const initializeService = async () => {
       try {
@@ -52,7 +53,7 @@ export const useAdvancedSearch = (collegesData = []) => {
       if (timeoutId) {
         clearTimeout(timeoutId);
       }
-    }; // eslint-disable-line react-hooks/exhaustive-deps
+    };
   }, [collegesData]);
 
   // Perform advanced search
