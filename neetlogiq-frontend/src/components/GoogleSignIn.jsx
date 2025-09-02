@@ -7,8 +7,6 @@ const GoogleSignIn = ({ className = "", text = "signin_with", size = "large", wi
   const googleButtonRef = useRef(null);
 
   useEffect(() => {
-    console.log('GoogleSignIn - GOOGLE_CLIENT_ID:', GOOGLE_CLIENT_ID);
-    
     // Load Google Identity Services script
     const script = document.createElement('script');
     script.src = 'https://accounts.google.com/gsi/client';
@@ -17,9 +15,7 @@ const GoogleSignIn = ({ className = "", text = "signin_with", size = "large", wi
     document.head.appendChild(script);
 
     script.onload = () => {
-      console.log('Google GSI script loaded');
       if (window.google) {
-        console.log('Initializing Google Sign-in with client_id:', GOOGLE_CLIENT_ID);
         window.google.accounts.id.initialize({
           client_id: GOOGLE_CLIENT_ID,
           callback: handleGoogleSuccess,
