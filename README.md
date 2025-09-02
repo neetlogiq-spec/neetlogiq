@@ -24,7 +24,7 @@ A comprehensive platform for medical aspirants to search and explore medical col
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/neetlogiq.git
+   git clone https://github.com/neetlogiq-spec/neetlogiq.git
    cd neetlogiq
    ```
 

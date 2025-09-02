@@ -10,12 +10,14 @@ export const GOOGLE_CREDENTIALS = {
   client_secret: "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", // This should be moved to backend-only
   redirect_uris: [
     "http://localhost:4000/api/auth/google/callback",
-    "https://your-domain.pages.dev/api/auth/google/callback" // Add your production domain
+    "https://neetlogiq.com/api/auth/google/callback",
+    "https://neetlogiq.pages.dev/api/auth/google/callback"
   ],
   javascript_origins: [
     "http://localhost:4001",
     "http://localhost:5001", // Your current dev port
-    "https://your-domain.pages.dev" // Add your production domain
+    "https://neetlogiq.com",
+    "https://neetlogiq.pages.dev"
   ]
 };
 

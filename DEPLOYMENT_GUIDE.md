@@ -46,10 +46,11 @@ neetlogiq/
 3. Go to "APIs & Services" > "Credentials"
 4. Edit your OAuth 2.0 Client ID
 5. Add authorized origins:
-   - `https://your-domain.pages.dev` (Cloudflare Pages URL)
-   - `https://your-custom-domain.com` (if you have one)
+   - `https://neetlogiq.pages.dev` (Cloudflare Pages URL)
+   - `https://neetlogiq.com` (your custom domain)
 6. Add authorized redirect URIs:
-   - `https://your-domain.pages.dev/api/auth/google/callback`
+   - `https://neetlogiq.pages.dev/api/auth/google/callback`
+   - `https://neetlogiq.com/api/auth/google/callback`
 
 ### 2.2 Environment Variables
 Create these environment variables in Cloudflare Pages:
@@ -74,7 +75,7 @@ Create these environment variables in Cloudflare Pages:
 ### 3.3 Environment Variables
 Add these in Cloudflare Pages settings:
 ```
-REACT_APP_GOOGLE_CLIENT_ID=your-production-google-client-id
+REACT_APP_GOOGLE_CLIENT_ID=1010076677532-0nqc9aqdev36oe5bvnfa39hdlv86rpp2.apps.googleusercontent.com
 REACT_APP_API_URL=https://your-backend-domain.com
 REACT_APP_ENVIRONMENT=production
 ```
