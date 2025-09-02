@@ -1,0 +1,346 @@
+# Medical College Management System - BMAD Project Configuration
+# Version: v2.1
+# BMAD-METHOD™ Version: v4.41.0
+
+project:
+  name: "Medical College Management System"
+  version: "v2.1"
+  description: "Advanced medical college management system with AI-powered search and data management"
+  domain: "Healthcare Education"
+  technology_stack: ["React.js", "Node.js", "SQLite3", "Advanced Search Algorithms"]
+
+# BMAD Agent Configuration
+agents:
+  primary:
+    - name: "bmad-orchestrator"
+      role: "Project coordination and workflow management"
+      priority: "high"
+      auto_start: true
+    
+    - name: "qa"
+      role: "Quality assurance and testing specialist"
+      priority: "high"
+      auto_start: true
+      config_file: "medical-college-qa.yaml"
+    
+    - name: "dev"
+      role: "Frontend development and component testing"
+      priority: "medium"
+      auto_start: true
+    
+    - name: "architect"
+      role: "System architecture and performance optimization"
+      priority: "medium"
+      auto_start: true
+    
+    - name: "infra-devops-platform"
+      role: "Database and infrastructure optimization"
+      priority: "medium"
+      auto_start: true
+
+  specialized:
+    - name: "ux-expert"
+      role: "User experience and interface validation"
+      priority: "medium"
+      auto_start: false
+    
+    - name: "pm"
+      role: "Project management and workflow coordination"
+      priority: "low"
+      auto_start: false
+
+# Workflow Configuration
+workflows:
+  primary:
+    - name: "medical-college-system"
+      file: "medical-college-system.yaml"
+      auto_start: true
+      priority: "high"
+      description: "Main workflow for system validation and testing"
+  
+  specialized:
+    - name: "search-algorithm-validation"
+      file: "search-validation.yaml"
+      auto_start: false
+      priority: "medium"
+      description: "Focused workflow for search algorithm testing"
+    
+    - name: "performance-optimization"
+      file: "performance-optimization.yaml"
+      auto_start: false
+      priority: "medium"
+      description: "Workflow for system performance optimization"
+
+# Testing Configuration
+testing:
+  automated:
+    - name: "Search Algorithm Tests"
+      frequency: "Every deployment"
+      scope: "All search algorithms"
+      tools: ["Jest", "React Testing Library"]
+    
+    - name: "Performance Tests"
+      frequency: "Weekly"
+      scope: "Search response times and system performance"
+      tools: ["Lighthouse", "WebPageTest"]
+    
+    - name: "API Tests"
+      frequency: "Every deployment"
+      scope: "All backend endpoints"
+      tools: ["Postman", "Newman"]
+  
+  manual:
+    - name: "User Experience Testing"
+      frequency: "Before major releases"
+      scope: "Interface usability and accessibility"
+      checklist: "manual-testing-checklist.md"
+    
+    - name: "Search Accuracy Testing"
+      frequency: "Weekly"
+      scope: "Search result relevance and accuracy"
+      test_cases: "search-test-cases.md"
+
+# Performance Monitoring
+monitoring:
+  metrics:
+    - name: "Search Response Time"
+      target: "< 300ms"
+      acceptable: "< 500ms"
+      critical: "> 1000ms"
+      collection: "real-time"
+    
+    - name: "System Uptime"
+      target: "99.9%"
+      acceptable: "99.5%"
+      critical: "< 99%"
+      collection: "continuous"
+    
+    - name: "Database Query Time"
+      target: "< 100ms"
+      acceptable: "< 200ms"
+      critical: "> 500ms"
+      collection: "real-time"
+  
+  alerts:
+    - condition: "Search response time > 500ms"
+      action: "Notify architect agent"
+      priority: "medium"
+    
+    - condition: "System uptime < 99.5%"
+      action: "Notify infra-devops-platform agent"
+      priority: "high"
+    
+    - condition: "Database query time > 200ms"
+      action: "Notify infra-devops-platform agent"
+      priority: "medium"
+
+# Quality Assurance
+quality_assurance:
+  standards:
+    - name: "Code Quality"
+      tool: "ESLint"
+      config: ".eslintrc.js"
+      threshold: "0 errors, < 10 warnings"
+    
+    - name: "Test Coverage"
+      tool: "Jest"
+      threshold: "> 80%"
+      focus: "Critical business logic"
+    
+    - name: "Performance"
+      tool: "Lighthouse"
+      threshold: "> 90"
+      focus: "Core Web Vitals"
+  
+  automated_checks:
+    - name: "Pre-commit Hooks"
+      enabled: true
+      checks: ["lint", "test", "format"]
+    
+    - name: "Build Validation"
+      enabled: true
+      checks: ["build", "test", "coverage"]
+    
+    - name: "Deployment Validation"
+      enabled: true
+      checks: ["health", "performance", "functionality"]
+
+# Security Configuration
+security:
+  authentication:
+    type: "Basic Auth"
+    credentials: "Lone_wolf#12:Apx_gp_delta"
+    session_timeout: "8 hours"
+  
+  data_protection:
+    encryption: "AES-256"
+    backup_frequency: "Daily"
+    retention_policy: "30 days"
+  
+  access_control:
+    admin_roles: ["super_admin", "admin", "moderator"]
+    user_roles: ["viewer", "searcher"]
+    ip_whitelist: []  # Empty means all IPs allowed
+
+# Integration Points
+integrations:
+  external_apis:
+    - name: "Medical Database APIs"
+      status: "planned"
+      priority: "low"
+      description: "Integration with external medical education databases"
+    
+    - name: "Payment Gateway"
+      status: "planned"
+      priority: "low"
+      description: "Integration for premium features"
+  
+  internal_systems:
+    - name: "Analytics Dashboard"
+      status: "active"
+      priority: "medium"
+      description: "Internal system performance monitoring"
+    
+    - name: "Log Management"
+      status: "active"
+      priority: "high"
+      description: "Centralized logging and error tracking"
+
+# Deployment Configuration
+deployment:
+  environments:
+    - name: "Development"
+      url: "http://localhost:4001"
+      database: "clean-unified.db"
+      auto_deploy: true
+    
+    - name: "Staging"
+      url: "http://staging.medicalcollege.com"
+      database: "staging_cutoffs.db"
+      auto_deploy: false
+    
+    - name: "Production"
+      url: "http://medicalcollege.com"
+      database: "production.db"
+      auto_deploy: false
+  
+  pipeline:
+    - stage: "Build"
+      command: "npm run build"
+      timeout: "10 minutes"
+    
+    - stage: "Test"
+      command: "npm run test"
+      timeout: "15 minutes"
+    
+    - stage: "Deploy"
+      command: "npm run deploy"
+      timeout: "20 minutes"
+
+# BMAD-Specific Configuration
+bmad:
+  auto_optimization:
+    enabled: true
+    areas: ["performance", "search-algorithms", "user-experience"]
+    frequency: "daily"
+  
+  ai_learning:
+    enabled: true
+    model: "gpt-4"
+    training_data: "user_search_patterns"
+    update_frequency: "weekly"
+  
+  collaboration:
+    enabled: true
+    agents_can_communicate: true
+    shared_knowledge_base: true
+    decision_logging: true
+
+# Success Metrics
+success_metrics:
+  search_quality:
+    - metric: "Search Accuracy"
+      target: "> 95%"
+      current: "90%"
+      measurement: "Relevant results / Total results"
+    
+    - metric: "False Negative Rate"
+      target: "< 5%"
+      current: "10%"
+      measurement: "Missed relevant results / Total relevant results"
+  
+  system_performance:
+    - metric: "Search Response Time"
+      target: "< 300ms"
+      current: "450ms"
+      measurement: "Average response time"
+    
+    - metric: "System Uptime"
+      target: "99.9%"
+      current: "99.5%"
+      measurement: "Availability percentage"
+  
+  user_satisfaction:
+    - metric: "User Rating"
+      target: "> 4.5/5"
+      current: "4.2/5"
+      measurement: "User feedback score"
+    
+    - metric: "Search Completion Rate"
+      target: "> 85%"
+      current: "78%"
+      measurement: "Successful searches / Total searches"
+
+# Maintenance Schedule
+maintenance:
+  daily:
+    - "Database backup"
+    - "Performance monitoring"
+    - "Error log review"
+  
+  weekly:
+    - "Search algorithm optimization"
+    - "Performance metrics analysis"
+    - "User feedback review"
+  
+  monthly:
+    - "Security audit"
+    - "Performance optimization"
+    - "Feature planning"
+  
+  quarterly:
+    - "Major system updates"
+    - "Security patches"
+    - "Performance benchmarking"
+
+# Documentation
+documentation:
+  user_guides:
+    - "BMAD-QUICK-START.md"
+    - "docs/user-guide.md"
+    - "docs/api-documentation.md"
+  
+  technical_docs:
+    - "docs/architecture.md"
+    - "docs/prd.md"
+    - "docs/project-status.md"
+  
+  agent_docs:
+    - ".bmad-core/agents/medical-college-qa.yaml"
+    - ".bmad-core/workflows/medical-college-system.yaml"
+    - ".bmad-core/user-guide.md"
+
+# Version Control
+version_control:
+  repository: "Medical College Management System"
+  branch_strategy: "GitFlow"
+  release_tags: "v2.1.x"
+  changelog: "CHANGELOG.md"
+
+# Support and Contact
+support:
+  team: "Medical College Development Team"
+  email: "support@medicalcollege.com"
+  documentation: "docs/"
+  issue_tracker: "GitHub Issues"
+  community: "BMAD Discord"

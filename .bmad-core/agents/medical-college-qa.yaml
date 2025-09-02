@@ -1,0 +1,203 @@
+name: Medical College QA Agent
+type: qa
+version: v2.1
+description: Specialized QA agent for testing Medical College Management System with focus on advanced search algorithms
+
+# Agent Capabilities
+capabilities:
+  - "Advanced search algorithm testing"
+  - "Frontend component validation"
+  - "Backend API endpoint testing"
+  - "Database query validation"
+  - "Performance benchmarking"
+  - "User experience testing"
+  - "Search accuracy validation"
+
+# Testing Focus Areas
+focus_areas:
+  search_algorithms:
+    - "Fuzzy search with Levenshtein distance"
+    - "Phonetic search (Soundex, Metaphone)"
+    - "Wildcard search (* and ? patterns)"
+    - "Regex pattern search"
+    - "Synonym and alias search"
+    - "Location-aware search"
+    - "Semantic search with word overlap"
+  
+  frontend_components:
+    - "AdvancedSearch component functionality"
+    - "Search suggestions and history"
+    - "Advanced search options toggle"
+    - "Search results display"
+    - "Mobile responsiveness"
+    - "Accessibility compliance"
+  
+  backend_validation:
+    - "API endpoint response times"
+    - "Database connection stability"
+    - "Authentication system"
+    - "Error handling and logging"
+    - "Data validation and sanitization"
+
+# Test Scenarios
+test_scenarios:
+  fuzzy_search:
+    - name: "Typo Tolerance Test"
+      input: "AIMS"
+      expected: "Should find 'AIIMS' colleges"
+      algorithm: "fuzzy"
+      threshold: 3
+    
+    - name: "Partial Match Test"
+      input: "med"
+      expected: "Should find 'Medical' colleges"
+      algorithm: "fuzzy"
+      threshold: 2
+  
+  location_search:
+    - name: "City Variation Test"
+      input: "bombay"
+      expected: "Should find 'Mumbai' colleges"
+      algorithm: "synonym"
+    
+    - name: "Abbreviation Test"
+      input: "ncr"
+      expected: "Should find 'Delhi' colleges"
+      algorithm: "synonym"
+  
+  phonetic_search:
+    - name: "Medical Term Test"
+      input: "kardioloji"
+      expected: "Should find 'Cardiology'"
+      algorithm: "phonetic"
+    
+    - name: "Specialty Test"
+      input: "ortopediks"
+      expected: "Should find 'Orthopedics'"
+      algorithm: "phonetic"
+
+# Performance Benchmarks
+performance_benchmarks:
+  search_response_time:
+    target: "< 300ms"
+    acceptable: "< 500ms"
+    critical: "> 1000ms"
+  
+  database_query_time:
+    target: "< 100ms"
+    acceptable: "< 200ms"
+    critical: "> 500ms"
+  
+  frontend_render_time:
+    target: "< 100ms"
+    acceptable: "< 200ms"
+    critical: "> 500ms"
+
+# Quality Metrics
+quality_metrics:
+  search_accuracy:
+    target: "> 95%"
+    measurement: "Relevant results / Total results"
+  
+  false_negative_rate:
+    target: "< 5%"
+    measurement: "Missed relevant results / Total relevant results"
+  
+  user_satisfaction:
+    target: "> 4.5/5"
+    measurement: "User rating scale"
+
+# Automated Testing
+automated_tests:
+  - name: "Search Algorithm Regression Test"
+    frequency: "Every deployment"
+    scope: "All search algorithms"
+    tools: ["Jest", "React Testing Library"]
+  
+  - name: "Performance Regression Test"
+    frequency: "Weekly"
+    scope: "Search response times"
+    tools: ["Lighthouse", "WebPageTest"]
+  
+  - name: "API Endpoint Test"
+    frequency: "Every deployment"
+    scope: "All backend endpoints"
+    tools: ["Postman", "Newman"]
+
+# Manual Testing Checklist
+manual_testing_checklist:
+  search_interface:
+    - "Search input responsiveness"
+    - "Suggestion dropdown functionality"
+    - "Advanced options toggle"
+    - "Search history display"
+    - "Clear search functionality"
+  
+  search_results:
+    - "Result relevance accuracy"
+    - "Result highlighting"
+    - "Pagination functionality"
+    - "Filter application"
+    - "Sort options"
+  
+  mobile_experience:
+    - "Touch-friendly interface"
+    - "Responsive design"
+    - "Mobile search suggestions"
+    - "Mobile advanced options"
+
+# Error Detection
+error_detection:
+  frontend_errors:
+    - "Console errors and warnings"
+    - "JavaScript runtime errors"
+    - "React component errors"
+    - "CSS rendering issues"
+  
+  backend_errors:
+    - "API response errors"
+    - "Database connection errors"
+    - "Authentication failures"
+    - "Performance timeouts"
+  
+  search_errors:
+    - "Invalid search results"
+    - "Search algorithm failures"
+    - "Performance degradation"
+    - "User experience issues"
+
+# Reporting
+reporting:
+  test_reports:
+    - "Daily test execution summary"
+    - "Weekly performance metrics"
+    - "Deployment validation reports"
+    - "Bug tracking and resolution"
+  
+  metrics_dashboard:
+    - "Search performance trends"
+    - "Error rate monitoring"
+    - "User satisfaction scores"
+    - "System health status"
+
+# Integration with BMAD
+bmad_integration:
+  workflow_coordination:
+    - "Coordinate with bmad-orchestrator"
+    - "Share test results with other agents"
+    - "Update project status automatically"
+  
+  ai_enhanced_testing:
+    - "AI-powered test case generation"
+    - "Intelligent bug detection"
+    - "Predictive performance analysis"
+    - "Automated test optimization"
+
+# Success Criteria
+success_criteria:
+  - "All search algorithms return accurate results"
+  - "Search response time consistently under 300ms"
+  - "No critical frontend or backend errors"
+  - "AdvancedSearch component works flawlessly"
+  - "User satisfaction score above 4.5/5"
+  - "System ready for production deployment"

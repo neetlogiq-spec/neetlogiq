@@ -1,0 +1,18 @@
+{
+  "id": "1bdd146f-c0e8-48e3-a634-38c001c3c63f",
+  "category": "decisions",
+  "title": "React App Mounting Issue",
+  "content": "The React app is loading but not rendering new content. This suggests client-side rendering issues that need debugging.",
+  "tags": [
+    "react",
+    "debugging",
+    "frontend"
+  ],
+  "priority": "high",
+  "status": "active",
+  "relatedMemories": [],
+  "createdAt": "2025-08-28T09:44:21.614Z",
+  "updatedAt": "2025-08-28T09:44:21.614Z",
+  "author": "system",
+  "version": "1.0.0"
+}

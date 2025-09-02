@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Cutoff Import - NeetLogIQ Admin</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+            min-height: 100vh; 
+        }
+        .container { 
+            max-width: 1600px; 
+            margin: 0 auto; 
+            padding: 20px; 
+        }
+        .header { 
+            background: rgba(255,255,255,0.95); 
+            backdrop-filter: blur(10px); 
+            padding: 30px; 
+            border-radius: 20px; 
+            margin-bottom: 30px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1); 
+        }
+        .header h1 { 
+            color: #2c3e50; 
+            font-size: 2.5em; 
+            margin-bottom: 10px; 
+        }
+        .header p { 
+            color: #7f8c8d; 
+            font-size: 1.1em; 
+        }
+        .nav { 
+            background: rgba(255,255,255,0.95); 
+            backdrop-filter: blur(10px); 
+            padding: 25px; 
+            border-radius: 15px; 
+            margin-bottom: 30px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1); 
+        }
+        .nav a { 
+            display: inline-block; 
+            margin: 10px; 
+            padding: 15px 25px; 
+            background: linear-gradient(135deg, #3498db, #2980b9); 
+            color: white; 
+            text-decoration: none; 
+            border-radius: 12px; 
+            transition: all 0.3s ease; 
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3); 
+        }
+        .nav a:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4); 
+        }
+        .content { 
+            background: rgba(255,255,255,0.95); 
+            backdrop-filter: blur(10px); 
+            padding: 30px; 
+            border-radius: 20px; 
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1); 
+        }
+        .tabs { 
+            display: flex; 
+            border-bottom: 2px solid #ecf0f1; 
+            margin-bottom: 30px; 
+        }
+        .tab { 
+            padding: 15px 30px; 
+            cursor: pointer; 
+            border-bottom: 3px solid transparent; 
+            transition: all 0.3s ease; 
+        }
+        .tab.active { 
+            border-bottom-color: #3498db; 
+            color: #3498db; 
+            font-weight: 600; 
+        }
+        .tab:hover { 
+            background: #f8f9fa; 
+        }
+        .tab-content { 
+            display: none; 
+        }
+        .tab-content.active { 
+            display: block; 
+        }
+        .upload-section { 
+            border: 3px dashed #3498db; 
+            padding: 60px; 
+            text-align: center; 
+            border-radius: 15px; 
+            margin: 30px 0; 
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef); 
+            transition: all 0.3s ease; 
+        }
+        .upload-section.dragover { 
+            border-color: #2ecc71; 
+            background: linear-gradient(135deg, #d5f4e6, #c8f0d8); 
+            transform: scale(1.02); 
+        }
+        .file-input { 
+            display: none; 
+        }
+        .upload-btn { 
+            background: linear-gradient(135deg, #3498db, #2980b9); 
+            color: white; 
+            padding: 18px 36px; 
+            border: none; 
+            border-radius: 12px; 
+            font-size: 16px; 
+            cursor: pointer; 
+            font-weight: 500; 
+            transition: all 0.3s ease; 
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3); 
+        }
+        .upload-btn:hover { 
+            transform: translateY(-3px); 
+            box-shadow: 0 8px 25px rgba(52, 152, 219, 0.4); 
+        }
+        .progress-bar { 
+            width: 100%; 
+            height: 8px; 
+            background: #ecf0f1; 
+            border-radius: 4px; 
+            margin: 20px 0; 
+            overflow: hidden; 
+        }
+        .progress-fill { 
+            height: 100%; 
+            background: linear-gradient(90deg, #2ecc71, #27ae60); 
+            width: 0%; 
+            transition: width 0.3s ease; 
+        }
+        .status-grid { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); 
+            gap: 20px; 
+            margin: 30px 0; 
+        }
+        .status-card { 
+            background: linear-gradient(135deg, #ecf0f1, #bdc3c7); 
+            padding: 25px; 
+            border-radius: 15px; 
+            text-align: center; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+        .status-number { 
+            font-size: 2.5em; 
+            font-weight: bold; 
+            color: #2c3e50; 
+            margin-bottom: 10px; 
+        }
+        .status-label { 
+            color: #7f8c8d; 
+            font-size: 1.1em; 
+        }
+        .data-preview { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 20px; 
+            margin: 20px 0; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+        .preview-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px; 
+        }
+        .preview-table th, .preview-table td { 
+            padding: 12px; 
+            text-align: left; 
+            border-bottom: 1px solid #ddd; 
+        }
+        .preview-table th { 
+            background: linear-gradient(135deg, #34495e, #2c3e50); 
+            color: white; 
+            font-weight: 500; 
+        }
+        .preview-table tr:hover { 
+            background: rgba(52, 152, 219, 0.1); 
+        }
+        .mapping-section { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 20px; 
+            margin: 20px 0; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+        .mapping-row { 
+            display: flex; 
+            align-items: center; 
+            margin: 15px 0; 
+            gap: 20px; 
+        }
+        .mapping-row label { 
+            min-width: 150px; 
+            font-weight: 500; 
+            color: #2c3e50; 
+        }
+        .mapping-row select { 
+            flex: 1; 
+            padding: 10px; 
+            border: 2px solid #ddd; 
+            border-radius: 8px; 
+        }
+        .btn { 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 500; 
+            transition: all 0.3s ease; 
+            margin: 5px; 
+        }
+        .btn-primary { 
+            background: linear-gradient(135deg, #3498db, #2980b9); 
+            color: white; 
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3); 
+        }
+        .btn-success { 
+            background: linear-gradient(135deg, #2ecc71, #27ae60); 
+            color: white; 
+            box-shadow: 0 4px 15px rgba(46, 204, 113, 0.3); 
+        }
+        .btn-warning { 
+            background: linear-gradient(135deg, #f39c12, #e67e22); 
+            color: white; 
+            box-shadow: 0 4px 15px rgba(243, 156, 18, 0.3); 
+        }
+        .btn-danger { 
+            background: linear-gradient(135deg, #e74c3c, #c0392b); 
+            color: white; 
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3); 
+        }
+        .btn:hover { 
+            transform: translateY(-2px); 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2); 
+        }
+        .import-history { 
+            background: white; 
+            border-radius: 12px; 
+            padding: 20px; 
+            margin: 20px 0; 
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1); 
+        }
+        .history-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px; 
+        }
+        .history-table th, .history-table td { 
+            padding: 12px; 
+            text-align: left; 
+            border-bottom: 1px solid #ddd; 
+        }
+        .history-table th { 
+            background: linear-gradient(135deg, #34495e, #2c3e50); 
+            color: white; 
+            font-weight: 500; 
+        }
+        .history-table tr:hover { 
+            background: rgba(52, 152, 219, 0.1); 
+        }
+        .modal { 
+            display: none; 
+            position: fixed; 
+            z-index: 1000; 
+            left: 0; 
+            top: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(0,0,0,0.5); 
+        }
+        .modal-content { 
+            background: white; 
+            margin: 5% auto; 
+            padding: 30px; 
+            border-radius: 15px; 
+            width: 80%; 
+            max-width: 800px; 
+            max-height: 80vh; 
+            overflow-y: auto; 
+        }
+        .modal-header { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+        }
+        .close { 
+            font-size: 28px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            color: #aaa; 
+        }
+        .close:hover { 
+            color: #000; 
+        }
+        .form-group { 
+            margin-bottom: 20px; 
+        }
+        .form-group label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 500; 
+            color: #2c3e50; 
+        }
+        .form-group input, .form-group select, .form-group textarea { 
+            width: 100%; 
+            padding: 12px; 
+            border: 2px solid #ddd; 
+            border-radius: 8px; 
+            font-size: 14px; 
+        }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { 
+            outline: none; 
+            border-color: #3498db; 
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.1); 
+        }
+        .form-actions { 
+            display: flex; 
+            gap: 15px; 
+            justify-content: flex-end; 
+            margin-top: 30px; 
+        }
+        .alert { 
+            padding: 15px; 
+            border-radius: 8px; 
+            margin: 15px 0; 
+        }
+        .alert-success { 
+            background: #d4edda; 
+            color: #155724; 
+            border: 1px solid #c3e6cb; 
+        }
+        .alert-error { 
+            background: #f8d7da; 
+            color: #721c24; 
+            border: 1px solid #f5c6cb; 
+        }
+        .alert-warning { 
+            background: #fff3cd; 
+            color: #856404; 
+            border: 1px solid #ffeaa7; 
+        }
+        .alert-info { 
+            background: #d1ecf1; 
+            color: #0c5460; 
+            border: 1px solid #bee5eb; 
+        }
+        @media (max-width: 768px) { 
+            .tabs { flex-direction: column; } 
+            .mapping-row { flex-direction: column; align-items: stretch; } 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Advanced Cutoff Import System</h1>
+            <p>Professional NEET cutoff data import with validation, mapping, and processing</p>
+        </div>
+        
+        <div class="nav">
+            <a href="/sector_xp_12">🏠 Dashboard</a>
+            <a href="/sector_xp_12/colleges">📚 Colleges</a>
+            <a href="/sector_xp_12/programs">🎓 Programs</a>
+            <a href="/sector_xp_12/cutoff-import">📊 Cutoff Import</a>
+            <a href="/sector_xp_12/error-corrections">🔧 Error Corrections</a>
+        </div>
+        
+        <div class="content">
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('upload')">📤 File Upload</div>
+                <div class="tab" onclick="switchTab('mapping')">🗺️ Data Mapping</div>
+                <div class="tab" onclick="switchTab('preview')">👁️ Data Preview</div>
+                <div class="tab" onclick="switchTab('processing')">⚙️ Processing</div>
+                <div class="tab" onclick="switchTab('history')">📚 Import History</div>
+                <div class="tab" onclick="switchTab('settings')">⚙️ Settings</div>
+            </div>
+            
+            <!-- File Upload Tab -->
+            <div id="upload" class="tab-content active">
+                <h2>📤 File Upload & Validation</h2>
+                <p>Upload Excel/CSV files and validate data structure before import.</p>
+                
+                <div class="upload-section" id="uploadSection">
+                    <div style="font-size: 1.2em; margin-bottom: 20px;">📁 Drag and drop files here or click to browse</div>
+                    <div style="margin-bottom: 20px; color: #7f8c8d;">Supported formats: .xlsx, .xls, .csv (Max: 50MB)</div>
+                    <input type="file" class="file-input" id="fileInput" accept=".xlsx,.xls,.csv">
+                    <button class="upload-btn" onclick="document.getElementById('fileInput').click()">Choose File</button>
+                </div>
+                
+                <div id="uploadStatus"></div>
+                
+                <div class="progress-bar" id="progressBar" style="display: none;">
+                    <div class="progress-fill" id="progressFill"></div>
+                </div>
+                
+                <div class="status-grid" id="statusGrid" style="display: none;">
+                    <div class="status-card">
+                        <div class="status-number" id="totalRows">-</div>
+                        <div class="status-label">Total Rows</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number" id="validRows">-</div>
+                        <div class="status-label">Valid Rows</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number" id="errorRows">-</div>
+                        <div class="status-label">Error Rows</div>
+                    </div>
+                    <div class="status-card">
+                        <div class="status-number" id="processingTime">-</div>
+                        <div class="status-label">Processing Time</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Data Mapping Tab -->
+            <div id="mapping" class="tab-content">
+                <h2>🗺️ Data Field Mapping</h2>
+                <p>Map your file columns to system fields for accurate data import.</p>
+                
+                <div class="mapping-section">
+                    <div class="mapping-row">
+                        <label>College Name:</label>
+                        <select id="collegeNameMapping">
+                            <option value="">Select Column</option>
+                        </select>
+                    </div>
+                    <div class="mapping-row">
+                        <label>Program/Course:</label>
+                        <select id="programMapping">
+                            <option value="">Select Column</option>
+                        </select>
+                    </div>
+                    <div class="mapping-row">
+                        <label>Category:</label>
+                        <select id="categoryMapping">
+                            <option value="">Select Column</option>
+                        </select>
+                    </div>
+                    <div class="mapping-row">
+                        <label>Cutoff Rank:</label>
+                        <select id="cutoffRankMapping">
+                            <option value="">Select Column</option>
+                        </select>
+                    </div>
+                    <div class="mapping-row">
+                        <label>Cutoff Score:</label>
+                        <select id="cutoffScoreMapping">
+                            <option value="">Select Column</option>
+                        </select>
+                    </div>
+                    <div class="mapping-row">
+                        <label>Year:</label>
+                        <select id="yearMapping">
+                            <option value="">Select Column</option>
+                        </select>
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        <button class="btn btn-success" onclick="validateMapping()">✅ Validate Mapping</button>
+                        <button class="btn btn-primary" onclick="saveMapping()">💾 Save Mapping</button>
+                        <button class="btn btn-warning" onclick="loadDefaultMapping()">🔄 Load Default</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Data Preview Tab -->
+            <div id="preview" class="tab-content">
+                <h2>👁️ Data Preview & Validation</h2>
+                <p>Review your data before import to ensure accuracy.</p>
+                
+                <div class="data-preview">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3>Data Preview (First 10 rows)</h3>
+                        <button class="btn btn-primary" onclick="refreshPreview()">🔄 Refresh</button>
+                    </div>
+                    <div id="previewTable"></div>
+                </div>
+                
+                <div class="alert alert-info">
+                    <strong>💡 Tip:</strong> Review the data carefully. You can edit individual values before import.
+                </div>
+            </div>
+            
+            <!-- Processing Tab -->
+            <div id="processing" class="tab-content">
+                <h2>⚙️ Import Processing</h2>
+                <p>Process and import your validated data into the system.</p>
+                
+                <div class="mapping-section">
+                    <div style="margin-bottom: 20px;">
+                        <h3>Import Options</h3>
+                        <div style="margin: 15px 0;">
+                            <input type="checkbox" id="overwriteExisting" style="margin-right: 10px;">
+                            <label for="overwriteExisting">Overwrite existing records</label>
+                        </div>
+                        <div style="margin: 15px 0;">
+                            <input type="checkbox" id="createMissing" style="margin-right: 10px;">
+                            <label for="createMissing">Create missing colleges/programs</label>
+                        </div>
+                        <div style="margin: 15px 0;">
+                            <input type="checkbox" id="validateData" style="margin-right: 10px;" checked>
+                            <label for="validateData">Validate data before import</label>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        <button class="btn btn-success" onclick="startImport()">🚀 Start Import</button>
+                        <button class="btn btn-warning" onclick="testImport()">🧪 Test Import</button>
+                        <button class="btn btn-danger" onclick="cancelImport()">❌ Cancel</button>
+                    </div>
+                </div>
+                
+                <div id="processingStatus"></div>
+            </div>
+            
+            <!-- Import History Tab -->
+            <div id="history" class="tab-content">
+                <h2>📚 Import History & Management</h2>
+                <p>View and manage previous import sessions.</p>
+                
+                <div class="import-history">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                        <h3>Import Sessions</h3>
+                        <button class="btn btn-primary" onclick="refreshHistory()">🔄 Refresh</button>
+                    </div>
+                    <div id="historyTable"></div>
+                </div>
+            </div>
+            
+            <!-- Settings Tab -->
+            <div id="settings" class="tab-content">
+                <h2>⚙️ Import Settings & Configuration</h2>
+                <p>Configure import preferences and validation rules.</p>
+                
+                <div class="mapping-section">
+                    <div class="form-group">
+                        <label>Default Year for Import</label>
+                        <select id="defaultYear">
+                            <option value="2024">2024</option>
+                            <option value="2023">2023</option>
+                            <option value="2022">2022</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Data Validation Level</label>
+                        <select id="validationLevel">
+                            <option value="strict">Strict - Reject all errors</option>
+                            <option value="moderate" selected>Moderate - Allow minor errors</option>
+                            <option value="lenient">Lenient - Allow most errors</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Auto-import Threshold</label>
+                        <input type="number" id="autoImportThreshold" value="95" min="0" max="100">
+                        <small>Percentage of valid data required for auto-import</small>
+                    </div>
+                    
+                    <div style="margin-top: 30px;">
+                        <button class="btn btn-success" onclick="saveSettings()">💾 Save Settings</button>
+                        <button class="btn btn-warning" onclick="resetSettings()">🔄 Reset to Default</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Import Progress Modal -->
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🚀 Import Progress</h2>
+                <span class="close" onclick="closeImportModal()">&times;</span>
+            </div>
+            <div id="importModalContent">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="modalProgressFill"></div>
+                </div>
+                <div id="importStatus" style="margin: 20px 0; text-align: center;"></div>
+                <div id="importDetails" style="margin: 20px 0;"></div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentFile = null;
+        let fileData = null;
+        let currentMapping = {};
+        let importSession = null;
+        
+        // Tab switching
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Load tab-specific content
+            if (tabName === 'history') {
+                loadImportHistory();
+            } else if (tabName === 'preview' && fileData) {
+                showDataPreview();
+            }
+        }
+        
+        // File upload handling
+        const uploadSection = document.getElementById('uploadSection');
+        const fileInput = document.getElementById('fileInput');
+        
+        uploadSection.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadSection.classList.add('dragover');
+        });
+        
+        uploadSection.addEventListener('dragleave', () => {
+            uploadSection.classList.remove('dragover');
+        });
+        
+        uploadSection.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadSection.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFileUpload(e.target.files[0]);
+            }
+        });
+        
+        async function handleFileUpload(file) {
+            if (file.size > 50 * 1024 * 1024) {
+                showAlert('File size exceeds 50MB limit', 'error');
+                return;
+            }
+            
+            currentFile = file;
+            const status = document.getElementById('uploadStatus');
+            status.innerHTML = '<div class="alert alert-info">📤 Uploading and analyzing file...</div>';
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            
+            try {
+                const response = await fetch('/api/sector_xp_12/admin/cutoffs/import', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Basic ' + btoa('Lone_wolf#12:Apx_gp_delta') },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    fileData = data.data;
+                    currentMapping = data.mapping || {};
+                    
+                    showAlert('✅ File uploaded and analyzed successfully!', 'success');
+                    showUploadStats(data.stats);
+                    populateMappingOptions(data.columns);
+                    showDataPreview();
+                    
+                    // Enable other tabs
+                    document.querySelectorAll('.tab:not(:first-child)').forEach(tab => tab.style.opacity = '1');
+                } else {
+                    showAlert('❌ Upload failed: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showAlert('❌ Upload failed: ' + error.message, 'error');
+            }
+        }
+        
+        function showUploadStats(stats) {
+            const statusGrid = document.getElementById('statusGrid');
+            statusGrid.style.display = 'grid';
+            
+            document.getElementById('totalRows').textContent = stats.totalRows || 0;
+            document.getElementById('validRows').textContent = stats.validRows || 0;
+            document.getElementById('errorRows').textContent = stats.errorRows || 0;
+            document.getElementById('processingTime').textContent = (stats.processingTime || 0) + 'ms';
+        }
+        
+        function populateMappingOptions(columns) {
+            const mappingSelects = [
+                'collegeNameMapping', 'programMapping', 'categoryMapping', 
+                'cutoffRankMapping', 'cutoffScoreMapping', 'yearMapping'
+            ];
+            
+            mappingSelects.forEach(selectId => {
+                const select = document.getElementById(selectId);
+                select.innerHTML = '<option value="">Select Column</option>';
+                
+                columns.forEach(column => {
+                    const option = document.createElement('option');
+                    option.value = column;
+                    option.textContent = column;
+                    select.appendChild(option);
+                });
+                
+                // Set default mapping if available
+                if (currentMapping[selectId.replace('Mapping', '')]) {
+                    select.value = currentMapping[selectId.replace('Mapping', '')];
+                }
+            });
+        }
+        
+        function showDataPreview() {
+            if (!fileData || !fileData.preview) return;
+            
+            const previewTable = document.getElementById('previewTable');
+            let tableHTML = '<table class="preview-table"><thead><tr>';
+            
+            // Headers
+            Object.keys(fileData.preview[0] || {}).forEach(key => {
+                tableHTML += '<th>' + key + '</th>';
+            });
+            tableHTML += '</tr></thead><tbody>';
+            
+            // Data rows
+            fileData.preview.forEach(row => {
+                tableHTML += '<tr>';
+                Object.values(row).forEach(value => {
+                    tableHTML += '<td>' + (value || '') + '</td>';
+                });
+                tableHTML += '</tr>';
+            });
+            
+            tableHTML += '</tbody></table>';
+            previewTable.innerHTML = tableHTML;
+        }
+        
+        function validateMapping() {
+            const requiredFields = ['collegeNameMapping', 'cutoffRankMapping'];
+            let isValid = true;
+            let missingFields = [];
+            
+            requiredFields.forEach(field => {
+                const select = document.getElementById(field);
+                if (!select.value) {
+                    isValid = false;
+                    missingFields.push(select.options[0].textContent);
+                }
+            });
+            
+            if (isValid) {
+                showAlert('✅ Mapping validation passed!', 'success');
+            } else {
+                showAlert('❌ Missing required fields: ' + missingFields.join(', '), 'error');
+            }
+            
+            return isValid;
+        }
+        
+        function saveMapping() {
+            if (!validateMapping()) return;
+            
+            currentMapping = {
+                collegeName: document.getElementById('collegeNameMapping').value,
+                program: document.getElementById('programMapping').value,
+                category: document.getElementById('categoryMapping').value,
+                cutoffRank: document.getElementById('cutoffRankMapping').value,
+                cutoffScore: document.getElementById('cutoffScoreMapping').value,
+                year: document.getElementById('yearMapping').value
+            };
+            
+            showAlert('💾 Mapping saved successfully!', 'success');
+        }
+        
+        function loadDefaultMapping() {
+            // Auto-detect common column names
+            const columns = Array.from(document.getElementById('collegeNameMapping').options).map(opt => opt.value);
+            
+            const defaultMapping = {
+                collegeName: columns.find(col => col.toLowerCase().includes('college') || col.toLowerCase().includes('institute')),
+                program: columns.find(col => col.toLowerCase().includes('program') || col.toLowerCase().includes('course')),
+                category: columns.find(col => col.toLowerCase().includes('category') || col.toLowerCase().includes('quota')),
+                cutoffRank: columns.find(col => col.toLowerCase().includes('rank') || col.toLowerCase().includes('cutoff')),
+                cutoffScore: columns.find(col => col.toLowerCase().includes('score') || col.toLowerCase().includes('marks')),
+                year: columns.find(col => col.toLowerCase().includes('year') || col.toLowerCase().includes('session'))
+            };
+            
+            // Apply mapping
+            Object.keys(defaultMapping).forEach(key => {
+                const select = document.getElementById(key + 'Mapping');
+                if (defaultMapping[key] && select) {
+                    select.value = defaultMapping[key];
+                }
+            });
+            
+            showAlert('🔄 Default mapping loaded!', 'info');
+        }
+        
+        async function startImport() {
+            if (!validateMapping()) return;
+            
+            const options = {
+                overwriteExisting: document.getElementById('overwriteExisting').checked,
+                createMissing: document.getElementById('createMissing').checked,
+                validateData: document.getElementById('validateData').checked
+            };
+            
+            showImportModal();
+            
+            try {
+                const response = await fetch('/api/sector_xp_12/admin/cutoffs/process', {
+                    method: 'POST',
+                    headers: { 
+                        'Authorization': 'Basic ' + btoa('Lone_wolf#12:Apx_gp_delta'),
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        mapping: currentMapping,
+                        options: options,
+                        sessionId: importSession
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    showAlert('✅ Import completed successfully!', 'success');
+                    closeImportModal();
+                    loadImportHistory();
+                } else {
+                    showAlert('❌ Import failed: ' + data.error, 'error');
+                }
+            } catch (error) {
+                showAlert('❌ Import failed: ' + error.message, 'error');
+            }
+        }
+        
+        function testImport() {
+            showAlert('🧪 Test import functionality will be implemented', 'info');
+        }
+        
+        function cancelImport() {
+            if (confirm('Are you sure you want to cancel the import?')) {
+                closeImportModal();
+                showAlert('❌ Import cancelled', 'warning');
+            }
+        }
+        
+        async function loadImportHistory() {
+            try {
+                const response = await fetch('/api/sector_xp_12/admin/cutoffs/sessions', {
+                    headers: { 'Authorization': 'Basic ' + btoa('Lone_wolf#12:Apx_gp_delta') }
+                });
+                
+                const sessions = await response.json();
+                showImportHistory(sessions);
+            } catch (error) {
+                showAlert('❌ Failed to load import history', 'error');
+            }
+        }
+        
+        function showImportHistory(sessions) {
+            const historyTable = document.getElementById('historyTable');
+            
+            if (!sessions || sessions.length === 0) {
+                historyTable.innerHTML = '<div style="text-align: center; padding: 40px; color: #6c757d;">No import sessions found</div>';
+                return;
+            }
+            
+            let tableHTML = '<table class="history-table"><thead><tr><th>Date</th><th>File</th><th>Status</th><th>Rows</th><th>Actions</th></tr></thead><tbody>';
+            
+            sessions.forEach(session => {
+                tableHTML += `
+                    <tr>
+                        <td>${new Date(session.started_at).toLocaleDateString()}</td>
+                        <td>${session.file_name || 'N/A'}</td>
+                        <td><span style="background: ${getStatusColor(session.status)}; color: white; padding: 4px 8px; border-radius: 4px;">${session.status}</span></td>
+                        <td>${session.total_rows || 0}</td>
+                        <td>
+                            <button class="btn btn-primary btn-sm" onclick="viewSession(${session.id})">👁️ View</button>
+                            <button class="btn btn-warning btn-sm" onclick="rollbackSession(${session.id})">↩️ Rollback</button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tableHTML += '</tbody></table>';
+            historyTable.innerHTML = tableHTML;
+        }
+        
+        function getStatusColor(status) {
+            switch(status) {
+                case 'completed': return '#27ae60';
+                case 'processing': return '#f39c12';
+                case 'failed': return '#e74c3c';
+                case 'pending': return '#3498db';
+                default: return '#95a5a6';
+            }
+        }
+        
+        function viewSession(sessionId) {
+            showAlert('👁️ View session functionality will be implemented', 'info');
+        }
+        
+        function rollbackSession(sessionId) {
+            if (confirm('Are you sure you want to rollback this import session? This will remove all imported data.')) {
+                showAlert('↩️ Rollback functionality will be implemented', 'info');
+            }
+        }
+        
+        function saveSettings() {
+            const settings = {
+                defaultYear: document.getElementById('defaultYear').value,
+                validationLevel: document.getElementById('validationLevel').value,
+                autoImportThreshold: document.getElementById('autoImportThreshold').value
+            };
+            
+            localStorage.setItem('cutoffImportSettings', JSON.stringify(settings));
+            showAlert('💾 Settings saved successfully!', 'success');
+        }
+        
+        function resetSettings() {
+            if (confirm('Are you sure you want to reset all settings to default?')) {
+                document.getElementById('defaultYear').value = '2024';
+                document.getElementById('validationLevel').value = 'moderate';
+                document.getElementById('autoImportThreshold').value = '95';
+                showAlert('🔄 Settings reset to default!', 'info');
+            }
+        }
+        
+        function showImportModal() {
+            document.getElementById('importModal').style.display = 'block';
+            document.getElementById('importStatus').innerHTML = '🚀 Starting import process...';
+            document.getElementById('modalProgressFill').style.width = '0%';
+        }
+        
+        function closeImportModal() {
+            document.getElementById('importModal').style.display = 'none';
+        }
+        
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = 'alert alert-' + type;
+            alertDiv.innerHTML = message;
+            
+            document.getElementById('uploadStatus').appendChild(alertDiv);
+            
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+        
+        function refreshPreview() {
+            if (fileData) {
+                showDataPreview();
+            }
+        }
+        
+        function refreshHistory() {
+            loadImportHistory();
+        }
+        
+        // Load saved settings on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedSettings = localStorage.getItem('cutoffImportSettings');
+            if (savedSettings) {
+                const settings = JSON.parse(savedSettings);
+                document.getElementById('defaultYear').value = settings.defaultYear || '2024';
+                document.getElementById('validationLevel').value = settings.validationLevel || 'moderate';
+                document.getElementById('autoImportThreshold').value = settings.autoImportThreshold || '95';
+            }
+            
+            // Initially disable other tabs
+            document.querySelectorAll('.tab:not(:first-child)').forEach(tab => tab.style.opacity = '0.5');
+        });
+        
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modal = document.getElementById('importModal');
+            if (event.target === modal) {
+                closeImportModal();
+            }
+        }
+    </script>
+</body>
+</html>

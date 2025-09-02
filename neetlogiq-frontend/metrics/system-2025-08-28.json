@@ -1,0 +1,58 @@
+[
+  {
+    "timestamp": "2025-08-28T18:42:54.629Z",
+    "cpu": 5.93,
+    "memory": 60,
+    "disk": 68,
+    "processes": 0
+  },
+  {
+    "timestamp": "2025-08-28T18:43:14.701Z",
+    "cpu": 11.73,
+    "memory": 62,
+    "disk": 68,
+    "processes": 0
+  },
+  {
+    "timestamp": "2025-08-28T18:43:34.619Z",
+    "cpu": 6.6,
+    "memory": 56,
+    "disk": 68,
+    "processes": 0
+  },
+  {
+    "timestamp": "2025-08-28T18:43:54.618Z",
+    "cpu": 8.42,
+    "memory": 64,
+    "disk": 68,
+    "processes": 0
+  },
+  {
+    "timestamp": "2025-08-28T18:44:14.631Z",
+    "cpu": 6.3,
+    "memory": 67,
+    "disk": 68,
+    "processes": 0
+  },
+  {
+    "timestamp": "2025-08-28T18:44:34.621Z",
+    "cpu": 6.61,
+    "memory": 78,
+    "disk": 68,
+    "processes": 0
+  },
+  {
+    "timestamp": "2025-08-28T18:44:54.635Z",
+    "cpu": 5.91,
+    "memory": 53,
+    "disk": 68,
+    "processes": 0
+  },
+  {
+    "timestamp": "2025-08-28T18:45:14.635Z",
+    "cpu": 6.1,
+    "memory": 76,
+    "disk": 68,
+    "processes": 0
+  }
+]

@@ -1,0 +1,18 @@
+{
+  "id": "5fea9f79-ef06-45f7-b81f-e96817129ce1",
+  "category": "bugs",
+  "title": "Port Conflict Resolution",
+  "content": "Use 'lsof -i :PORT' to check what's using a port, then 'kill -9 PID' to free it. Common issue when restarting development servers.",
+  "tags": [
+    "ports",
+    "development",
+    "servers"
+  ],
+  "priority": "medium",
+  "status": "active",
+  "relatedMemories": [],
+  "createdAt": "2025-08-28T09:44:37.696Z",
+  "updatedAt": "2025-08-28T09:44:37.696Z",
+  "author": "system",
+  "version": "1.0.0"
+}

@@ -1,0 +1,78 @@
+{
+  "theme": "accessible",
+  "name": "Accessible Theme",
+  "description": "High accessibility, inclusive design system",
+  "colors": {
+    "primary": "#1e40af",
+    "secondary": "#059669",
+    "accent": "#dc2626",
+    "neutral": "#ffffff",
+    "dark": "#000000"
+  },
+  "typography": {
+    "fontFamily": {
+      "primary": "Inter, system-ui, sans-serif",
+      "secondary": "Open Sans, system-ui, sans-serif"
+    },
+    "fontSize": {
+      "xs": "0.875rem",
+      "sm": "1rem",
+      "base": "1.125rem",
+      "lg": "1.25rem",
+      "xl": "1.5rem",
+      "2xl": "1.875rem",
+      "3xl": "2.25rem"
+    },
+    "fontWeight": {
+      "normal": "400",
+      "medium": "500",
+      "semibold": "600",
+      "bold": "700"
+    }
+  },
+  "spacing": {
+    "xs": "0.5rem",
+    "sm": "0.75rem",
+    "md": "1.25rem",
+    "lg": "2rem",
+    "xl": "2.5rem",
+    "2xl": "3.5rem",
+    "3xl": "4.5rem"
+  },
+  "borderRadius": {
+    "none": "0",
+    "sm": "0.25rem",
+    "base": "0.5rem",
+    "md": "0.75rem",
+    "lg": "1rem",
+    "xl": "1.5rem",
+    "full": "9999px"
+  },
+  "shadows": {
+    "sm": "0 2px 4px 0 rgba(0, 0, 0, 0.2)",
+    "base": "0 4px 8px 0 rgba(0, 0, 0, 0.2)",
+    "md": "0 8px 16px 0 rgba(0, 0, 0, 0.2)",
+    "lg": "0 16px 32px 0 rgba(0, 0, 0, 0.2)",
+    "xl": "0 32px 64px 0 rgba(0, 0, 0, 0.2)"
+  },
+  "accessibility": {
+    "contrastRatio": "7:1",
+    "fontSize": "Minimum 16px",
+    "touchTargets": "Minimum 44px",
+    "focusIndicators": "High visibility",
+    "colorBlindFriendly": true
+  },
+  "useCases": [
+    "Government applications",
+    "Educational platforms",
+    "Healthcare applications",
+    "Public services",
+    "Accessibility-focused applications"
+  ],
+  "characteristics": [
+    "High Contrast",
+    "Inclusive",
+    "Clear",
+    "Universal"
+  ]
+}

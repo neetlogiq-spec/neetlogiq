@@ -1,0 +1,67 @@
+{
+  "totalMemories": 4,
+  "categories": {
+    "decisions": {
+      "count": 1,
+      "memories": [
+        "1bdd146f-c0e8-48e3-a634-38c001c3c63f"
+      ]
+    },
+    "bugs": {
+      "count": 1,
+      "memories": [
+        "5fea9f79-ef06-45f7-b81f-e96817129ce1"
+      ]
+    },
+    "features": {
+      "count": 1,
+      "memories": [
+        "99ef0466-5af5-4aa5-87c6-759975178467"
+      ]
+    },
+    "learnings": {
+      "count": 1,
+      "memories": [
+        "4c2d0354-974d-4ea4-8157-4c23384f9fed"
+      ]
+    }
+  },
+  "tags": {
+    "react": [
+      "1bdd146f-c0e8-48e3-a634-38c001c3c63f",
+      "4c2d0354-974d-4ea4-8157-4c23384f9fed"
+    ],
+    "debugging": [
+      "1bdd146f-c0e8-48e3-a634-38c001c3c63f"
+    ],
+    "frontend": [
+      "1bdd146f-c0e8-48e3-a634-38c001c3c63f"
+    ],
+    "ports": [
+      "5fea9f79-ef06-45f7-b81f-e96817129ce1"
+    ],
+    "development": [
+      "5fea9f79-ef06-45f7-b81f-e96817129ce1"
+    ],
+    "servers": [
+      "5fea9f79-ef06-45f7-b81f-e96817129ce1"
+    ],
+    "ai": [
+      "99ef0466-5af5-4aa5-87c6-759975178467"
+    ],
+    "code-generation": [
+      "99ef0466-5af5-4aa5-87c6-759975178467"
+    ],
+    "templates": [
+      "99ef0466-5af5-4aa5-87c6-759975178467"
+    ],
+    "best-practices": [
+      "4c2d0354-974d-4ea4-8157-4c23384f9fed"
+    ],
+    "performance": [
+      "4c2d0354-974d-4ea4-8157-4c23384f9fed"
+    ]
+  },
+  "lastUpdated": "2025-08-28T09:48:03.615Z",
+  "version": "1.0.0"
+}

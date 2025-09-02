@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 NeetLogIQ Admin System Test</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            text-align: center;
+            color: #2d3748;
+            margin-bottom: 30px;
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .test-section { 
+            margin: 25px 0; 
+            padding: 25px; 
+            border: 2px solid #e2e8f0; 
+            border-radius: 15px; 
+            background: rgba(255, 255, 255, 0.8);
+            transition: all 0.3s ease;
+        }
+        .test-section:hover {
+            border-color: #667eea;
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.1);
+            transform: translateY(-2px);
+        }
+        .test-section h2 {
+            color: #4a5568;
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+        }
+        button { 
+            padding: 12px 24px; 
+            margin: 8px; 
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+        button:hover { 
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+        }
+        button:active {
+            transform: translateY(0);
+        }
+        .result { 
+            margin: 15px 0; 
+            padding: 15px; 
+            border-radius: 10px; 
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .success { 
+            background: linear-gradient(135deg, #d4edda, #c3e6cb); 
+            color: #155724; 
+            border-left: 4px solid #28a745;
+        }
+        .error { 
+            background: linear-gradient(135deg, #f8d7da, #f5c6cb); 
+            color: #721c24; 
+            border-left: 4px solid #dc3545;
+        }
+        .info {
+            background: linear-gradient(135deg, #d1ecf1, #bee5eb);
+            color: #0c5460;
+            border-left: 4px solid #17a2b8;
+        }
+        .credentials {
+            background: linear-gradient(135deg, #fff3cd, #ffeaa7);
+            border: 2px solid #ffc107;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .credentials h3 {
+            color: #856404;
+            margin-bottom: 15px;
+        }
+        .credential-item {
+            display: flex;
+            align-items: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.7);
+            border-radius: 8px;
+        }
+        .credential-label {
+            font-weight: 600;
+            color: #856404;
+            min-width: 120px;
+        }
+        .credential-value {
+            background: #f8f9fa;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-family: monospace;
+            color: #495057;
+            border: 1px solid #dee2e6;
+        }
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 8px;
+        }
+        .status-online { background: #28a745; }
+        .status-offline { background: #dc3545; }
+        .status-checking { background: #ffc107; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 NeetLogIQ Secure Admin System</h1>
+        
+        <div class="credentials">
+            <h3>🔑 Access Credentials</h3>
+            <div class="credential-item">
+                <span class="credential-label">Secret URL:</span>
+                <span class="credential-value">/sector_xp_12</span>
+            </div>
+            <div class="credential-item">
+                <span class="credential-label">Username:</span>
+                <span class="credential-value">Lone_wolf#12</span>
+            </div>
+            <div class="credential-item">
+                <span class="credential-label">Password:</span>
+                <span class="credential-value">Apx_gp_delta</span>
+            </div>
+            <div class="credential-item">
+                <span class="credential-label">Backend URL:</span>
+                <span class="credential-value">http://localhost:4000/api/sector_xp_12</span>
+            </div>
+        </div>
+
+        <div class="test-section">
+            <h2>🌐 Backend Health Check</h2>
+            <p>Test if the backend server is running and accessible.</p>
+            <button onclick="testBackend()">🔍 Test Backend Connection</button>
+            <div id="backend-result" class="result info">Click the button to test backend connectivity...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔐 Admin Authentication Test</h2>
+            <p>Test admin authentication with the provided credentials.</p>
+            <button onclick="testAdminAuth()">🔑 Test Admin Authentication</button>
+            <div id="admin-result" class="result info">Click the button to test admin authentication...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Admin Dashboard Test</h2>
+            <p>Test access to the admin dashboard endpoint.</p>
+            <button onclick="testAdminDashboard()">📈 Test Dashboard Access</button>
+            <div id="dashboard-result" class="result info">Click the button to test dashboard access...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 System Status</h2>
+            <div id="system-status">
+                <p><span class="status-indicator status-checking"></span>Checking system status...</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // System status check
+        async function checkSystemStatus() {
+            const statusDiv = document.getElementById('system-status');
+            try {
+                const response = await fetch('http://localhost:4000/api/health');
+                if (response.ok) {
+                    statusDiv.innerHTML = `
+                        <p><span class="status-indicator status-online"></span>✅ Backend Server: ONLINE</p>
+                        <p><span class="status-indicator status-online"></span>✅ Port 4000: ACTIVE</p>
+                        <p><span class="status-indicator status-online"></span>✅ Admin Routes: READY</p>
+                    `;
+                } else {
+                    statusDiv.innerHTML = `
+                        <p><span class="status-indicator status-offline"></span>❌ Backend Server: ERROR</p>
+                        <p><span class="status-indicator status-offline"></span>❌ Port 4000: INACCESSIBLE</p>
+                        <p><span class="status-indicator status-offline"></span>❌ Admin Routes: UNAVAILABLE</p>
+                    `;
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `
+                    <p><span class="status-indicator status-offline"></span>❌ Backend Server: OFFLINE</p>
+                    <p><span class="status-indicator status-offline"></span>❌ Port 4000: UNREACHABLE</p>
+                    <p><span class="status-indicator status-offline"></span>❌ Admin Routes: UNAVAILABLE</p>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `;
+            }
+        }
+
+        async function testBackend() {
+            const resultDiv = document.getElementById('backend-result');
+            resultDiv.innerHTML = '🔄 Testing backend connection...';
+            resultDiv.className = 'result info';
+            
+            try {
+                const response = await fetch('http://localhost:4000/api/health');
+                const data = await response.json();
+                resultDiv.innerHTML = `✅ Backend Connection Successful!\n\n📊 Response Data:\n${JSON.stringify(data, null, 2)}`;
+                resultDiv.className = 'result success';
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Backend Connection Failed!\n\n🚨 Error Details:\n${error.message}\n\n💡 Make sure the backend server is running on port 4000`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testAdminAuth() {
+            const resultDiv = document.getElementById('admin-result');
+            resultDiv.innerHTML = '🔄 Testing admin authentication...';
+            resultDiv.className = 'result info';
+            
+            try {
+                const credentials = btoa('Lone_wolf#12:Apx_gp_delta');
+                const response = await fetch('http://localhost:4000/api/sector_xp_12', {
+                    headers: {
+                        'Authorization': `Basic ${credentials}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `✅ Admin Authentication Successful!\n\n🔐 Access Granted:\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result success';
+                } else {
+                    const errorData = await response.json();
+                    resultDiv.innerHTML = `❌ Admin Authentication Failed!\n\n🚨 Error Response:\n${JSON.stringify(errorData, null, 2)}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Admin Authentication Test Failed!\n\n🚨 Network Error:\n${error.message}\n\n💡 Check if backend is running and accessible`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testAdminDashboard() {
+            const resultDiv = document.getElementById('dashboard-result');
+            resultDiv.innerHTML = '🔄 Testing admin dashboard access...';
+            resultDiv.className = 'result info';
+            
+            try {
+                const credentials = btoa('Lone_wolf#12:Apx_gp_delta');
+                const response = await fetch('http://localhost:4000/api/sector_xp_12/dashboard', {
+                    headers: {
+                        'Authorization': `Basic ${credentials}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `✅ Admin Dashboard Access Successful!\n\n📊 Dashboard Data:\n${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result success';
+                } else {
+                    const errorData = await response.json();
+                    resultDiv.innerHTML = `❌ Admin Dashboard Access Failed!\n\n🚨 Error Response:\n${JSON.stringify(errorData, null, 2)}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Admin Dashboard Test Failed!\n\n🚨 Network Error:\n${error.message}\n\n💡 Check if backend is running and accessible`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        // Auto-check system status when page loads
+        window.addEventListener('load', () => {
+            checkSystemStatus();
+        });
+    </script>
+</body>
+</html>

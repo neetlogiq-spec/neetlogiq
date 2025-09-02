@@ -1,0 +1,279 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;500;600;700;800&display=swap');
+
+/* Custom base styles */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+  
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Poppins', system-ui, sans-serif;
+  }
+}
+
+/* Custom component styles */
+@layer components {
+  .btn-primary {
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg;
+  }
+  
+  .btn-secondary {
+    @apply bg-secondary-600 hover:bg-secondary-700 text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105 hover:shadow-lg;
+  }
+  
+  .btn-outline {
+    @apply border-2 border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white font-semibold py-3 px-6 rounded-lg transition-all duration-300 transform hover:scale-105;
+  }
+  
+  .card {
+    @apply bg-gray-50/40 dark:bg-dark-800/95 backdrop-blur-md border-2 border-gray-200/60 dark:border-dark-700/50 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1;
+  }
+  
+  .input-field {
+    @apply w-full px-4 py-3 border border-neutral-300 dark:border-dark-600 bg-white dark:bg-dark-700 text-gray-900 dark:text-gray-100 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-300;
+  }
+
+  /* Light Mode Specific Styles */
+  .light-card {
+    @apply bg-white/90 backdrop-blur-sm border border-gray-200 shadow-lg hover:shadow-xl;
+  }
+
+  .light-text {
+    @apply text-gray-900;
+  }
+
+  .light-text-secondary {
+    @apply text-gray-600;
+  }
+
+  .light-bg {
+    @apply bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50;
+  }
+
+  /* Dark Mode Specific Styles */
+  .dark-card {
+    @apply bg-dark-800/90 backdrop-blur-sm border border-dark-700 shadow-lg hover:shadow-xl;
+  }
+
+  .dark-text {
+    @apply text-gray-100;
+  }
+
+  .dark-text-secondary {
+    @apply text-gray-300;
+  }
+
+  .dark-bg {
+    @apply bg-gradient-to-br from-dark-900 via-dark-800 to-dark-900;
+  }
+}
+
+/* Custom utility styles */
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary-600 to-secondary-600 bg-clip-text text-transparent;
+  }
+  
+  .bg-gradient-medical {
+    @apply bg-gradient-to-br from-primary-50 via-secondary-50 to-accent-50;
+  }
+  
+  .shadow-medical {
+    @apply shadow-lg shadow-primary-500/20;
+  }
+}
+
+/* Custom scrollbar styles for courses dropdown */
+.courses-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.6) rgba(255, 255, 255, 0.2);
+}
+
+.courses-scroll-container::-webkit-scrollbar {
+  width: 8px;
+}
+
+.courses-scroll-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.courses-scroll-container::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.6);
+  border-radius: 4px;
+}
+
+.courses-scroll-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+/* Back to Top Button - From Uiverse.io by vinodjangid07 */
+.back-to-top-button {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background-color: rgb(20, 20, 20);
+  border: none;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0px 0px 0px 4px rgba(180, 160, 255, 0.253);
+  cursor: pointer;
+  transition-duration: 0.3s;
+  overflow: hidden;
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  z-index: 1000;
+}
+
+.back-to-top-button .svg-icon {
+  width: 12px;
+  transition-duration: 0.3s;
+  color: white;
+}
+
+.back-to-top-button:hover {
+  width: 140px;
+  border-radius: 50px;
+  transition-duration: 0.3s;
+  background-color: rgb(181, 160, 255);
+  align-items: center;
+}
+
+.back-to-top-button:hover .svg-icon {
+  transition-duration: 0.3s;
+  transform: translateY(-200%);
+}
+
+.back-to-top-button::before {
+  position: absolute;
+  bottom: -20px;
+  content: "Back to Top";
+  color: white;
+  font-size: 0px;
+}
+
+.back-to-top-button:hover::before {
+  font-size: 13px;
+  opacity: 1;
+  bottom: unset;
+  transition-duration: 0.3s;
+}
+
+/* Google Sign-in Button Customization */
+.google-signin-container {
+  display: inline-block;
+}
+
+.google-button-wrapper {
+  transform-origin: center;
+}
+
+.google-button-wrapper iframe {
+  border-radius: 6px !important;
+  margin: 0 auto !important;
+  display: block !important;
+}
+
+/* Large button for modal */
+.google-signin-container .google-button-wrapper {
+  max-width: 280px;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto !important;
+  text-align: center !important;
+}
+
+/* Force centering for modal buttons */
+.google-signin-container {
+  text-align: center !important;
+  display: block !important;
+  margin: 0 auto !important;
+}
+
+/* Override Google button positioning */
+.google-signin-container iframe {
+  margin: 0 auto !important;
+  display: block !important;
+  position: relative !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+}
+
+/* Smaller button for navigation */
+.navbar .google-signin-container .google-button-wrapper {
+  transform: scale(0.6);
+  max-width: 100px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .navbar .google-button-wrapper {
+    transform: scale(0.6);
+  }
+  
+  .navbar .google-signin-container .google-button-wrapper {
+    max-width: 100px;
+  }
+}
+
+/* Blur Overlay Styles */
+.blur-overlay {
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.content-blur {
+  filter: blur(2px);
+  -webkit-filter: blur(2px);
+  transition: filter 0.3s ease;
+}
+
+/* Ensure proper layering */
+.overlay-container {
+  position: relative;
+  isolation: isolate;
+}
+
+/* Blurred Overlay Modal Styles */
+.blurred-modal {
+  position: fixed !important;
+  top: 50% !important;
+  left: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  z-index: 9999 !important;
+}
+
+/* Ensure modal is always visible on small screens */
+@media (max-height: 600px) {
+  .blurred-modal {
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    max-height: calc(100vh - 40px) !important;
+  }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 640px) {
+  .blurred-modal {
+    width: calc(100vw - 32px) !important;
+    max-width: 400px !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%) !important;
+  }
+}

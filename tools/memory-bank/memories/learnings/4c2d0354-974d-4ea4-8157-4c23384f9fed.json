@@ -1,0 +1,18 @@
+{
+  "id": "4c2d0354-974d-4ea4-8157-4c23384f9fed",
+  "category": "learnings",
+  "title": "React Development Best Practices",
+  "content": "Use React.memo for expensive components, implement proper error boundaries, use React.lazy for code splitting, and always handle loading states gracefully.",
+  "tags": [
+    "react",
+    "best-practices",
+    "performance"
+  ],
+  "priority": "high",
+  "status": "active",
+  "relatedMemories": [],
+  "createdAt": "2025-08-28T09:48:03.615Z",
+  "updatedAt": "2025-08-28T09:48:03.615Z",
+  "author": "system",
+  "version": "1.0.0"
+}

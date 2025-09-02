@@ -1,0 +1,318 @@
+name: Search Algorithm Validation
+version: v2.1
+description: Specialized workflow for testing and validating all search algorithms in the Medical College Management System
+
+# Project Context
+context:
+  project_type: "Medical Education Management System"
+  domain: "Healthcare Education"
+  focus_area: "Advanced Search Algorithms"
+  current_status: "Search algorithms implemented, need validation"
+
+# Workflow Phases
+phases:
+  - name: "Search Algorithm Testing"
+    description: "Test all 7 search algorithms with various inputs"
+    tasks:
+      - name: "Fuzzy Search Validation"
+        agent: "qa"
+        description: "Test fuzzy search with typos and variations"
+        test_cases:
+          - input: "AIMS"
+            expected: "Should find 'AIIMS' colleges"
+            algorithm: "fuzzy"
+            threshold: 3
+            priority: "high"
+          
+          - input: "med"
+            expected: "Should find 'Medical' colleges"
+            algorithm: "fuzzy"
+            threshold: 2
+            priority: "high"
+          
+          - input: "kardioloji"
+            expected: "Should find 'Cardiology'"
+            algorithm: "fuzzy"
+            threshold: 4
+            priority: "medium"
+        
+        acceptance_criteria:
+          - "All fuzzy search test cases pass"
+          - "Response time < 300ms"
+          - "No false negatives for obvious matches"
+      
+      - name: "Phonetic Search Validation"
+        agent: "qa"
+        description: "Test Soundex and Metaphone algorithms"
+        test_cases:
+          - input: "ortopediks"
+            expected: "Should find 'Orthopedics'"
+            algorithm: "phonetic"
+            priority: "high"
+          
+          - input: "kardioloji"
+            expected: "Should find 'Cardiology'"
+            algorithm: "phonetic"
+            priority: "high"
+          
+          - input: "nuerolaji"
+            expected: "Should find 'Neurology'"
+            algorithm: "phonetic"
+            priority: "medium"
+        
+        acceptance_criteria:
+          - "All phonetic search test cases pass"
+          - "Response time < 300ms"
+          - "Phonetic matching works for medical terms"
+      
+      - name: "Location Search Validation"
+        agent: "qa"
+        description: "Test location-aware search with city variations"
+        test_cases:
+          - input: "bombay"
+            expected: "Should find 'Mumbai' colleges"
+            algorithm: "synonym"
+            priority: "high"
+          
+          - input: "ncr"
+            expected: "Should find 'Delhi' colleges"
+            algorithm: "synonym"
+            priority: "high"
+          
+          - input: "bengaluru"
+            expected: "Should find 'Bangalore' colleges"
+            algorithm: "synonym"
+            priority: "medium"
+          
+          - input: "greater mumbai"
+            expected: "Should find 'Mumbai' colleges"
+            algorithm: "location_variation"
+            priority: "medium"
+        
+        acceptance_criteria:
+          - "All location search test cases pass"
+          - "City variations are properly mapped"
+          - "Abbreviations work correctly"
+      
+      - name: "Wildcard Search Validation"
+        agent: "qa"
+        description: "Test wildcard patterns (* and ?)"
+        test_cases:
+          - input: "med*"
+            expected: "Should find medical, medicine, medico"
+            algorithm: "wildcard"
+            priority: "high"
+          
+          - input: "cardio*"
+            expected: "Should find cardiology, cardiothoracic"
+            algorithm: "wildcard"
+            priority: "high"
+          
+          - input: "?urgery"
+            expected: "Should find surgery"
+            algorithm: "wildcard"
+            priority: "medium"
+        
+        acceptance_criteria:
+          - "All wildcard search test cases pass"
+          - "Pattern matching works correctly"
+          - "Response time < 300ms"
+      
+      - name: "Regex Search Validation"
+        agent: "qa"
+        description: "Test regular expression patterns"
+        test_cases:
+          - input: "/^AIIMS/"
+            expected: "Should find colleges starting with 'AIIMS'"
+            algorithm: "regex"
+            priority: "medium"
+          
+          - input: "/.*Medical.*/"
+            expected: "Should find colleges with 'Medical' anywhere in name"
+            algorithm: "regex"
+            priority: "medium"
+          
+          - input: "/[A-Z]{2,}.*/"
+            expected: "Should find colleges with 2+ capital letters"
+            algorithm: "regex"
+            priority: "low"
+        
+        acceptance_criteria:
+          - "All regex search test cases pass"
+          - "Pattern matching is accurate"
+          - "No regex injection vulnerabilities"
+      
+      - name: "Synonym Search Validation"
+        agent: "qa"
+        description: "Test medical term synonyms and abbreviations"
+        test_cases:
+          - input: "mbbs"
+            expected: "Should find 'Bachelor of Medicine and Bachelor of Surgery'"
+            algorithm: "synonym"
+            priority: "high"
+          
+          - input: "md"
+            expected: "Should find 'Doctor of Medicine'"
+            algorithm: "synonym"
+            priority: "high"
+          
+          - input: "ms"
+            expected: "Should find 'Master of Surgery'"
+            algorithm: "synonym"
+            priority: "high"
+        
+        acceptance_criteria:
+          - "All synonym search test cases pass"
+          - "Medical abbreviations are properly mapped"
+          - "Common variations are recognized"
+      
+      - name: "Semantic Search Validation"
+        agent: "qa"
+        description: "Test semantic similarity and word overlap"
+        test_cases:
+          - input: "heart disease treatment"
+            expected: "Should find cardiology related programs"
+            algorithm: "semantic"
+            threshold: 0.3
+            priority: "medium"
+          
+          - input: "brain surgery"
+            expected: "Should find neurosurgery programs"
+            algorithm: "semantic"
+            threshold: 0.4
+            priority: "medium"
+          
+          - input: "child healthcare"
+            expected: "Should find pediatrics programs"
+            algorithm: "semantic"
+            threshold: 0.3
+            priority: "medium"
+        
+        acceptance_criteria:
+          - "All semantic search test cases pass"
+          - "Semantic similarity is meaningful"
+          - "Thresholds are appropriate"
+
+  - name: "Performance Testing"
+    description: "Validate search performance and response times"
+    tasks:
+      - name: "Response Time Benchmarking"
+        agent: "architect"
+        description: "Measure search response times under various loads"
+        metrics:
+          - "Single search query: < 300ms"
+          - "Multiple concurrent searches: < 500ms"
+          - "Complex queries: < 800ms"
+          - "Database query time: < 100ms"
+        
+        test_scenarios:
+          - "Empty search (all results)"
+          - "Single word search"
+          - "Complex multi-field search"
+          - "Wildcard search with large dataset"
+          - "Regex search with complex patterns"
+      
+      - name: "Load Testing"
+        agent: "infra-devops-platform"
+        description: "Test system performance under load"
+        scenarios:
+          - "10 concurrent users"
+          - "50 concurrent users"
+          - "100 concurrent users"
+          - "Sustained load for 5 minutes"
+        
+        acceptance_criteria:
+          - "Response time < 500ms under normal load"
+          - "Response time < 1000ms under peak load"
+          - "No system crashes or errors"
+          - "Database performance remains stable"
+
+  - name: "Accuracy Validation"
+    description: "Validate search result accuracy and relevance"
+    tasks:
+      - name: "False Negative Testing"
+        agent: "qa"
+        description: "Ensure no relevant results are missed"
+        methodology:
+          - "Use known college names with variations"
+          - "Test common misspellings"
+          - "Test abbreviated forms"
+          - "Test location variations"
+        
+        target: "False negative rate < 5%"
+      
+      - name: "False Positive Testing"
+        agent: "qa"
+        description: "Ensure irrelevant results are not returned"
+        methodology:
+          - "Test with completely unrelated terms"
+          - "Test with very generic terms"
+          - "Test with edge case inputs"
+        
+        target: "False positive rate < 10%"
+      
+      - name: "Relevance Scoring"
+        agent: "architect"
+        description: "Validate search result relevance scoring"
+        criteria:
+          - "Exact matches get highest scores"
+          - "Partial matches get appropriate scores"
+          - "Fuzzy matches get lower but reasonable scores"
+          - "Results are properly ranked by relevance"
+
+# Success Criteria
+success_criteria:
+  - "All search algorithms return accurate results"
+  - "Search response time consistently under 300ms"
+  - "False negative rate below 5%"
+  - "False positive rate below 10%"
+  - "All test cases pass successfully"
+  - "Performance benchmarks met under load"
+
+# Risk Mitigation
+risks:
+  - risk: "Search algorithm performance degradation"
+    mitigation: "Performance monitoring and optimization"
+  - risk: "False negative results in critical searches"
+    mitigation: "Comprehensive testing with edge cases"
+  - risk: "Search response time increase under load"
+    mitigation: "Load testing and performance optimization"
+
+# Dependencies
+dependencies:
+  - "Backend server running on port 4000"
+  - "Frontend accessible on port 4001"
+  - "All databases accessible and functional"
+  - "Search algorithms properly implemented"
+
+# Timeline
+timeline:
+  - phase: "Search Algorithm Testing"
+    duration: "4-5 hours"
+  - phase: "Performance Testing"
+    duration: "2-3 hours"
+  - phase: "Accuracy Validation"
+    duration: "2-3 hours"
+  - total_estimated_time: "8-11 hours"
+
+# Agent Assignments
+agent_assignments:
+  qa: "Quality assurance and testing specialist"
+  architect: "System architecture and performance optimization"
+  infra-devops-platform: "Database and infrastructure optimization"
+
+# Testing Tools
+testing_tools:
+  - "Jest for unit testing"
+  - "React Testing Library for component testing"
+  - "Postman for API testing"
+  - "Lighthouse for performance testing"
+  - "Custom search validation scripts"
+
+# Output Deliverables
+deliverables:
+  - "Search algorithm test results report"
+  - "Performance benchmarking report"
+  - "Accuracy validation report"
+  - "Optimization recommendations"
+  - "Updated search algorithm configurations"
