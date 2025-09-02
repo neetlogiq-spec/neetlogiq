@@ -1,21 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, Sparkles, Zap, Target, Clock, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
+import { Search, Sparkles, Target, TrendingUp, CheckCircle, AlertCircle } from 'lucide-react';
 import AdvancedSearchService from '../services/advancedSearchService';
 import BeautifulLoader from '../components/BeautifulLoader';
 import { useTheme } from '../context/ThemeContext';
 
-const SearchDemo = () => {
-  const [searchService, setSearchService] = useState(null);
-  const [isInitialized, setIsInitialized] = useState(false);
-  const [demoQuery, setDemoQuery] = useState('');
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [searchStats, setSearchStats] = useState(null);
-  const { isDarkMode } = useTheme();
-
-  // Sample college data for demo
-  const sampleColleges = [
+// Sample college data for demo
+const sampleColleges = [
     {
       id: 1,
       name: "Ramaiah Medical College",
@@ -57,6 +48,15 @@ const SearchDemo = () => {
       stream: "DENTAL"
     }
   ];
+
+const SearchDemo = () => {
+  const [searchService, setSearchService] = useState(null);
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [demoQuery, setDemoQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchStats, setSearchStats] = useState(null);
+  const { isDarkMode } = useTheme();
 
   // Initialize search service
   useEffect(() => {

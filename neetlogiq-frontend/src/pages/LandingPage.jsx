@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, GraduationCap, MapPin, Users, TrendingUp, Shield, Zap, Brain, Target } from 'lucide-react';
+import { Search, GraduationCap, MapPin, TrendingUp, Shield, Zap, Brain, Target } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import GoogleSignIn from '../components/GoogleSignIn';
 import UserPopup from '../components/UserPopup';

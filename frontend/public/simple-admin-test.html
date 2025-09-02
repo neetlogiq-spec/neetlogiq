@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Simple Admin Test</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+        }
+        button {
+            padding: 15px 30px;
+            margin: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        .result {
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 10px;
+            font-family: monospace;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.3);
+            border-left: 4px solid #17a2b8;
+        }
+        .success { border-left-color: #28a745; }
+        .error { border-left-color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Simple Admin System Test</h1>
+        
+        <div class="result">
+            <h3>🎯 Test Steps:</h3>
+            <ol style="text-align: left; margin: 10px 0;">
+                <li>Click "Test Admin Login" to open the login page</li>
+                <li>Use credentials: <strong>Lone_wolf#12</strong> / <strong>Apx_gp_delta</strong></li>
+                <li>Click "Access Admin Panel"</li>
+                <li>Should redirect to admin dashboard automatically</li>
+            </ol>
+        </div>
+
+        <div>
+            <button onclick="testAdminLogin()">🔑 Test Admin Login</button>
+            <button onclick="testAdminDashboard()">📊 Test Admin Dashboard</button>
+            <button onclick="testAPI()">🌐 Test API</button>
+        </div>
+
+        <div class="result" id="test-result">
+            Click a button above to start testing...
+        </div>
+
+        <div class="result">
+            <h3>🔗 Direct Links:</h3>
+            <p><a href="http://localhost:4001/sector_xp_12" target="_blank" style="color: #667eea;">🔑 Admin Login Page</a></p>
+            <p><a href="http://localhost:4001/sector_xp_12/admin" target="_blank" style="color: #667eea;">📊 Admin Dashboard</a></p>
+        </div>
+    </div>
+
+    <script>
+        async function testAdminLogin() {
+            const resultDiv = document.getElementById('test-result');
+            resultDiv.innerHTML = '🔄 Testing admin login page...';
+            
+            try {
+                const response = await fetch('http://localhost:4001/sector_xp_12');
+                if (response.ok) {
+                    resultDiv.innerHTML = '✅ Admin login page accessible!<br><br>🎯 <strong>Next:</strong> Open the login page and try logging in with your credentials.';
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.innerHTML = '❌ Admin login page not accessible';
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testAdminDashboard() {
+            const resultDiv = document.getElementById('test-result');
+            resultDiv.innerHTML = '🔄 Testing admin dashboard...';
+            
+            try {
+                const response = await fetch('http://localhost:4001/sector_xp_12/admin');
+                if (response.ok) {
+                    resultDiv.innerHTML = '✅ Admin dashboard route accessible!<br><br>🎯 <strong>Note:</strong> This route requires authentication to show content.';
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.innerHTML = '❌ Admin dashboard not accessible';
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testAPI() {
+            const resultDiv = document.getElementById('test-result');
+            resultDiv.innerHTML = '🔄 Testing admin API...';
+            
+            try {
+                const credentials = btoa('Lone_wolf#12:Apx_gp_delta');
+                const response = await fetch('http://localhost:4001/api/sector_xp_12', {
+                    headers: {
+                        'Authorization': `Basic ${credentials}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `✅ Admin API working!<br><br>🔑 <strong>User:</strong> ${data.user.username}<br>👑 <strong>Role:</strong> ${data.user.role}<br>📊 <strong>Available Routes:</strong> ${Object.keys(data.routes).length}`;
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.innerHTML = '❌ Admin API failed';
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+    </script>
+</body>
+</html>

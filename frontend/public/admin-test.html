@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Admin System Test</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        button {
+            padding: 12px 24px;
+            margin: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .result {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        .success { border-left: 4px solid #28a745; }
+        .error { border-left: 4px solid #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 NeetLogIQ Admin System Test</h1>
+        
+        <div class="test-section">
+            <h2>🌐 React App Test</h2>
+            <p>Test if the React app is accessible</p>
+            <button onclick="testReactApp()">Test React App</button>
+            <div id="react-result" class="result">Click button to test...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔐 Admin Login Test</h2>
+            <p>Test if the admin login page is accessible</p>
+            <button onclick="testAdminLogin()">Test Admin Login Page</button>
+            <div id="admin-result" class="result">Click button to test...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>📊 Admin API Test</h2>
+            <p>Test admin API authentication</p>
+            <button onclick="testAdminAPI()">Test Admin API</button>
+            <div id="api-result" class="result">Click button to test...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>🚀 Quick Access</h2>
+            <p>Direct links to test the system</p>
+            <button onclick="window.open('http://localhost:4001/', '_blank')">Open React App</button>
+            <button onclick="window.open('http://localhost:4001/sector_xp_12', '_blank')">Open Admin Login</button>
+            <button onclick="window.open('http://localhost:4001/api/sector_xp_12', '_blank')">Open Admin API</button>
+        </div>
+    </div>
+
+    <script>
+        async function testReactApp() {
+            const resultDiv = document.getElementById('react-result');
+            resultDiv.innerHTML = '🔄 Testing React app...';
+            
+            try {
+                const response = await fetch('http://localhost:4001/');
+                if (response.ok) {
+                    const html = await response.text();
+                    if (html.includes('NeetLogIQ') || html.includes('react')) {
+                        resultDiv.innerHTML = '✅ React app is accessible and working!';
+                        resultDiv.className = 'result success';
+                    } else {
+                        resultDiv.innerHTML = '⚠️ React app accessible but content unclear';
+                        resultDiv.className = 'result error';
+                    }
+                } else {
+                    resultDiv.innerHTML = '❌ React app not accessible';
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testAdminLogin() {
+            const resultDiv = document.getElementById('admin-result');
+            resultDiv.innerHTML = '🔄 Testing admin login page...';
+            
+            try {
+                const response = await fetch('http://localhost:4001/sector_xp_12');
+                if (response.ok) {
+                    const html = await response.text();
+                    if (html.includes('sector_xp_12') || html.includes('react')) {
+                        resultDiv.innerHTML = '✅ Admin login page accessible!';
+                        resultDiv.className = 'result success';
+                    } else {
+                        resultDiv.innerHTML = '⚠️ Page accessible but may not be React route';
+                        resultDiv.className = 'result error';
+                    }
+                } else {
+                    resultDiv.innerHTML = '❌ Admin login page not accessible';
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testAdminAPI() {
+            const resultDiv = document.getElementById('api-result');
+            resultDiv.innerHTML = '🔄 Testing admin API...';
+            
+            try {
+                const credentials = btoa('Lone_wolf#12:Apx_gp_delta');
+                const response = await fetch('http://localhost:4001/api/sector_xp_12', {
+                    headers: {
+                        'Authorization': `Basic ${credentials}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `✅ Admin API working! Response: ${JSON.stringify(data, null, 2)}`;
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.innerHTML = `❌ Admin API failed: ${response.status}`;
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+    </script>
+</body>
+</html>

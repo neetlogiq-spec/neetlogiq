@@ -48,8 +48,9 @@ export const useAdvancedSearch = (collegesData = []) => {
     
     // Cleanup function
     return () => {
-      if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current);
+      const timeoutId = retryTimeoutRef.current;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
       }
     };
   }, [collegesData]);

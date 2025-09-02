@@ -50,7 +50,7 @@ export const Vortex = (props: any) => {
         draw(canvas, ctx);
       }
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const initParticles = () => {
     tick = 0;
@@ -216,7 +216,7 @@ export const Vortex = (props: any) => {
     if (canvas && ctx) {
       resize(canvas, ctx);
     }
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setup();

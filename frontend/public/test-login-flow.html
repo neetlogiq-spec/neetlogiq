@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Test Login Flow</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+        }
+        .step {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .step.completed {
+            border-color: #28a745;
+            background: rgba(40, 167, 69, 0.1);
+        }
+        .step.failed {
+            border-color: #dc3545;
+            background: rgba(220, 53, 69, 0.1);
+        }
+        button {
+            padding: 15px 30px;
+            margin: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .result {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            font-family: monospace;
+            text-align: left;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Test Complete Login Flow</h1>
+        
+        <div class="step" id="step1">
+            <h3>Step 1: Test API Connection</h3>
+            <p>Verify backend API is accessible</p>
+            <button onclick="testAPI()">Test API</button>
+            <div class="result" id="result1">Click button to test...</div>
+        </div>
+
+        <div class="step" id="step2">
+            <h3>Step 2: Test Login</h3>
+            <p>Authenticate with credentials</p>
+            <button onclick="testLogin()">Test Login</button>
+            <div class="result" id="result2">Click button to test...</div>
+        </div>
+
+        <div class="step" id="step3">
+            <h3>Step 3: Test Redirect</h3>
+            <p>Verify redirect to admin dashboard</p>
+            <button onclick="testRedirect()">Test Redirect</button>
+            <div class="result" id="result3">Click button to test...</div>
+        </div>
+
+        <div class="step" id="step4">
+            <h3>Step 4: Complete Flow Test</h3>
+            <p>Test the entire process</p>
+            <button onclick="testCompleteFlow()">Test Complete Flow</button>
+            <div class="result" id="result4">Click button to test...</div>
+        </div>
+
+        <div style="margin-top: 30px;">
+            <button onclick="window.open('http://localhost:4001/sector_xp_12', '_blank')" style="background: linear-gradient(135deg, #28a745, #20c997);">
+                🚀 Open Admin Login
+            </button>
+        </div>
+    </div>
+
+    <script>
+        async function testAPI() {
+            const step = document.getElementById('step1');
+            const result = document.getElementById('result1');
+            
+            try {
+                const credentials = btoa('Lone_wolf#12:Apx_gp_delta');
+                const response = await fetch('/api/sector_xp_12', {
+                    headers: {
+                        'Authorization': `Basic ${credentials}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    result.innerHTML = `✅ API Working!\n\nResponse: ${JSON.stringify(data, null, 2)}`;
+                    step.className = 'step completed';
+                } else {
+                    result.innerHTML = `❌ API Failed: ${response.status}`;
+                    step.className = 'step failed';
+                }
+            } catch (error) {
+                result.innerHTML = `❌ Error: ${error.message}`;
+                step.className = 'step failed';
+            }
+        }
+
+        async function testLogin() {
+            const step = document.getElementById('step2');
+            const result = document.getElementById('result2');
+            
+            try {
+                const credentials = btoa('Lone_wolf#12:Apx_gp_delta');
+                const response = await fetch('/api/sector_xp_12', {
+                    headers: {
+                        'Authorization': `Basic ${credentials}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    // Store session (simulate login)
+                    localStorage.setItem('adminSession', JSON.stringify({
+                        username: 'Lone_wolf#12',
+                        password: 'Apx_gp_delta',
+                        role: data.user.role,
+                        permissions: data.user.permissions,
+                        timestamp: new Date().toISOString()
+                    }));
+                    
+                    result.innerHTML = `✅ Login Successful!\n\nSession stored in localStorage\nUser: ${data.user.username}\nRole: ${data.user.role}`;
+                    step.className = 'step completed';
+                } else {
+                    result.innerHTML = `❌ Login Failed: ${response.status}`;
+                    step.className = 'step failed';
+                }
+            } catch (error) {
+                result.innerHTML = `❌ Error: ${error.message}`;
+                step.className = 'step failed';
+            }
+        }
+
+        async function testRedirect() {
+            const step = document.getElementById('step3');
+            const result = document.getElementById('result3');
+            
+            try {
+                // Check if session exists
+                const session = localStorage.getItem('adminSession');
+                if (!session) {
+                    result.innerHTML = '❌ No session found. Run Step 2 first.';
+                    step.className = 'step failed';
+                    return;
+                }
+                
+                result.innerHTML = `✅ Session exists!\n\nAttempting redirect...\n\nRedirecting to /sector_xp_12/admin in 3 seconds...`;
+                step.className = 'step completed';
+                
+                // Redirect after 3 seconds
+                setTimeout(() => {
+                    window.location.href = '/sector_xp_12/admin';
+                }, 3000);
+                
+            } catch (error) {
+                result.innerHTML = `❌ Error: ${error.message}`;
+                step.className = 'step failed';
+            }
+        }
+
+        async function testCompleteFlow() {
+            const result = document.getElementById('result4');
+            result.innerHTML = '🔄 Testing complete flow...\n\n1. Testing API...';
+            
+            try {
+                // Step 1: Test API
+                const credentials = btoa('Lone_wolf#12:Apx_gp_delta');
+                const response = await fetch('/api/sector_xp_12', {
+                    headers: {
+                        'Authorization': `Basic ${credentials}`
+                    }
+                });
+                
+                if (!response.ok) {
+                    result.innerHTML = '❌ Step 1 Failed: API not accessible';
+                    return;
+                }
+                
+                const data = await response.json();
+                result.innerHTML = '✅ Step 1: API Working\n\n2. Storing session...';
+                
+                // Step 2: Store session
+                localStorage.setItem('adminSession', JSON.stringify({
+                    username: 'Lone_wolf#12',
+                    password: 'Apx_gp_delta',
+                    role: data.user.role,
+                    permissions: data.user.permissions,
+                    timestamp: new Date().toISOString()
+                }));
+                
+                result.innerHTML = '✅ Step 1: API Working\n✅ Step 2: Session Stored\n\n3. Testing redirect...';
+                
+                // Step 3: Test redirect
+                setTimeout(() => {
+                    result.innerHTML = '✅ Step 1: API Working\n✅ Step 2: Session Stored\n✅ Step 3: Redirect Ready\n\n🎉 Complete Flow Working!\n\nRedirecting to admin dashboard...';
+                    
+                    setTimeout(() => {
+                        window.location.href = '/sector_xp_12/admin';
+                    }, 2000);
+                }, 1000);
+                
+            } catch (error) {
+                result.innerHTML = `❌ Error: ${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>

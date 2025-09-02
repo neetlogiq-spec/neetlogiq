@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Admin Dashboard Test</title>
+    <style>
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: white;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        button {
+            padding: 12px 24px;
+            margin: 10px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+        }
+        .result {
+            margin: 15px 0;
+            padding: 15px;
+            border-radius: 10px;
+            font-family: monospace;
+            text-align: left;
+            background: rgba(0, 0, 0, 0.3);
+        }
+        .success { border-left: 4px solid #28a745; }
+        .error { border-left: 4px solid #dc3545; }
+        .info { border-left: 4px solid #17a2b8; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 Admin Dashboard Test</h1>
+        
+        <div class="test-section">
+            <h2>🚀 Quick Access Links</h2>
+            <p>Test the admin system directly</p>
+            <button onclick="window.open('http://localhost:4001/sector_xp_12', '_blank')">🔑 Admin Login</button>
+            <button onclick="window.open('http://localhost:4001/sector_xp_12/admin', '_blank')">📊 Admin Dashboard</button>
+            <button onclick="window.open('http://localhost:4001/sector_xp_12/import-export', '_blank')">📁 Import/Export</button>
+        </div>
+
+        <div class="test-section">
+            <h2>🧪 Test Admin Login Flow</h2>
+            <p>Complete login process test</p>
+            <button onclick="testCompleteLoginFlow()">Test Complete Flow</button>
+            <div id="flow-result" class="result info">Click button to test complete login flow...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>📋 Current Status</h2>
+            <div id="status-result" class="result info">Checking system status...</div>
+        </div>
+
+        <div class="test-section">
+            <h2>🔍 Debug Information</h2>
+            <p>Check what's happening in the system</p>
+            <button onclick="checkReactRoutes()">Check React Routes</button>
+            <button onclick="checkLocalStorage()">Check Local Storage</button>
+            <div id="debug-result" class="result info">Click buttons to check debug info...</div>
+        </div>
+    </div>
+
+    <script>
+        // Check system status
+        async function checkSystemStatus() {
+            const statusDiv = document.getElementById('status-result');
+            try {
+                const response = await fetch('http://localhost:4001/api/sector_xp_12', {
+                    headers: {
+                        'Authorization': 'Basic ' + btoa('Lone_wolf#12:Apx_gp_delta')
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    statusDiv.innerHTML = `
+                        ✅ <strong>Backend Status:</strong> ONLINE<br>
+                        ✅ <strong>Admin API:</strong> Working<br>
+                        ✅ <strong>Authentication:</strong> Valid<br>
+                        📊 <strong>Available Routes:</strong> ${Object.keys(data.routes).length} routes<br>
+                        🔑 <strong>User Role:</strong> ${data.user.role}
+                    `;
+                    statusDiv.className = 'result success';
+                } else {
+                    statusDiv.innerHTML = '❌ Backend API not accessible';
+                    statusDiv.className = 'result error';
+                }
+            } catch (error) {
+                statusDiv.innerHTML = `❌ Error: ${error.message}`;
+                statusDiv.className = 'result error';
+            }
+        }
+
+        // Test complete login flow
+        async function testCompleteLoginFlow() {
+            const resultDiv = document.getElementById('flow-result');
+            resultDiv.innerHTML = '🔄 Testing complete login flow...';
+            resultDiv.className = 'result info';
+            
+            try {
+                // Step 1: Test authentication
+                const credentials = btoa('Lone_wolf#12:Apx_gp_delta');
+                const authResponse = await fetch('http://localhost:4001/api/sector_xp_12', {
+                    headers: {
+                        'Authorization': `Basic ${credentials}`
+                    }
+                });
+                
+                if (!authResponse.ok) {
+                    resultDiv.innerHTML = '❌ Step 1 Failed: Authentication failed';
+                    resultDiv.className = 'result error';
+                    return;
+                }
+                
+                resultDiv.innerHTML = '✅ Step 1: Authentication successful<br>🔄 Step 2: Testing dashboard access...';
+                
+                // Step 2: Test dashboard access
+                const dashboardResponse = await fetch('http://localhost:4001/sector_xp_12/admin');
+                if (dashboardResponse.ok) {
+                    const html = await dashboardResponse.text();
+                    if (html.includes('react') || html.includes('vite')) {
+                        resultDiv.innerHTML = `
+                            ✅ Step 1: Authentication successful<br>
+                            ✅ Step 2: Dashboard route accessible<br>
+                            ✅ <strong>Complete flow working!</strong><br><br>
+                            🎯 <strong>Next steps:</strong><br>
+                            1. Open <a href="http://localhost:4001/sector_xp_12" target="_blank" style="color: #667eea;">Admin Login</a><br>
+                            2. Use credentials: Lone_wolf#12 / Apx_gp_delta<br>
+                            3. Should redirect to dashboard automatically
+                        `;
+                        resultDiv.className = 'result success';
+                    } else {
+                        resultDiv.innerHTML = '⚠️ Dashboard accessible but may not be React route';
+                        resultDiv.className = 'result error';
+                    }
+                } else {
+                    resultDiv.innerHTML = '❌ Step 2 Failed: Dashboard not accessible';
+                    resultDiv.className = 'result error';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `❌ Error: ${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        // Check React routes
+        function checkReactRoutes() {
+            const resultDiv = document.getElementById('debug-result');
+            resultDiv.innerHTML = `
+                📍 <strong>React Routes:</strong><br>
+                • / → Dashboard (public)<br>
+                • /colleges → Colleges (public)<br>
+                • /cutoffs → Cutoffs (public)<br>
+                • /sector_xp_12 → Admin Login (hidden)<br>
+                • /sector_xp_12/admin → Admin Dashboard (hidden)<br>
+                • /sector_xp_12/import-export → Import/Export (hidden)<br><br>
+                🔗 <strong>Current URL:</strong> ${window.location.href}<br>
+                🌐 <strong>Base URL:</strong> http://localhost:4001
+            `;
+            resultDiv.className = 'result info';
+        }
+
+        // Check local storage
+        function checkLocalStorage() {
+            const resultDiv = document.getElementById('debug-result');
+            const adminSession = localStorage.getItem('adminSession');
+            
+            if (adminSession) {
+                try {
+                    const session = JSON.parse(adminSession);
+                    resultDiv.innerHTML = `
+                        💾 <strong>Local Storage - Admin Session:</strong><br>
+                        • Username: ${session.username}<br>
+                        • Role: ${session.role}<br>
+                        • Timestamp: ${session.timestamp}<br>
+                        • Permissions: ${JSON.stringify(session.permissions || 'None')}
+                    `;
+                    resultDiv.className = 'result success';
+                } catch (error) {
+                    resultDiv.innerHTML = '❌ Error parsing admin session from localStorage';
+                    resultDiv.className = 'result error';
+                }
+            } else {
+                resultDiv.innerHTML = '❌ No admin session found in localStorage';
+                resultDiv.className = 'result error';
+            }
+        }
+
+        // Auto-check system status when page loads
+        window.addEventListener('load', () => {
+            checkSystemStatus();
+        });
+    </script>
+</body>
+</html>

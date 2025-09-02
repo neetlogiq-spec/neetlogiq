@@ -6,8 +6,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
-  Settings, Users, Database, BarChart3, Shield, Eye, Edit, Trash2, 
-  Plus, Search, Filter, Download, Upload, GraduationCap, Activity,
+  Settings, Users, Database, BarChart3, Shield, Trash2, 
+  Plus, Search, Download, Upload, GraduationCap, Activity,
   TrendingUp, AlertTriangle, CheckCircle, Clock
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
