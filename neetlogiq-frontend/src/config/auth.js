@@ -2,7 +2,7 @@
 import { GOOGLE_CREDENTIALS } from './google-credentials';
 
 export const GOOGLE_CONFIG = {
-  // Google Client ID from the provided credentials
+  // Google Client ID from environment variable or fallback to credentials
   CLIENT_ID: process.env.REACT_APP_GOOGLE_CLIENT_ID || GOOGLE_CREDENTIALS.client_id,
   
   // OAuth scopes

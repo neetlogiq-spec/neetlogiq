@@ -18,6 +18,10 @@ export const AuthProvider = ({ children }) => {
 
   // Google OAuth configuration
   const GOOGLE_CLIENT_ID = GOOGLE_CONFIG.CLIENT_ID;
+  
+  // Debug logging
+  console.log('AuthContext - GOOGLE_CLIENT_ID:', GOOGLE_CLIENT_ID);
+  console.log('AuthContext - process.env.REACT_APP_GOOGLE_CLIENT_ID:', process.env.REACT_APP_GOOGLE_CLIENT_ID);
 
   useEffect(() => {
     // Check if user is already logged in (from localStorage)

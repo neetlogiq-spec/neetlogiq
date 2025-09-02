@@ -2,7 +2,7 @@
 // This file contains the actual Google OAuth configuration from the provided credentials
 
 export const GOOGLE_CREDENTIALS = {
-  client_id: process.env.REACT_APP_GOOGLE_CLIENT_ID || "1010076677532-0nqc9aqdev36oe5bvnfa39hdlv86rpp2.apps.googleusercontent.com",
+  client_id: "1010076677532-0nqc9aqdev36oe5bvnfa39hdlv86rpp2.apps.googleusercontent.com",
   project_id: "neetlogiq",
   auth_uri: "https://accounts.google.com/o/oauth2/auth",
   token_uri: "https://oauth2.googleapis.com/token",
