@@ -149,38 +149,48 @@ router.get('/api/courses', async (request, env) => {
     const limit = parseInt(url.searchParams.get('limit')) || 20;
     const offset = (page - 1) * limit;
 
+    // For now, return colleges as courses since we don't have programs data yet
     let query = `
       SELECT 
-        c.name as college_name,
-        p.name as course_name,
-        p.level as stream,
-        p.level,
-        p.total_seats,
-        c.management_type,
-        c.city,
-        c.state,
-        p.status
-      FROM programs p
-      JOIN colleges c ON p.college_id = c.id
-      WHERE p.status = 'active' AND c.status = 'active'
+        name as college_name,
+        name as course_name,
+        college_type as stream,
+        college_type as level,
+        0 as total_seats,
+        management_type,
+        city,
+        state,
+        status
+      FROM colleges
+      WHERE status = 'active'
     `;
-    let params = [];
 
     if (search) {
       const searchQuery = buildSearchQuery(search);
       query += ` AND (${searchQuery})`;
     }
 
-    query += ` ORDER BY c.name, p.name LIMIT ${limit} OFFSET ${offset}`;
+    query += ` ORDER BY name LIMIT ${limit} OFFSET ${offset}`;
 
     const result = await env.DB.prepare(query).all();
+    
+    // Get total count for pagination
+    let totalCount = 0;
+    if (search) {
+      const countQuery = `SELECT COUNT(*) as count FROM colleges WHERE status = 'active' AND (${buildSearchQuery(search)})`;
+      const countResult = await env.DB.prepare(countQuery).first();
+      totalCount = countResult?.count || 0;
+    } else {
+      const countResult = await env.DB.prepare('SELECT COUNT(*) as count FROM colleges WHERE status = "active"').first();
+      totalCount = countResult?.count || 0;
+    }
     
     return new Response(JSON.stringify({
       courses: result.results || [],
       pagination: {
         page,
         limit,
-        total: result.results?.length || 0
+        total: totalCount
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
