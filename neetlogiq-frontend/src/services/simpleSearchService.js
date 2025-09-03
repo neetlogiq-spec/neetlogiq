@@ -26,8 +26,8 @@ class SimpleSearchService {
         const response = await fetch('https://neetlogiq-backend.neetlogiq.workers.dev/api/colleges?limit=10000');
         const data = await response.json();
         
-        if (data.data && Array.isArray(data.data)) {
-          this.collegesData = data.data;
+        if (data.colleges && Array.isArray(data.colleges)) {
+          this.collegesData = data.colleges;
           this.isInitialized = true;
           console.log(`✅ Simple Search Service initialized with ${this.collegesData.length} colleges`);
           return true;
