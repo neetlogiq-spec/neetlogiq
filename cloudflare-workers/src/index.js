@@ -104,6 +104,32 @@ router.get('/api/colleges', async (request, env) => {
   }
 });
 
+// College filters endpoint
+router.get('/api/colleges/filters', async (request, env) => {
+  try {
+    // Get unique values for filters
+    const states = await env.DB.prepare('SELECT DISTINCT state FROM colleges WHERE status = "active" ORDER BY state').all();
+    const cities = await env.DB.prepare('SELECT DISTINCT city FROM colleges WHERE status = "active" ORDER BY city').all();
+    const collegeTypes = await env.DB.prepare('SELECT DISTINCT college_type FROM colleges WHERE status = "active" ORDER BY college_type').all();
+    const managementTypes = await env.DB.prepare('SELECT DISTINCT management_type FROM colleges WHERE status = "active" ORDER BY management_type').all();
+    
+    return new Response(JSON.stringify({
+      states: states.results?.map(r => r.state) || [],
+      cities: cities.results?.map(r => r.city) || [],
+      collegeTypes: collegeTypes.results?.map(r => r.college_type) || [],
+      managementTypes: managementTypes.results?.map(r => r.management_type) || []
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  } catch (error) {
+    console.error('Filters error:', error);
+    return new Response(JSON.stringify({ error: 'Filters error' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+});
+
 router.get('/api/courses', async (request, env) => {
   try {
     const url = new URL(request.url);
@@ -255,8 +281,14 @@ router.get('/api/search', async (request, env) => {
   }
 });
 
-// Health check route
+// Health check routes
 router.get('/health', () => {
+  return new Response(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }), {
+    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+  });
+});
+
+router.get('/api/health', () => {
   return new Response(JSON.stringify({ status: 'ok', timestamp: new Date().toISOString() }), {
     headers: { ...corsHeaders, 'Content-Type': 'application/json' }
   });
