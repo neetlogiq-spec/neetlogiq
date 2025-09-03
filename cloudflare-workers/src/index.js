@@ -85,12 +85,23 @@ router.get('/api/colleges', async (request, env) => {
 
     const result = await env.DB.prepare(query).all();
     
+    // Get total count for pagination
+    let totalCount = 0;
+    if (search) {
+      const countQuery = `SELECT COUNT(*) as count FROM colleges WHERE status = "active" AND (${buildSearchQuery(search)})`;
+      const countResult = await env.DB.prepare(countQuery).first();
+      totalCount = countResult?.count || 0;
+    } else {
+      const countResult = await env.DB.prepare('SELECT COUNT(*) as count FROM colleges WHERE status = "active"').first();
+      totalCount = countResult?.count || 0;
+    }
+    
     return new Response(JSON.stringify({
       colleges: result.results || [],
       pagination: {
         page,
         limit,
-        total: result.results?.length || 0
+        total: totalCount
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
