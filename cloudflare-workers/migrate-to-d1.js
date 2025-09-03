@@ -19,7 +19,7 @@ function exportColleges() {
   return new Promise((resolve, reject) => {
     const query = `
       SELECT 
-        name as college_name,
+        name,
         city,
         state,
         college_type,
@@ -46,7 +46,7 @@ function exportColleges() {
           val === null ? 'NULL' : `'${val.toString().replace(/'/g, "''")}'`
         ).join(', ');
         
-        return `INSERT INTO colleges (college_name, city, state, college_type, management_type, university, address, phone, email, website, status) VALUES (${values});`;
+        return `INSERT INTO colleges (name, city, state, college_type, management_type, university, address, phone, email, website, status) VALUES (${values});`;
       });
       
       fs.writeFileSync('migrations/colleges_data.sql', inserts.join('\n'));
@@ -60,14 +60,11 @@ function exportCourses() {
   return new Promise((resolve, reject) => {
     const query = `
       SELECT 
-        c.name as college_name,
-        p.name as course_name,
-        p.level as stream,
+        p.college_id,
+        p.name,
         p.level,
+        p.course_type,
         p.total_seats,
-        c.management_type,
-        c.city,
-        c.state,
         p.status
       FROM programs p
       JOIN colleges c ON p.college_id = c.id
@@ -85,7 +82,7 @@ function exportCourses() {
           val === null ? 'NULL' : `'${val.toString().replace(/'/g, "''")}'`
         ).join(', ');
         
-        return `INSERT INTO courses (college_name, course_name, stream, level, total_seats, management_type, city, state, status) VALUES (${values});`;
+        return `INSERT INTO programs (college_id, name, level, course_type, total_seats, status) VALUES (${values});`;
       });
       
       fs.writeFileSync('migrations/courses_data.sql', inserts.join('\n'));
