@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from '../context/ThemeContext';
 
@@ -34,7 +34,7 @@ const Tooltip = ({
     setIsVisible(false);
   };
 
-  const updatePosition = () => {
+  const updatePosition = useCallback(() => {
     if (!triggerRef.current || !tooltipRef.current) return;
 
     const triggerRect = triggerRef.current.getBoundingClientRect();
@@ -78,7 +78,7 @@ const Tooltip = ({
     }
 
     setTooltipPosition({ x, y });
-  };
+  }, [position]);
 
   useEffect(() => {
     if (isVisible && tooltipRef.current && triggerRef.current) {
