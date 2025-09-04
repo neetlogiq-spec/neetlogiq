@@ -1,6 +1,6 @@
 // API Service for NeetLogIQ Cloudflare Worker Integration
 
-const API_BASE_URL = 'http://localhost:8787/api';
+const API_BASE_URL = 'https://neetlogiq-backend.neetlogiq.workers.dev/api';
 
 class ApiService {
   constructor() {
