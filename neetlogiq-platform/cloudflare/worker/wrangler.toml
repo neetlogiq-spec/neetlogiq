@@ -1,0 +1,31 @@
+name = "neetlogiq-backend"
+main = "src/index.js"
+compatibility_date = "2024-01-15"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "development"
+
+# Local development environment
+[env.development]
+name = "neetlogiq-backend-dev"
+[env.development.vars]
+ENVIRONMENT = "development"
+
+# D1 Database configuration for development
+[[env.development.d1_databases]]
+binding = "DB"
+database_name = "neetlogiq-db"
+database_id = "769bb466-8366-4584-bd51-b78bb60d5e6c"
+
+# Production environment
+[env.production]
+name = "neetlogiq-backend"
+[env.production.vars]
+ENVIRONMENT = "production"
+
+# D1 Database configuration for production
+[[env.production.d1_databases]]
+binding = "DB"
+database_name = "neetlogiq-db"
+database_id = "769bb466-8366-4584-bd51-b78bb60d5e6c"

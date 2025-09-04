@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import BMADStatus from '../components/BMADStatus';
 
 const Admin = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -227,65 +228,96 @@ const Admin = () => {
               {/* Tab Content */}
               <div className="min-h-[400px]">
                 {activeTab === 'dashboard' && (
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Recent Activities */}
-            <div>
-                      <h3 className="text-xl font-semibold text-white mb-4">Recent Activities</h3>
-                      <div className="space-y-3">
-                        {recentActivities.map((activity, index) => {
-                          const ActivityIcon = getActivityIcon(activity.type);
-                          return (
+                  <div className="space-y-8">
+                    {/* BMAD Status */}
+                    <BMADStatus />
+                    
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                      {/* Recent Activities */}
+                      <div>
+                        <h3 className="text-xl font-semibold text-white mb-4">Recent Activities</h3>
+                        <div className="space-y-3">
+                          {recentActivities.map((activity, index) => {
+                            const ActivityIcon = getActivityIcon(activity.type);
+                            return (
+                              <motion.div
+                                key={index}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: isLoaded ? 1 : 0, x: isLoaded ? 0 : -10 }}
+                                transition={{ delay: 0.7 + index * 0.05, duration: 0.3 }}
+                                className="flex items-center space-x-3 p-3 bg-white/5 rounded-lg"
+                              >
+                                <ActivityIcon className={`w-5 h-5 ${getActivityColor(activity.type)}`} />
+                                <div className="flex-1">
+                                  <div className="text-white font-medium">{activity.action}</div>
+                                  <div className="text-white/70 text-sm">{activity.target}</div>
+                                </div>
+                                <div className="text-white/60 text-xs">{activity.time}</div>
+                              </motion.div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                      
+                      {/* Pending Approvals */}
+                      <div>
+                        <h3 className="text-xl font-semibold text-white mb-4">Pending Approvals</h3>
+                        <div className="space-y-3">
+                          {pendingApprovals.map((approval, index) => (
                             <motion.div
                               key={index}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: isLoaded ? 1 : 0, x: isLoaded ? 0 : -10 }}
-                              transition={{ delay: 0.7 + index * 0.05, duration: 0.3 }}
-                              className="flex items-center space-x-3 p-3 bg-white/5 rounded-lg"
+                              initial={{ opacity: 0, x: 10 }}
+                              animate={{ opacity: isLoaded ? 1 : 0, x: isLoaded ? 0 : 10 }}
+                              transition={{ delay: 0.8 + index * 0.05, duration: 0.3 }}
+                              className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
                             >
-                              <ActivityIcon className={`w-5 h-5 ${getActivityColor(activity.type)}`} />
-                              <div className="flex-1">
-                                <div className="text-white font-medium">{activity.action}</div>
-                                <div className="text-white/70 text-sm">{activity.target}</div>
+                              <div>
+                                <div className="text-white font-medium">{approval.type}</div>
+                                <div className="text-white/70 text-sm">{approval.name}</div>
+                                <div className="text-white/60 text-xs">{approval.submitted}</div>
                               </div>
-                              <div className="text-white/60 text-xs">{activity.time}</div>
+                              <div className="flex items-center space-x-2">
+                                <span className={`text-xs ${getPriorityColor(approval.priority)}`}>
+                                  {approval.priority.toUpperCase()}
+                                </span>
+                                <button className="p-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
+                                  <CheckCircle className="w-4 h-4 text-white" />
+                                </button>
+                                <button className="p-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
+                                  <Trash2 className="w-4 h-4 text-white" />
+                                </button>
+                              </div>
                             </motion.div>
-                          );
-                        })}
-                      </div>
-            </div>
-            
-                    {/* Pending Approvals */}
-                    <div>
-                      <h3 className="text-xl font-semibold text-white mb-4">Pending Approvals</h3>
-                      <div className="space-y-3">
-                        {pendingApprovals.map((approval, index) => (
-                          <motion.div
-                            key={index}
-                            initial={{ opacity: 0, x: 10 }}
-                            animate={{ opacity: isLoaded ? 1 : 0, x: isLoaded ? 0 : 10 }}
-                            transition={{ delay: 0.8 + index * 0.05, duration: 0.3 }}
-                            className="flex items-center justify-between p-3 bg-white/5 rounded-lg"
-                          >
-                            <div>
-                              <div className="text-white font-medium">{approval.type}</div>
-                              <div className="text-white/70 text-sm">{approval.name}</div>
-                              <div className="text-white/60 text-xs">{approval.submitted}</div>
-                            </div>
-                            <div className="flex items-center space-x-2">
-                              <span className={`text-xs ${getPriorityColor(approval.priority)}`}>
-                                {approval.priority.toUpperCase()}
-                              </span>
-                              <button className="p-2 bg-green-600 hover:bg-green-700 rounded-lg transition-colors">
-                                <CheckCircle className="w-4 h-4 text-white" />
-                              </button>
-                              <button className="p-2 bg-red-600 hover:bg-red-700 rounded-lg transition-colors">
-                                <Trash2 className="w-4 h-4 text-white" />
-                              </button>
-                            </div>
-                          </motion.div>
-                        ))}
+                          ))}
+                        </div>
                       </div>
                     </div>
+
+                    {/* Quick Actions */}
+                    <motion.div
+                      className="grid grid-cols-1 md:grid-cols-3 gap-6"
+                      initial={{ opacity: 0, y: 15 }}
+                      animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 15 }}
+                      transition={{ duration: 0.3, delay: 0.9 }}
+                    >
+                      <button className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl border border-white/20 hover:bg-white/20 transition-all text-center">
+                        <Plus className="w-12 h-12 text-primary-400 mx-auto mb-3" />
+                        <h3 className="text-lg font-semibold text-white mb-2">Add New College</h3>
+                        <p className="text-white/70 text-sm">Register a new medical college</p>
+                      </button>
+
+                      <button className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl border border-white/20 hover:bg-white/20 transition-all text-center">
+                        <Upload className="w-12 h-12 text-primary-400 mx-auto mb-3" />
+                        <h3 className="text-lg font-semibold text-white mb-2">Bulk Import</h3>
+                        <p className="text-white/70 text-sm">Import data from Excel/CSV</p>
+                      </button>
+
+                      <button className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl border border-white/20 hover:bg-white/20 transition-all text-center">
+                        <Download className="w-12 h-12 text-primary-400 mx-auto mb-3" />
+                        <h3 className="text-lg font-semibold text-white mb-2">Export Data</h3>
+                        <p className="text-white/70 text-sm">Download platform data</p>
+                      </button>
+                    </motion.div>
                   </div>
                 )}
 
@@ -329,32 +361,6 @@ const Admin = () => {
                   </div>
                 )}
               </div>
-            </motion.div>
-
-            {/* Quick Actions */}
-            <motion.div
-              className="grid grid-cols-1 md:grid-cols-3 gap-6"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 15 }}
-              transition={{ duration: 0.3, delay: 0.9 }}
-            >
-              <button className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl border border-white/20 hover:bg-white/20 transition-all text-center">
-                <Plus className="w-12 h-12 text-primary-400 mx-auto mb-3" />
-                <h3 className="text-lg font-semibold text-white mb-2">Add New College</h3>
-                <p className="text-white/70 text-sm">Register a new medical college</p>
-              </button>
-
-              <button className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl border border-white/20 hover:bg-white/20 transition-all text-center">
-                <Upload className="w-12 h-12 text-primary-400 mx-auto mb-3" />
-                <h3 className="text-lg font-semibold text-white mb-2">Bulk Import</h3>
-                <p className="text-white/70 text-sm">Import data from Excel/CSV</p>
-              </button>
-
-              <button className="bg-white/10 backdrop-blur-sm p-6 rounded-2xl border border-white/20 hover:bg-white/20 transition-all text-center">
-                <Download className="w-12 h-12 text-primary-400 mx-auto mb-3" />
-                <h3 className="text-lg font-semibold text-white mb-2">Export Data</h3>
-                <p className="text-white/70 text-sm">Download platform data</p>
-              </button>
             </motion.div>
           </div>
         </main>

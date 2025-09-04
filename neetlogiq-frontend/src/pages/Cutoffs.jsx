@@ -7,9 +7,11 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { TrendingUp, BarChart3, GraduationCap, Award, TrendingDown } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import AdvancedSearchBar from '../components/AdvancedSearchBar';
+import UnifiedSearchBar from '../components/UnifiedSearchBar';
 import GoogleSignIn from '../components/GoogleSignIn';
 import UserPopup from '../components/UserPopup';
+import BlurredOverlay from '../components/BlurredOverlay';
+import ResponsiveHeader from '../components/ResponsiveHeader';
 import { useAuth } from '../contexts/AuthContext';
 import { Vortex } from '../components/ui/vortex';
 import { LightVortex } from '../components/ui/LightVortex';
@@ -132,7 +134,8 @@ const Cutoffs = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <BlurredOverlay>
+      <div className="min-h-screen relative overflow-hidden">
       {/* Dynamic Background */}
       {isDarkMode ? (
         <Vortex
@@ -170,42 +173,49 @@ const Cutoffs = () => {
 
       {/* Content */}
       <div className="relative z-20 min-h-screen flex flex-col">
-        {/* Header - Same style as landing page */}
-      <motion.header
-          className="flex items-center justify-between p-8"
-        initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -20 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-        >
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center">
-              <GraduationCap className="w-8 h-8 text-white" />
+        {/* Desktop Header - Original Design */}
+        <div className="hidden md:block">
+          <motion.header
+            className="flex items-center justify-between p-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -20 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center">
+                <GraduationCap className="w-8 h-8 text-white" />
+              </div>
+              <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>NeetLogIQ</h1>
             </div>
-            <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>NeetLogIQ</h1>
-          </div>
 
-          <div className="flex items-center space-x-6 navbar">
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link to="/" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Home</Link>
-              <Link to="/colleges" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Colleges</Link>
-              <Link to="/courses" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Courses</Link>
-              <Link to="/cutoffs" className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-semibold`}>Cutoffs</Link>
-              <Link to="/about" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>About</Link>
-            </nav>
-            
-            {/* Theme Toggle */}
-            <ThemeToggle />
-            
-            {/* Authentication Section */}
-            <div className="flex items-center gap-4">
-              {isAuthenticated ? (
-                <UserPopup />
-              ) : (
-                <GoogleSignIn text="signin" size="medium" width={120} />
-              )}
+            <div className="flex items-center space-x-6 navbar">
+              <nav className="hidden md:flex items-center space-x-8">
+                <Link to="/" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Home</Link>
+                <Link to="/colleges" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Colleges</Link>
+                <Link to="/courses" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Courses</Link>
+                <Link to="/cutoffs" className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-semibold`}>Cutoffs</Link>
+                <Link to="/about" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>About</Link>
+              </nav>
+              
+              {/* Theme Toggle */}
+              <ThemeToggle />
+              
+              {/* Authentication Section */}
+              <div className="flex items-center gap-4">
+                {isAuthenticated ? (
+                  <UserPopup />
+                ) : (
+                  <GoogleSignIn text="signin" size="medium" width={120} />
+                )}
+              </div>
             </div>
+          </motion.header>
         </div>
-      </motion.header>
+
+        {/* Mobile Header - Responsive Design */}
+        <div className="md:hidden">
+          <ResponsiveHeader />
+        </div>
 
       {/* Main Content */}
         <main className="flex-1 flex flex-col items-center justify-center px-8 py-16">
@@ -237,32 +247,37 @@ const Cutoffs = () => {
               animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 15 }}
               transition={{ duration: 0.3, delay: 0.4 }}
             >
-              <AdvancedSearchBar
-                placeholder="Search cutoffs with AI-powered algorithms..."
-                onSearchSubmit={(query) => {
-                  console.log('🔍 Search query:', query);
+              <UnifiedSearchBar
+                placeholder="Search cutoffs with AI-powered intelligence..."
+                contentType="cutoffs"
+                onSearchResults={(searchResult) => {
+                  console.log("🔍 Unified search results for cutoffs:", searchResult);
                   
-                  if (query && query.trim()) {
-                    // Perform simple text search on cutoffs
-                    const searchTerm = query.toLowerCase().trim();
-                    const filtered = featuredCutoffs.filter(cutoff => 
-                      (cutoff.college && cutoff.college.toLowerCase().includes(searchTerm)) ||
-                      (cutoff.course && cutoff.course.toLowerCase().includes(searchTerm)) ||
-                      (cutoff.category && cutoff.category.toLowerCase().includes(searchTerm)) ||
-                      (cutoff.description && cutoff.description.toLowerCase().includes(searchTerm))
-                    );
-                    console.log('🔍 Filtered cutoffs:', filtered.length);
-                    // You can add state management here if needed
+                  if (searchResult.results && searchResult.results.length > 0) {
+                    console.log("🔍 Setting cutoffs to search results:", searchResult.results.length, "cutoffs");
+                    
+                    // Convert search results to cutoff format for display
+                    const searchCutoffs = searchResult.results.map(result => ({
+                      id: result.id,
+                      college: result.college,
+                      course: result.course,
+                      category: result.category,
+                      cutoff_rank: result.cutoff_rank,
+                      year: result.year,
+                      score: result.score,
+                      description: `${result.college} - ${result.course} (${result.category}) - Rank: ${result.cutoff_rank}`
+                    }));
+                    
+                    // For now, we'll just log the results since cutoffs don't have state management yet
+                    console.log("🔍 Search Cutoffs results:", searchCutoffs);
+                    // TODO: Add state management for cutoffs when needed
                   } else {
-                    console.log('🔍 Clearing search');
-                    // Reset to show all cutoffs
+                    console.log("🔍 No search results to display for cutoffs");
                   }
                 }}
-                data={featuredCutoffs}
-                searchFields={['college', 'course', 'category', 'description']}
-                showSuggestions={true}
-                showAlgorithmInfo={true}
                 debounceMs={300}
+                showSuggestions={true}
+                showAIInsight={true}
               />
             </motion.div>
 
@@ -478,7 +493,8 @@ const Cutoffs = () => {
           <p>&copy; 2024 NeetLogIQ. All rights reserved. Built with ❤️ for medical aspirants.</p>
         </motion.footer>
         </div>
-    </div>
+      </div>
+    </BlurredOverlay>
   );
 };
 

@@ -33,13 +33,13 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "PORT=5001 react-scripts start",
+    "start": "PORT=3000 react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "serve": "node simple-server.js",
     "cli": "node neetlogiq-cli.js",
-    "dev": "PORT=5001 react-scripts start",
+    "dev": "PORT=3000 react-scripts start",
     "status": "node neetlogiq-cli.js status",
     "clean": "node neetlogiq-cli.js clean",
     "ai:train": "node neetlogiq-cli.js ai:train",

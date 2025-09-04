@@ -5,10 +5,13 @@ import { Link } from 'react-router-dom';
 import GoogleSignIn from './GoogleSignIn';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../context/ThemeContext';
+import { Meteors } from './ui/meteors';
 
 const BlurredOverlay = ({ children }) => {
   const { isAuthenticated } = useAuth();
   const { isDarkMode } = useTheme();
+
+  console.log('BlurredOverlay rendering:', { isAuthenticated });
 
   if (isAuthenticated) {
     return children;
@@ -26,7 +29,7 @@ const BlurredOverlay = ({ children }) => {
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          className={`backdrop-blur-md rounded-2xl shadow-2xl p-6 max-w-sm w-full transition-all duration-300 ${
+          className={`relative backdrop-blur-md rounded-2xl shadow-2xl p-6 max-w-sm w-full transition-all duration-300 overflow-hidden ${
             isDarkMode 
               ? 'bg-white/90 border border-white/20' 
               : 'bg-white/95 border border-gray-200 shadow-lg'
@@ -38,16 +41,25 @@ const BlurredOverlay = ({ children }) => {
             maxWidth: '400px'
           }}
         >
+          {/* Meteor Effect Background */}
+          <div className="absolute inset-0 overflow-hidden rounded-2xl">
+            <Meteors number={40} className="opacity-70" />
+          </div>
+          
+          {/* Additional meteor layer for depth */}
+          <div className="absolute inset-0 overflow-hidden rounded-2xl">
+            <Meteors number={20} className="opacity-40" />
+          </div>
           {/* Close Button */}
           <Link
             to="/"
-            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors z-10"
             title="Go to Home"
           >
             <X className="w-5 h-5" />
           </Link>
 
-          <div className="text-center">
+          <div className="relative z-10 text-center">
             {/* Lock Icon */}
             <div className="w-16 h-16 bg-gradient-to-r from-blue-100 to-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Lock className="w-8 h-8 text-blue-600" />

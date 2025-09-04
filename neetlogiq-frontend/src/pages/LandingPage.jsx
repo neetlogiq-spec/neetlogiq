@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, GraduationCap, MapPin, TrendingUp, Shield, Zap, Brain, Target } from 'lucide-react';
+import { GraduationCap, MapPin, TrendingUp, Shield, Zap, Brain, Target } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import GoogleSignIn from '../components/GoogleSignIn';
 import UserPopup from '../components/UserPopup';
@@ -9,10 +9,14 @@ import { useTheme } from '../context/ThemeContext';
 import { Vortex } from '../components/ui/vortex';
 import { LightVortex } from '../components/ui/LightVortex';
 import ThemeToggle from '../components/ThemeToggle';
+import AISearchModal from '../components/AISearchModal';
+import ResponsiveHeader from '../components/ResponsiveHeader';
+import MobileOptimizedSearchBar from '../components/MobileOptimizedSearchBar';
 
 const LandingPage = () => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery] = useState('');
+  const [isAISearchModalOpen, setIsAISearchModalOpen] = useState(false);
   const { isAuthenticated } = useAuth();
   const { isDarkMode } = useTheme();
   const navigate = useNavigate();
@@ -25,40 +29,23 @@ const LandingPage = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleSearch = (e) => {
-    e.preventDefault();
-    if (searchQuery.trim()) {
-      const query = searchQuery.trim().toLowerCase();
-      
-      // Smart search type detection and redirect
-      
-      // 1. Check for cutoff/rank related searches first (most specific)
-      if (query.includes('cutoff') || query.includes('rank') || query.includes('score') ||
-          query.includes('percentile') || query.includes('opening') || query.includes('closing') ||
-          query.includes('neet rank') || query.includes('all india rank')) {
-        navigate(`/cutoffs?search=${encodeURIComponent(searchQuery.trim())}`);
+  // Keyboard shortcut for AI search (Ctrl+K or Cmd+K)
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+        event.preventDefault();
+        setIsAISearchModalOpen(true);
       }
-      // 2. Check for specific course names (but not college abbreviations)
-      else if ((query.includes('mbbs') || query.includes('bds') || query.includes('md') || 
-                query.includes('ms') || query.includes('diploma') || query.includes('dnb') || 
-                query.includes('mch') || query.includes('dm')) && 
-               !query.match(/\b(aiims|jipmer|pgimer|nimhans|kgmc|gmch|amc|jnmc|kims|kims|srm|manipal|christian|st\.?johns?|lady\s+hardinge|maulana\s+azad|safdarjung|ram\s+manohar|lok\s+nayak|govt\.?\s+medical|medical\s+college)\b/)) {
-        // Only redirect to courses if it's clearly a course search, not a college abbreviation
-        navigate(`/courses?search=${encodeURIComponent(searchQuery.trim())}`);
+      if (event.key === 'Escape') {
+        setIsAISearchModalOpen(false);
       }
-      // 3. Check for college-related searches (college names, abbreviations, locations)
-      else if (query.includes('college') || query.includes('institute') || query.includes('university') ||
-               query.includes('medical') || query.includes('dental') || query.includes('hospital') ||
-               query.match(/\b(aiims|jipmer|pgimer|nimhans|kgmc|gmch|amc|jnmc|kims|srm|manipal|christian|st\.?johns?|lady\s+hardinge|maulana\s+azad|safdarjung|ram\s+manohar|lok\s+nayak|govt\.?\s+medical|medical\s+college)\b/) ||
-               query.match(/\b(delhi|mumbai|bangalore|chennai|kolkata|hyderabad|pune|ahmedabad|jaipur|lucknow|patna|bhubaneswar|chandigarh|karnataka|maharashtra|tamil\s+nadu|west\s+bengal|gujarat|rajasthan|uttar\s+pradesh|bihar|odisha|punjab)\b/)) {
-        navigate(`/colleges?search=${encodeURIComponent(searchQuery.trim())}`);
-      }
-      // 4. Default to colleges page for everything else
-      else {
-        navigate(`/colleges?search=${encodeURIComponent(searchQuery.trim())}`);
-      }
-    }
-  };
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  // Removed handleSearch function as it's no longer needed with MobileOptimizedSearchBar
 
   const stats = [
     { icon: GraduationCap, value: '2,400+', label: 'Colleges Covered', color: 'text-blue-400' },
@@ -124,80 +111,97 @@ const LandingPage = () => {
 
       {/* Content */}
       <div className="relative z-20 min-h-screen flex flex-col">
-        {/* Header */}
-      <motion.header
-          className="flex items-center justify-between p-8"
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -50 }}
-          transition={{ duration: 0.4, delay: 0.1 }}
-        >
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center">
-              <GraduationCap className="w-8 h-8 text-white" />
+        {/* Header - Original Design for Desktop, Responsive for Mobile */}
+        <div className="hidden md:block">
+          <motion.header
+            className="flex items-center justify-between p-8"
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -50 }}
+            transition={{ duration: 0.4, delay: 0.1 }}
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center">
+                <GraduationCap className="w-8 h-8 text-white" />
+              </div>
+              <h1 className={`text-3xl font-bold transition-colors duration-300 ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>NeetLogIQ</h1>
             </div>
-            <h1 className={`text-3xl font-bold transition-colors duration-300 ${
-              isDarkMode ? 'text-white' : 'text-gray-900'
-            }`}>NeetLogIQ</h1>
-          </div>
 
-          <div className="flex items-center space-x-6 navbar">
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link 
-                to="/colleges" 
-                className={`transition-colors duration-300 ${
-                  isDarkMode 
-                    ? 'text-white/80 hover:text-white' 
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
-              >
-                Colleges
-              </Link>
-              <Link 
-                to="/courses" 
-                className={`transition-colors duration-300 ${
-                  isDarkMode 
-                    ? 'text-white/80 hover:text-white' 
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
-              >
-                Courses
-              </Link>
-              <Link 
-                to="/cutoffs" 
-                className={`transition-colors duration-300 ${
-                  isDarkMode 
-                    ? 'text-white/80 hover:text-white' 
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
-              >
-                Cutoffs
-              </Link>
-              <Link 
-                to="/about" 
-                className={`transition-colors duration-300 ${
-                  isDarkMode 
-                    ? 'text-white/80 hover:text-white' 
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
-              >
-                About
-              </Link>
-            </nav>
-            
-            {/* Theme Toggle and Authentication Section */}
-            <div className="flex items-center gap-4">
-              <ThemeToggle />
-              {isAuthenticated ? (
-                <UserPopup />
-              ) : (
-                <GoogleSignIn text="signin" size="medium" width={120} />
-              )}
+            <div className="flex items-center space-x-6 navbar">
+              <nav className="hidden md:flex items-center space-x-8">
+                <Link 
+                  to="/" 
+                  className={`transition-colors duration-300 ${
+                    isDarkMode 
+                      ? 'text-white' 
+                      : 'text-gray-900'
+                  }`}
+                >
+                  Home
+                </Link>
+                <Link 
+                  to="/colleges" 
+                  className={`transition-colors duration-300 ${
+                    isDarkMode 
+                      ? 'text-white/80 hover:text-white' 
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  Colleges
+                </Link>
+                <Link 
+                  to="/courses" 
+                  className={`transition-colors duration-300 ${
+                    isDarkMode 
+                      ? 'text-white/80 hover:text-white' 
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  Courses
+                </Link>
+                <Link 
+                  to="/cutoffs" 
+                  className={`transition-colors duration-300 ${
+                    isDarkMode 
+                      ? 'text-white/80 hover:text-white' 
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  Cutoffs
+                </Link>
+                <Link 
+                  to="/about" 
+                  className={`transition-colors duration-300 ${
+                    isDarkMode 
+                      ? 'text-white/80 hover:text-white' 
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  About
+                </Link>
+              </nav>
+              
+              {/* Theme Toggle and Authentication Section */}
+              <div className="flex items-center gap-4">
+                <ThemeToggle />
+                {isAuthenticated ? (
+                  <UserPopup />
+                ) : (
+                  <GoogleSignIn text="signin" size="medium" width={120} />
+                )}
+              </div>
             </div>
+          </motion.header>
         </div>
-      </motion.header>
+
+        {/* Mobile Header */}
+        <div className="md:hidden">
+          <ResponsiveHeader />
+        </div>
 
       {/* Main Content */}
-        <main className="flex-1 flex items-center justify-center px-8">
+        <main className="flex-1 flex items-center justify-center px-4 sm:px-8 pt-8">
           <div className="text-center max-w-4xl">
             {/* Main Title */}
             <motion.h1
@@ -224,33 +228,48 @@ const LandingPage = () => {
             </motion.p>
 
             {/* Search Bar */}
-            <motion.form
-              onSubmit={handleSearch}
-              className="max-w-2xl mx-auto mb-16"
+            <motion.div
+              className="max-w-3xl mx-auto mb-16"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 30 }}
               transition={{ duration: 0.4, delay: 0.4 }}
             >
-              <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Search colleges, courses, or cutoffs..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className={`w-full px-6 py-4 text-lg rounded-2xl border-0 focus:ring-4 focus:ring-primary-500/50 focus:outline-none transition-all duration-300 ${
-                    isDarkMode 
-                      ? 'bg-white/90 backdrop-blur-sm text-gray-900 placeholder-gray-600' 
-                      : 'bg-white/95 backdrop-blur-sm text-gray-900 placeholder-gray-500 shadow-lg border border-gray-200'
-                  }`}
-                />
-                <button
-                  type="submit"
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-primary-600 hover:bg-primary-700 text-white p-3 rounded-xl transition-colors"
-                >
-                  <Search className="w-6 h-6" />
-                </button>
+              <MobileOptimizedSearchBar
+                placeholder="Search colleges, courses, or cutoffs with AI..."
+                contentType="all"
+                onSearchResults={(searchResult) => {
+                  if (searchResult.results && searchResult.results.length > 0) {
+                    // Navigate to appropriate page based on search results
+                    const firstResult = searchResult.results[0];
+                    if (firstResult.category === 'colleges') {
+                      navigate(`/colleges?search=${encodeURIComponent(firstResult.name)}`);
+                    } else if (firstResult.category === 'courses') {
+                      navigate(`/courses?search=${encodeURIComponent(firstResult.name)}`);
+                    } else if (firstResult.category === 'cutoffs') {
+                      navigate(`/cutoffs?search=${encodeURIComponent(firstResult.college || firstResult.course)}`);
+                    } else {
+                      navigate(`/colleges?search=${encodeURIComponent(firstResult.name)}`);
+                    }
+                  }
+                }}
+                showSuggestions={true}
+                showAIInsight={true}
+              />
+              
+              {/* AI Search Hint */}
+              <div className="mt-3 text-center">
+                <p className={`text-sm ${
+                  isDarkMode ? 'text-white/70' : 'text-gray-600'
+                }`}>
+                  Try our <span className="font-semibold text-blue-500">AI-powered search</span> for natural language queries
+                </p>
+                <p className={`text-xs mt-1 ${
+                  isDarkMode ? 'text-white/50' : 'text-gray-500'
+                }`}>
+                  Press <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-600 rounded text-xs">Ctrl+K</kbd> for quick access
+                </p>
               </div>
-            </motion.form>
+            </motion.div>
 
             {/* Stats */}
             <motion.div
@@ -283,7 +302,7 @@ const LandingPage = () => {
               className={`text-sm text-center mb-8 transition-colors duration-300 ${
                 isDarkMode ? 'text-white/60' : 'text-gray-500'
               }`}
-              initial={{ opacity: 0 }}
+        initial={{ opacity: 0 }}
               animate={{ opacity: isLoaded ? 1 : 0 }}
               transition={{ duration: 0.4, delay: 0.55 }}
             >
@@ -411,6 +430,13 @@ const LandingPage = () => {
           <p>&copy; 2024 NeetLogIQ. All rights reserved. Built with ❤️ for medical aspirants.</p>
         </motion.footer>
         </div>
+        
+        {/* AI Search Modal */}
+        <AISearchModal 
+          isVisible={isAISearchModalOpen}
+          onClose={() => setIsAISearchModalOpen(false)}
+          initialQuery={searchQuery}
+        />
     </div>
   );
 };

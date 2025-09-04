@@ -7,29 +7,38 @@ class SimpleSearchService {
   constructor() {
     this.collegesData = [];
     this.isInitialized = false;
-    console.log('🔍 Simple Search Service initialized');
+    // Minimal logging for better performance
+    if (process.env.NODE_ENV === 'development') {
+      console.log('🔍 Simple Search Service initialized');
+    }
   }
 
   // Initialize with college data
   async initialize(collegesData = null) {
     try {
-      console.log('🔄 Initializing Simple Search Service...');
+      if (process.env.NODE_ENV === 'development') {
+        console.log('🔄 Initializing Simple Search Service...');
+      }
       
       if (collegesData && Array.isArray(collegesData)) {
         // Use provided data
         this.collegesData = collegesData;
         this.isInitialized = true;
-        console.log(`✅ Simple Search Service initialized with ${this.collegesData.length} colleges (provided data)`);
+        if (process.env.NODE_ENV === 'development') {
+          console.log(`✅ Simple Search Service initialized with ${this.collegesData.length} colleges (provided data)`);
+        }
         return true;
       } else {
-        // Load college data from backend
-        const response = await fetch('https://neetlogiq-backend.neetlogiq.workers.dev/api/colleges?limit=10000');
+        // Load college data from Cloudflare Worker with high limit
+        const response = await fetch('http://localhost:8787/api/colleges?limit=1000');
         const data = await response.json();
         
-        if (data.colleges && Array.isArray(data.colleges)) {
-          this.collegesData = data.colleges;
+        if (data.data && Array.isArray(data.data)) {
+          this.collegesData = data.data;
           this.isInitialized = true;
-          console.log(`✅ Simple Search Service initialized with ${this.collegesData.length} colleges`);
+          if (process.env.NODE_ENV === 'development') {
+            console.log(`✅ Simple Search Service initialized with ${this.collegesData.length} colleges`);
+          }
           return true;
         } else {
           throw new Error('Failed to load college data');
@@ -56,10 +65,13 @@ class SimpleSearchService {
     const startTime = performance.now();
     const normalizedQuery = this.normalizeQuery(query.trim());
     
-    console.log(`🔍 Searching for: "${query}" (normalized: "${normalizedQuery}")`);
+    // Reduced logging for better performance - only log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔍 Searching for: "${query}" (normalized: "${normalizedQuery}")`);
+    }
 
-    // Debug abbreviation detection for specific queries
-    if (query === 'a b' || query === 'A B' || query === 'a.b' || query === 'A.B' || query === 'msrmc' || query === 'MSRMC' || query === 'ajims' || query === 'AJIMS' || query === 'rmch' || query === 'RMCH' || query === 'rrmch' || query === 'RRMCH' || query === 'rims' || query === 'RIMS') {
+    // Enhanced debug logging for abbreviation search
+    if (process.env.NODE_ENV === 'development' && (query === 'test' || query === 'debug' || query.length <= 3)) {
       console.log(`🧪 Testing abbreviation detection for "${query}":`);
       console.log(`  Original query: "${query}"`);
       console.log(`  Normalized query: "${normalizedQuery}"`);
@@ -71,16 +83,20 @@ class SimpleSearchService {
     const results = this.performSearch(normalizedQuery, query);
     
     const searchTime = performance.now() - startTime;
-    console.log(`✅ Search completed in ${searchTime.toFixed(2)}ms with ${results.length} results`);
     
-    // Log top results for debugging
-    if (results.length > 0) {
-      console.log(`📊 Top 3 results:`);
-      results.slice(0, 3).forEach((result, index) => {
-        console.log(`  ${index + 1}. ${result.name} (Score: ${result.relevanceScore}, Type: ${result.matchType})`);
-      });
-    } else {
-      console.log(`❌ No results found for query: "${query}"`);
+    // Reduced logging for better performance - only log in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`✅ Search completed in ${searchTime.toFixed(2)}ms with ${results.length} results`);
+      
+      // Log top results for debugging only in development
+      if (results.length > 0) {
+        console.log(`📊 Top 3 results:`);
+        results.slice(0, 3).forEach((result, index) => {
+          console.log(`  ${index + 1}. ${result.name} (Score: ${result.relevanceScore}, Type: ${result.matchType})`);
+        });
+      } else {
+        console.log(`❌ No results found for query: "${query}"`);
+      }
     }
 
     return this.createSearchResult(results, 'simple-search', searchTime);
@@ -170,21 +186,10 @@ class SimpleSearchService {
     return sortedResults.slice(0, maxResults);
   }
 
-  // Get maximum results allowed for a query (to prevent too many false positives)
+  // Get maximum results allowed for a query (removed restrictions for better results)
   getMaxResultsForQuery(query) {
-    const queryLength = query.length;
-    
-    // Very short queries (1-2 chars) - very restrictive
-    if (queryLength <= 2) return 10;
-    
-    // Short queries (3-4 chars) - restrictive
-    if (queryLength <= 4) return 25;
-    
-    // Medium queries (5-8 chars) - moderate
-    if (queryLength <= 8) return 50;
-    
-    // Longer queries - more permissive
-    return 100;
+    // Return a high limit to show all relevant results
+    return 1000;
   }
 
   // Check if query is an abbreviation match - MUCH MORE RESTRICTIVE
@@ -198,8 +203,8 @@ class SimpleSearchService {
     const normalizedQuery = this.normalizeQuery(query);
     const patterns = this.generateAbbreviationPatterns(normalizedQuery);
     
-    // Debug logging for abbreviation matching
-    if (query === 'a b' || query === 'A B' || query === 'a.b' || query === 'A.B' || query === 'msrmc' || query === 'MSRMC' || query === 'ajims' || query === 'AJIMS' || query === 'aj' || query === 'AJ' || query === 'rmch' || query === 'RMCH' || query === 'rrmch' || query === 'RRMCH' || query === 'rims' || query === 'RIMS') {
+    // Enhanced debug logging for abbreviation search
+    if (process.env.NODE_ENV === 'development' && (query === 'test' || query === 'debug' || query.length <= 3)) {
       console.log(`🔍 Abbreviation match debug for "${query}":`);
       console.log(`  Original College: "${collegeName}"`);
       console.log(`  Normalized College: "${this.normalizeCollegeName(collegeName)}"`);
@@ -210,19 +215,19 @@ class SimpleSearchService {
     for (const pattern of patterns) {
       // Use strict pattern matching instead of simple includes
       if (this.isStrictPatternMatch(pattern, collegeName)) {
-        // Debug logging for pattern matches
-        if (query === 'a b' || query === 'A B' || query === 'a.b' || query === 'A.B' || query === 'msrmc' || query === 'MSRMC' || query === 'ajims' || query === 'AJIMS' || query === 'aj' || query === 'AJ' || query === 'rmch' || query === 'RMCH' || query === 'rrmch' || query === 'RRMCH' || query === 'rims' || query === 'RIMS') {
+        // Enhanced debug logging for abbreviation search
+        if (process.env.NODE_ENV === 'development' && (query === 'test' || query === 'debug' || query.length <= 3)) {
           console.log(`  ✅ Pattern "${pattern}" found in "${collegeName}"`);
         }
         
         // STRICT validation for abbreviation matches
         if (this.isValidAbbreviationPattern(query, pattern, collegeName)) {
-          if (query === 'a b' || query === 'A B' || query === 'a.b' || query === 'A.B' || query === 'msrmc' || query === 'MSRMC' || query === 'ajims' || query === 'AJIMS' || query === 'aj' || query === 'AJ' || query === 'rmch' || query === 'RMCH' || query === 'rrmch' || query === 'RRMCH' || query === 'rims' || query === 'RIMS') {
+          if (process.env.NODE_ENV === 'development' && (query === 'test' || query === 'debug' || query.length <= 3)) {
             console.log(`  ✅ Pattern "${pattern}" is VALID for "${collegeName}"`);
           }
           return true;
         } else {
-          if (query === 'a b' || query === 'A B' || query === 'a.b' || query === 'A.B' || query === 'msrmc' || query === 'MSRMC' || query === 'ajims' || query === 'AJIMS' || query === 'aj' || query === 'AJ' || query === 'rmch' || query === 'RMCH' || query === 'rrmch' || query === 'RRMCH' || query === 'rims' || query === 'RIMS') {
+          if (process.env.NODE_ENV === 'development' && (query === 'test' || query === 'debug' || query.length <= 3)) {
             console.log(`  ❌ Pattern "${pattern}" is INVALID for "${collegeName}"`);
           }
         }
@@ -429,6 +434,20 @@ class SimpleSearchService {
       patterns.push(single);
       patterns.push(single.split('').join('.') + '.');
       patterns.push(single.split('').join('. ') + '.');
+      
+      // For longer abbreviations like "AJIMS", also try common patterns
+      if (single.length >= 4) {
+        // "AJIMS" -> try "A J" (first two letters)
+        patterns.push(`${single[0]} ${single[1]}`);
+        patterns.push(`${single[0]}${single[1]}`);
+        // "AJIMS" -> try "AJ" (first two letters)
+        patterns.push(single.substring(0, 2));
+        // "AJIMS" -> try "A J I" (first three letters)
+        if (single.length >= 5) {
+          patterns.push(`${single[0]} ${single[1]} ${single[2]}`);
+          patterns.push(`${single[0]}${single[1]}${single[2]}`);
+        }
+      }
     }
 
     return patterns;
@@ -480,57 +499,57 @@ class SimpleSearchService {
     );
   }
 
-  // Smart contains match with better filtering
+  // Smart contains match with better filtering - Made less restrictive
   isSmartContainsMatch(query, collegeName) {
-    // Only allow contains match for queries of 3+ characters
-    if (query.length < 3) return false;
+    // Allow contains match for queries of 2+ characters (was 3+)
+    if (query.length < 2) return false;
     
     // Check if query appears in college name
     if (!collegeName.includes(query)) return false;
     
-    // Additional filtering to avoid false positives
+    // Less restrictive filtering to allow more results
     const queryWords = query.split(' ');
     const collegeWords = collegeName.split(' ');
     
-    // For multi-word queries, ensure at least one word is a significant match
+    // For multi-word queries, be less restrictive
     if (queryWords.length > 1) {
       return queryWords.some(queryWord => 
         collegeWords.some(collegeWord => 
-          collegeWord.startsWith(queryWord) && queryWord.length >= 2
+          collegeWord.includes(queryWord) && queryWord.length >= 2
         )
       );
     }
     
-    // For single word queries, ensure it's not just a common substring
+    // For single word queries, be less restrictive
     return this.isSignificantMatch(query, collegeName);
   }
 
-  // Check if a match is significant (not just a common substring)
+  // Check if a match is significant (not just a common substring) - Made less restrictive
   isSignificantMatch(query, collegeName) {
-    // Avoid matches that are too short or common
-    if (query.length < 3) return false;
+    // Allow matches for queries of 2+ characters (was 3+)
+    if (query.length < 2) return false;
     
     // Check if query appears at word boundaries or as a significant part
     const words = collegeName.split(' ');
     return words.some(word => {
       // Exact word match
       if (word === query) return true;
-      // Word starts with query (for longer queries)
-      if (query.length >= 4 && word.startsWith(query)) return true;
-      // Word contains query but not as a tiny substring
-      if (word.includes(query) && query.length >= Math.min(4, word.length * 0.5)) return true;
+      // Word starts with query (for queries of 3+ characters)
+      if (query.length >= 3 && word.startsWith(query)) return true;
+      // Word contains query (less restrictive)
+      if (word.includes(query) && query.length >= 2) return true;
       return false;
     });
   }
 
-  // Validate if a match is legitimate (additional filtering)
+  // Validate if a match is legitimate (additional filtering) - Made less restrictive
   isValidMatch(query, collegeName, matchType) {
     // For abbreviation matches, be more strict
     if (matchType === 'abbreviation') {
       return this.isValidAbbreviationMatch(query, collegeName);
     }
     
-    // For contains matches, ensure it's not a false positive
+    // For contains matches, be less restrictive - allow more results
     if (matchType === 'contains') {
       return this.isValidContainsMatch(query, collegeName);
     }
@@ -551,15 +570,16 @@ class SimpleSearchService {
     return true;
   }
 
-  // Validate contains matches to avoid false positives
+  // Validate contains matches to avoid false positives - Made less restrictive
   isValidContainsMatch(query, collegeName) {
-    // Avoid matches where query is just a common substring
+    // Only filter out very obvious false positives
     const commonSubstrings = ['HOSPITAL', 'COLLEGE', 'INSTITUTE', 'MEDICAL', 'DENTAL', 'DNB'];
     
-    // If query is a common substring, require it to be part of a meaningful word
+    // If query is a common substring, be less restrictive
     if (commonSubstrings.some(sub => query.includes(sub))) {
       const words = collegeName.split(' ');
-      return words.some(word => word.includes(query) && word.length > query.length + 2);
+      // Allow matches if query appears in any word, even if it's short
+      return words.some(word => word.includes(query));
     }
     
     return true;

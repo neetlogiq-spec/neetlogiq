@@ -1,0 +1,15 @@
+{
+  "timestamp": "2025-08-29T10:12:10.295Z",
+  "buildStatus": "unknown",
+  "serveStatus": "stopped",
+  "structure": {
+    "components": 1,
+    "pages": 6,
+    "styles": 0,
+    "assets": 0
+  },
+  "recommendations": [
+    "Fix build issues before proceeding",
+    "Start the frontend server to test your application"
+  ]
+}

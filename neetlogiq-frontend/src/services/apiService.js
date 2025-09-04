@@ -1,16 +1,17 @@
-// API Service for NeetLogIQ Backend Integration
+// API Service for NeetLogIQ Cloudflare Worker Integration
 
-const API_BASE_URL = 'https://neetlogiq-backend.neetlogiq.workers.dev/api';
+const API_BASE_URL = 'http://localhost:8787/api';
 
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL;
   }
 
-  // Generic API call method
+  // Generic API call method with BMAD integration
   async apiCall(endpoint, options = {}) {
     try {
       const url = `${this.baseURL}${endpoint}`;
+      console.log('🌐 API Call URL:', url);
       const response = await fetch(url, {
         headers: {
           'Content-Type': 'application/json',
@@ -23,7 +24,16 @@ class ApiService {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      return await response.json();
+      const data = await response.json();
+      console.log('🌐 API Response data:', data);
+      
+      // Check for BMAD optimization headers
+      const bmadOptimized = response.headers.get('X-BMAD-Optimized');
+      if (bmadOptimized) {
+        console.log('🤖 BMAD optimization detected:', bmadOptimized);
+      }
+      
+      return data;
     } catch (error) {
       console.error(`API call failed for ${endpoint}:`, error);
       throw error;
@@ -31,7 +41,7 @@ class ApiService {
   }
 
   // Colleges API
-  async getColleges(filters = {}, page = 1, limit = 20) {
+  async getColleges(filters = {}, page = 1, limit = 24) {
     const queryParams = new URLSearchParams();
     
     // Add filters
@@ -65,7 +75,7 @@ class ApiService {
     const queryParams = new URLSearchParams();
     queryParams.append('search', query); // Use 'search' parameter as expected by backend
     queryParams.append('page', page); // Add pagination support
-    queryParams.append('limit', limit); // Use 24 for proper grid layout
+    queryParams.append('limit', limit); // Use 24 for proper pagination
     
     // Use the existing colleges endpoint with search parameter
     return this.apiCall(`/colleges?${queryParams.toString()}`);
@@ -103,7 +113,7 @@ class ApiService {
 
   async searchCourses(query, filters = {}) {
     const queryParams = new URLSearchParams();
-    queryParams.append('q', query);
+    queryParams.append('search', query);
     
     Object.entries(filters).forEach(([key, value]) => {
       if (value) {
@@ -111,7 +121,7 @@ class ApiService {
       }
     });
     
-    return this.apiCall(`/courses/search?${queryParams.toString()}`);
+    return this.apiCall(`/courses?${queryParams.toString()}`);
   }
 
   async getCourseById(id) {
@@ -119,7 +129,7 @@ class ApiService {
   }
 
   async getCoursesByCollege(collegeId) {
-    return this.apiCall(`/courses/college/${collegeId}`);
+    return this.apiCall(`/courses?college_id=${collegeId}`);
   }
 
   // Cutoffs API
@@ -136,6 +146,15 @@ class ApiService {
     queryParams.append('limit', limit);
     
     return this.apiCall(`/cutoffs?${queryParams.toString()}`);
+  }
+
+  // BMAD Analytics API
+  async getBMADAnalytics() {
+    return this.apiCall('/bmad/analytics');
+  }
+
+  async getBMADPerformance() {
+    return this.apiCall('/bmad/performance');
   }
 
   // Health check
@@ -185,6 +204,8 @@ export const {
   getCourseById,
   getCoursesByCollege,
   getCutoffs,
+  getBMADAnalytics,
+  getBMADPerformance,
   healthCheck,
   getApiStatus
 } = apiService;

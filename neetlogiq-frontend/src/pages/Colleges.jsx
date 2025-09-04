@@ -8,9 +8,13 @@ import { motion } from 'framer-motion';
 import { Building2, Wifi, WifiOff, GraduationCap, Database, ChevronUp, ChevronDown, X, Sparkles, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import IntelligentFilters from '../components/IntelligentFilters';
-import AdvancedSearchBar from '../components/AdvancedSearchBar';
+import ResponsiveHeader from '../components/ResponsiveHeader';
+// import MobileOptimizedSearchBar from '../components/MobileOptimizedSearchBar'; // Replaced with UnifiedSearchBar
+import UnifiedSearchBar from '../components/UnifiedSearchBar';
+import BlurredOverlay from '../components/BlurredOverlay';
 import apiService from '../services/apiService';
 import { useAdvancedSearch } from '../hooks/useAdvancedSearch';
+import { useUnifiedSearch } from '../hooks/useUnifiedSearch';
 import BeautifulLoader from '../components/BeautifulLoader';
 import BackToTopButton from '../components/BackToTopButton';
 import GoogleSignIn from '../components/GoogleSignIn';
@@ -20,11 +24,13 @@ import { Vortex } from '../components/ui/vortex';
 import { LightVortex } from '../components/ui/LightVortex';
 import { useTheme } from '../context/ThemeContext';
 import ThemeToggle from '../components/ThemeToggle';
+import AICommandPalette from '../components/AICommandPalette';
 
 const Colleges = () => {
   const [isLoaded, setIsLoaded] = useState(false);
   const { isAuthenticated } = useAuth();
   const { isDarkMode } = useTheme();
+  const [isAICommandPaletteOpen, setIsAICommandPaletteOpen] = useState(false);
 
   const [expandedCards, setExpandedCards] = useState(new Set());
   const [collegeCourses, setCollegeCourses] = useState({});
@@ -42,7 +48,7 @@ const Colleges = () => {
   const [apiStatus, setApiStatus] = useState('checking');
   const [pagination, setPagination] = useState({
     page: 1,
-    limit: 24, // Back to 24 for proper 3x8 grid layout
+    limit: 24, // 3x8 grid = 24 college cards per page
     totalPages: 1,
     totalItems: 0
   });
@@ -62,6 +68,13 @@ const Colleges = () => {
     performSearch: performAdvancedSearch
   } = useAdvancedSearch(allCollegesForSearch);
 
+  // Unified search integration
+  const { 
+    performSearch: performUnifiedSearch, 
+    isInitialized: isUnifiedSearchInitialized
+    // performanceMetrics: unifiedSearchMetrics // Available if needed for debugging
+  } = useUnifiedSearch(allCollegesForSearch, { contentType: 'colleges' });
+
   // Search colleges by query (hybrid approach)
   const searchColleges = async (searchQuery) => {
     try {
@@ -80,8 +93,34 @@ const Colleges = () => {
       
       console.log('🔍 Searching for:', searchQuery);
       
-      // Try advanced search first if available
-      if (isAdvancedSearchReady && searchService) {
+      // Try unified search first if available
+      if (isUnifiedSearchInitialized && performUnifiedSearch) {
+        try {
+          console.log('🚀 Using unified search engine...');
+          const unifiedResults = await performUnifiedSearch(searchQuery.trim(), { contentType: 'colleges' });
+          
+          if (unifiedResults && unifiedResults.length > 0) {
+            console.log(`✅ Unified search found ${unifiedResults.length} results`);
+            
+            const firstPageResults = unifiedResults.slice(0, pagination.limit);
+            setColleges(firstPageResults);
+            setCurrentSearchQuery(searchQuery.trim());
+            setPagination({
+              page: 1,
+              limit: pagination.limit,
+              totalPages: Math.ceil(unifiedResults.length / pagination.limit),
+              totalItems: unifiedResults.length
+            });
+            setAllSearchResults(unifiedResults);
+            return;
+          }
+        } catch (unifiedError) {
+          console.warn('⚠️ Unified search failed, falling back to backend search:', unifiedError.message);
+        }
+      }
+      
+      // Try advanced search as fallback (temporarily disabled to use backend search)
+      if (false && isAdvancedSearchReady && searchService) {
         try {
           console.log('🚀 Using advanced search service...');
           console.log('🔍 Search service status:', searchService);
@@ -93,7 +132,32 @@ const Colleges = () => {
           if (advancedResults && advancedResults.length > 0) {
             console.log(`🤖 Advanced search found ${advancedResults.length} results`);
             
-            // Always show only first page results to maintain grid
+            // If advanced search returns very few results, also try backend search for comparison
+            if (advancedResults.length < 5) {
+              console.log('⚠️ Advanced search returned few results, also trying backend search...');
+              try {
+                const backendResponse = await apiService.searchColleges(searchQuery.trim(), 1, 100);
+                if (backendResponse && backendResponse.data && backendResponse.data.length > advancedResults.length) {
+                  console.log(`🔄 Backend search found ${backendResponse.data.length} results, using backend results`);
+                  // Use backend results if they're more comprehensive
+                  const firstPageResults = backendResponse.data.slice(0, pagination.limit);
+                  setColleges(firstPageResults);
+                  setCurrentSearchQuery(searchQuery.trim());
+                  setPagination({
+                    page: 1,
+                    limit: pagination.limit,
+                    totalPages: Math.ceil(backendResponse.data.length / pagination.limit),
+                    totalItems: backendResponse.data.length
+                  });
+                  setAllSearchResults(backendResponse.data);
+                  return;
+                }
+              } catch (backendError) {
+                console.warn('⚠️ Backend search failed:', backendError);
+              }
+            }
+            
+            // Use advanced search results
             const firstPageResults = advancedResults.slice(0, pagination.limit);
             setColleges(firstPageResults);
             setCurrentSearchQuery(searchQuery.trim());
@@ -184,8 +248,11 @@ const Colleges = () => {
       const response = await apiService.getColleges(newFilters, newPage, pagination.limit); // Use dynamic limit
       
       console.log('🔍 API Response:', response);
+      console.log('🔍 API Response keys:', Object.keys(response));
       console.log('🔍 Total colleges from API:', response.pagination?.totalItems);
       console.log('🔍 Colleges data length:', response.data?.length);
+      console.log('🔍 Response.data exists:', !!response.data);
+      console.log('🔍 Response.colleges exists:', !!response.colleges);
       
       setColleges(response.data || []);
       setPagination(response.pagination || {
@@ -406,26 +473,28 @@ const Colleges = () => {
       console.log(`🔍 Fetching courses for college ID: ${collegeId}`);
       
       // Use the specific college courses endpoint
-      const response = await fetch(`https://neetlogiq-backend.neetlogiq.workers.dev/api/courses?college_id=${collegeId}`);
+              const response = await fetch(`http://localhost:8787/api/courses?college_id=${collegeId}`);
       
       if (response.ok) {
         const data = await response.json();
         console.log(`📚 Courses data for college ${collegeId}:`, data);
+        console.log(`📚 Sample course data:`, data.data?.[0]);
         
-        // The API returns { collegeId, courses, total }
-        const courses = data.courses || [];
+        // The API returns { data: [...], pagination: {...} }
+        const courses = data.data || [];
         
         if (courses && courses.length > 0) {
           // Transform the courses data to match expected format
+          // Note: Local backend returns college data as courses, so we need to handle both cases
           const transformedCourses = courses.map(course => ({
-            id: course.id || course.course_name,
-            name: course.course_name || course.name,
-            specialization: course.branch || course.specialization,
-            level: course.level,
-            course_type: course.stream || course.course_type,
-            duration: course.duration,
+            id: course.id || course.college_id || course.course_name,
+            name: course.course_name || course.name || course.college_name,
+            specialization: course.branch || course.specialization || course.college_type,
+            level: course.level || course.college_type,
+            course_type: course.stream || course.course_type || course.college_type,
+            duration: course.duration || 'N/A',
             total_seats: course.total_seats || 0,
-            college_name: course.college_name
+            college_name: course.college_name || course.name
           }));
           
           console.log(`✅ Found ${transformedCourses.length} courses for college ${collegeId}:`, transformedCourses);
@@ -461,7 +530,8 @@ const Colleges = () => {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden">
+    <BlurredOverlay>
+      <div className="min-h-screen relative overflow-hidden">
       {/* Dynamic Background */}
       {isDarkMode ? (
         <Vortex
@@ -499,45 +569,52 @@ const Colleges = () => {
 
       {/* Content */}
       <div className="relative z-20 min-h-screen flex flex-col">
-        {/* Header - Same style as landing page */}
+        {/* Header - Original Design for Desktop, Responsive for Mobile */}
+        <div className="hidden md:block">
       <motion.header
-          className="flex items-center justify-between p-8"
-          initial={{ opacity: 0, y: -50 }}
-          animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -50 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-        >
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center">
-              <GraduationCap className="w-8 h-8 text-white" />
+            className="flex items-center justify-between p-8"
+            initial={{ opacity: 0, y: -50 }}
+            animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -50 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center">
+                <GraduationCap className="w-8 h-8 text-white" />
+              </div>
+              <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>NeetLogIQ</h1>
             </div>
-            <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>NeetLogIQ</h1>
-          </div>
 
-          <div className="flex items-center space-x-6 navbar">
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link to="/" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Home</Link>
-              <Link to="/colleges" className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-semibold`}>Colleges</Link>
-              <Link to="/courses" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Courses</Link>
-              <Link to="/cutoffs" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Cutoffs</Link>
-              <Link to="/about" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>About</Link>
-            </nav>
-            
-            {/* Theme Toggle */}
-            <ThemeToggle />
-            
-            {/* Authentication Section */}
-            <div className="flex items-center gap-4">
-              {isAuthenticated ? (
-                <UserPopup />
-              ) : (
-                <GoogleSignIn text="signin" size="medium" width={120} />
-              )}
+            <div className="flex items-center space-x-6 navbar">
+              <nav className="hidden md:flex items-center space-x-8">
+                <Link to="/" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Home</Link>
+                <Link to="/colleges" className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-semibold`}>Colleges</Link>
+                <Link to="/courses" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Courses</Link>
+                <Link to="/cutoffs" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Cutoffs</Link>
+                <Link to="/about" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>About</Link>
+              </nav>
+              
+              {/* Theme Toggle */}
+              <ThemeToggle />
+              
+              {/* Authentication Section */}
+              <div className="flex items-center gap-4">
+                {isAuthenticated ? (
+                  <UserPopup />
+                ) : (
+                  <GoogleSignIn text="signin" size="medium" width={120} />
+                )}
+              </div>
             </div>
+          </motion.header>
         </div>
-      </motion.header>
+
+        {/* Mobile Header */}
+        <div className="md:hidden">
+          <ResponsiveHeader />
+        </div>
 
       {/* Main Content */}
-        <main className="flex-1 flex flex-col items-center justify-center px-8 py-16">
+        <main className="flex-1 flex flex-col items-center justify-center px-4 sm:px-8 py-8">
           <div className="text-center max-w-6xl w-full">
             {/* Page Title - Same style as landing page */}
             <motion.h1
@@ -595,12 +672,36 @@ const Colleges = () => {
                   )}
                 </div>
               </div>
-                              <AdvancedSearchBar
-                  placeholder="Search medical colleges with AI-powered algorithms..."
-                  onSearchSubmit={searchColleges}
+                              <UnifiedSearchBar
+                  placeholder="Search medical colleges with unified AI intelligence..."
+                  onSearchResults={(searchResult) => {
+                    console.log("🔍 Unified search results received:", searchResult);
+                    if (searchResult && searchResult.results && searchResult.results.length > 0) {
+                      console.log("🔍 Setting colleges to unified search results:", searchResult.results.length, "colleges");
+                      setColleges(searchResult.results);
+                      setCurrentSearchQuery(searchResult.query || "Search Results");
+                      setPagination({
+                        page: 1,
+                        limit: searchResult.results.length,
+                        totalPages: 1,
+                        totalItems: searchResult.results.length
+                      });
+                      console.log("✅ Colleges state updated successfully");
+                    } else if (searchResult && searchResult.searchType === 'none') {
+                      // Only clear search when explicitly clearing (searchType: 'none')
+                      console.log("🔍 Clearing search results");
+                      setCurrentSearchQuery('');
+                      // Don't clear colleges array - let the initial load handle it
+                    } else {
+                      console.log("🔍 No search results to display");
+                      // Don't clear colleges array for empty results
+                    }
+                  }}
                   debounceMs={300}
-                  advancedSearchService={searchService}
-                  showAdvancedFeatures={isAdvancedSearchReady}
+                  contentType="colleges"
+                  collegesData={allCollegesForSearch}
+                  showAdvancedFeatures={isUnifiedSearchInitialized}
+                  showPerformanceMetrics={true}
                 />
             </motion.div>
 
@@ -1197,7 +1298,14 @@ const Colleges = () => {
         </motion.footer>
         </div>
         <BackToTopButton />
+        
+        {/* AI Command Palette - Available via Ctrl+K */}
+        <AICommandPalette 
+          isVisible={isAICommandPaletteOpen}
+          onClose={() => setIsAICommandPaletteOpen(false)}
+        />
     </div>
+    </BlurredOverlay>
   );
 };
 

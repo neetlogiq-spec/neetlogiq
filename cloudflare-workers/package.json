@@ -1,19 +1,35 @@
 {
-  "name": "neetlogiq-backend",
+  "name": "neetlogiq-cloudflare-worker",
   "version": "1.0.0",
-  "description": "NEET Logiq backend API using Cloudflare Workers and D1",
+  "description": "NEET Logiq Cloudflare Worker Backend",
+  "type": "module",
   "main": "src/index.js",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "wrangler dev --local --port 8787",
+    "dev:remote": "wrangler dev --remote --port 8787",
     "deploy": "wrangler deploy",
+    "deploy:dev": "wrangler deploy --env development",
+    "deploy:prod": "wrangler deploy --env production",
     "db:create": "wrangler d1 create neetlogiq-db",
-    "db:migrate": "wrangler d1 migrations apply neetlogiq-db",
-    "db:seed": "wrangler d1 execute neetlogiq-db --file=./migrations/seed.sql"
+    "db:migrate": "wrangler d1 migrations apply neetlogiq-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply neetlogiq-db --remote",
+    "db:query": "wrangler d1 execute neetlogiq-db --command",
+    "db:backup": "wrangler d1 export neetlogiq-db --output backup.sql",
+    "test": "wrangler dev --local --port 8787 --test-scheduled"
   },
   "dependencies": {
-    "itty-router": "^4.0.0"
+    "csv-parse": "^6.1.0",
+    "itty-router": "^4.0.0",
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
-    "wrangler": "^3.0.0"
+    "@cloudflare/workers-types": "^4.20250903.0",
+    "@types/node": "^24.3.0",
+    "better-sqlite3": "^12.2.0",
+    "eslint": "^9.34.0",
+    "hono": "^4.9.6",
+    "prettier": "^3.6.2",
+    "typescript": "^5.9.2",
+    "wrangler": "^4.33.2"
   }
 }

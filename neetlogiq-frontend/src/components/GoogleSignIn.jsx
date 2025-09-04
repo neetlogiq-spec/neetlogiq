@@ -6,6 +6,8 @@ const GoogleSignIn = ({ className = "", text = "signin_with", size = "large", wi
   const { handleGoogleSuccess, GOOGLE_CLIENT_ID } = useAuth();
   const googleButtonRef = useRef(null);
 
+  console.log('GoogleSignIn component rendering:', { GOOGLE_CLIENT_ID, text, size });
+
   useEffect(() => {
     // Load Google Identity Services script
     const script = document.createElement('script');

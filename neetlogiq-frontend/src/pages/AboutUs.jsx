@@ -9,6 +9,7 @@ import { Heart, Users, Target, GraduationCap, Star, Shield, Zap, Phone, Mail, Ma
 import { Link } from 'react-router-dom';
 import GoogleSignIn from '../components/GoogleSignIn';
 import UserPopup from '../components/UserPopup';
+import ResponsiveHeader from '../components/ResponsiveHeader';
 import { useAuth } from '../contexts/AuthContext';
 import { Vortex } from '../components/ui/vortex';
 import { LightVortex } from '../components/ui/LightVortex';
@@ -111,42 +112,49 @@ const AboutUs = () => {
 
       {/* Content */}
       <div className="relative z-20 min-h-screen flex flex-col">
-        {/* Header - Same style as landing page */}
-      <motion.header
-          className="flex items-center justify-between p-8"
-        initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -20 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-        >
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center">
-              <GraduationCap className="w-8 h-8 text-white" />
+        {/* Desktop Header - Original Design */}
+        <div className="hidden md:block">
+          <motion.header
+            className="flex items-center justify-between p-8"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -20 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center">
+                <GraduationCap className="w-8 h-8 text-white" />
+              </div>
+              <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>NeetLogIQ</h1>
             </div>
-            <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>NeetLogIQ</h1>
-          </div>
 
-          <div className="flex items-center space-x-6 navbar">
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link to="/" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Home</Link>
-              <Link to="/colleges" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Colleges</Link>
-              <Link to="/courses" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Courses</Link>
-              <Link to="/cutoffs" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Cutoffs</Link>
-              <Link to="/about" className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-semibold`}>About</Link>
-            </nav>
-            
-            {/* Theme Toggle */}
-            <ThemeToggle />
-            
-            {/* Authentication Section */}
-            <div className="flex items-center gap-4">
-              {isAuthenticated ? (
-                <UserPopup />
-              ) : (
-                <GoogleSignIn text="signin" size="medium" width={120} />
-              )}
+            <div className="flex items-center space-x-6 navbar">
+              <nav className="hidden md:flex items-center space-x-8">
+                <Link to="/" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Home</Link>
+                <Link to="/colleges" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Colleges</Link>
+                <Link to="/courses" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Courses</Link>
+                <Link to="/cutoffs" className={`${isDarkMode ? 'text-white/80 hover:text-white' : 'text-gray-600 hover:text-gray-900'} transition-colors`}>Cutoffs</Link>
+                <Link to="/about" className={`${isDarkMode ? 'text-white' : 'text-gray-900'} font-semibold`}>About</Link>
+              </nav>
+              
+              {/* Theme Toggle */}
+              <ThemeToggle />
+              
+              {/* Authentication Section */}
+              <div className="flex items-center gap-4">
+                {isAuthenticated ? (
+                  <UserPopup />
+                ) : (
+                  <GoogleSignIn text="signin" size="medium" width={120} />
+                )}
+              </div>
             </div>
+          </motion.header>
         </div>
-      </motion.header>
+
+        {/* Mobile Header - Responsive Design */}
+        <div className="md:hidden">
+          <ResponsiveHeader />
+        </div>
 
       {/* Main Content */}
         <main className="flex-1 flex flex-col items-center justify-center px-8 py-16">

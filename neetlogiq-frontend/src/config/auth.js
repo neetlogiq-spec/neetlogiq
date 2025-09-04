@@ -12,9 +12,9 @@ export const GOOGLE_CONFIG = {
   COOKIE_POLICY: 'single_host_origin',
 };
 
-// Backend API configuration
+// Cloudflare Worker API configuration
 export const API_CONFIG = {
-  BASE_URL: 'https://neetlogiq-backend.neetlogiq.workers.dev',
+  BASE_URL: 'http://localhost:8787',
   ENDPOINTS: {
     AUTH: '/api/auth',
     USER: '/api/user',
@@ -22,5 +22,7 @@ export const API_CONFIG = {
     COURSES: '/api/courses',
     CUTOFFS: '/api/cutoffs',
     SEARCH: '/api/search',
+    BMAD_ANALYTICS: '/api/bmad/analytics',
+    BMAD_PERFORMANCE: '/api/bmad/performance',
   },
 };

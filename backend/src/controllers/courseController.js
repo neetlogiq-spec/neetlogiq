@@ -15,7 +15,8 @@ exports.getAllCourses = async (req, res, next) => {
       state, 
       college_type, 
       level,
-      search 
+      search,
+      college_id
     } = req.query;
     
     const db = dbManager.getDatabase('clean-unified.db');
@@ -60,6 +61,11 @@ exports.getAllCourses = async (req, res, next) => {
       params.push(level);
     }
     
+    if (college_id) {
+      whereClause += ' AND p.college_id = ?';
+      params.push(college_id);
+    }
+    
     // Get total count for pagination (count unique courses, not course-college combinations)
     const countQuery = `
       SELECT COUNT(DISTINCT p.name) as count 
@@ -96,37 +102,59 @@ exports.getAllCourses = async (req, res, next) => {
     
     const rawCourses = await db.all(coursesQuery, params);
     
-    // Group courses by course name and create colleges array
-    const groupedCourses = {};
-    rawCourses.forEach(course => {
-      if (!groupedCourses[course.course_name]) {
-        groupedCourses[course.course_name] = {
-          course_name: course.course_name,
-          stream: course.stream,
-          level: course.level,
-          branch: course.branch,
-          duration: course.duration,
-          entrance_exam: course.entrance_exam,
-          colleges: []
-        };
-      }
-      
-      // Add college information
-      groupedCourses[course.course_name].colleges.push({
+    let courses;
+    
+    // If filtering by college_id, return individual course records for that college
+    if (college_id) {
+      courses = rawCourses.map(course => ({
+        id: course.id,
+        course_name: course.course_name,
+        stream: course.stream,
+        level: course.level,
+        branch: course.branch,
+        duration: course.duration || 'N/A',
+        total_seats: course.total_seats || 0,
+        entrance_exam: course.entrance_exam,
         college_id: course.college_id,
         college_name: course.college_name,
         city: course.city,
         state: course.state,
         college_type: course.college_type,
         management_type: course.management_type,
-        establishment_year: course.establishment_year,
-        total_seats: course.total_seats
+        establishment_year: course.establishment_year
+      }));
+    } else {
+      // Group courses by course name and create colleges array (original logic)
+      const groupedCourses = {};
+      rawCourses.forEach(course => {
+        if (!groupedCourses[course.course_name]) {
+          groupedCourses[course.course_name] = {
+            course_name: course.course_name,
+            stream: course.stream,
+            level: course.level,
+            branch: course.branch,
+            duration: course.duration,
+            entrance_exam: course.entrance_exam,
+            colleges: []
+          };
+        }
+        
+        // Add college information
+        groupedCourses[course.course_name].colleges.push({
+          college_id: course.college_id,
+          college_name: course.college_name,
+          city: course.city,
+          state: course.state,
+          college_type: course.college_type,
+          management_type: course.management_type,
+          establishment_year: course.establishment_year,
+          total_seats: course.total_seats
+        });
       });
-    });
-    
-    // Convert to array and calculate total seats, also handle duration variations
-    let courses = Object.values(groupedCourses).map(course => {
-      const totalSeats = course.colleges.reduce((sum, college) => sum + (college.total_seats || 0), 0);
+      
+      // Convert to array and calculate total seats, also handle duration variations
+      courses = Object.values(groupedCourses).map(course => {
+        const totalSeats = course.colleges.reduce((sum, college) => sum + (college.total_seats || 0), 0);
       
       // Handle duration variations - if multiple durations exist, show the most common or a range
       let finalDuration = course.duration;
@@ -168,12 +196,13 @@ exports.getAllCourses = async (req, res, next) => {
         }
       }
       
-      return {
-        ...course,
-        duration: finalDuration,
-        total_seats: totalSeats
-      };
-    });
+        return {
+          ...course,
+          duration: finalDuration,
+          total_seats: totalSeats
+        };
+      });
+    }
     
     // Sort courses: courses with seats first (descending by seats), then 0-seat courses at the end
     courses.sort((a, b) => {

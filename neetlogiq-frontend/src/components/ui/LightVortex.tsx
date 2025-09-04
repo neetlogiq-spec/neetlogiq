@@ -21,7 +21,7 @@ export const LightVortex = (props: LightVortexProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef(null);
   const animationFrameId = useRef<number>();
-  const particleCount = props.particleCount || 600;
+  const particleCount = props.particleCount || 200; // Reduced from 600 to 200 for better performance
   const particlePropCount = 9;
   const particlePropsLength = particleCount * particlePropCount;
   const rangeY = props.rangeY || 100;
@@ -42,6 +42,9 @@ export const LightVortex = (props: LightVortexProps) => {
   const noise3D = createNoise3D();
   let particleProps = new Float32Array(particlePropsLength);
   let center: [number, number] = [0, 0];
+  let lastFrameTime = 0;
+  const targetFPS = 30; // Limit to 30 FPS for better performance
+  const frameInterval = 1000 / targetFPS;
 
   const TAU: number = 2 * Math.PI;
   const rand = (n: number): number => n * Math.random();
@@ -96,6 +99,17 @@ export const LightVortex = (props: LightVortexProps) => {
   };
 
   const draw = (canvas: HTMLCanvasElement, ctx: CanvasRenderingContext2D) => {
+    const currentTime = performance.now();
+    
+    // Frame rate limiting for better performance
+    if (currentTime - lastFrameTime < frameInterval) {
+      animationFrameId.current = window.requestAnimationFrame(() =>
+        draw(canvas, ctx),
+      );
+      return;
+    }
+    
+    lastFrameTime = currentTime;
     tick++;
 
     ctx.clearRect(0, 0, canvas.width, canvas.height);

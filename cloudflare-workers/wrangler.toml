@@ -8,10 +8,16 @@ binding = "DB"
 database_name = "neetlogiq-db"
 database_id = "769bb466-8366-4584-bd51-b78bb60d5e6c"
 
+# AI Model binding
+[ai]
+binding = "AI"
+
+# Vectorize database for AI embeddings
+[[vectorize]]
+binding = "VECTORIZE_INDEX"
+index_name = "neetlogiq-index"
+
 # Environment variables
 [vars]
-ENVIRONMENT = "production"
-
-# CORS configuration
-[env.production.vars]
-ENVIRONMENT = "production"
+ENVIRONMENT = "development"
+INDEXER_AUTH_SECRET = "dev-secret-key-change-in-production"

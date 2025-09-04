@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Cache - NeetLogIQ</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-align: center;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Cache Clearing Tool</h1>
+        <p>This will clear all cached data and redirect you to the NeetLogIQ app.</p>
+        
+        <div class="status" id="status">
+            Ready to clear cache...
+        </div>
+        
+        <button onclick="clearAllCache()">Clear All Cache & Redirect</button>
+        <button onclick="window.location.href='/'">Go to App (Skip Clearing)</button>
+    </div>
+
+    <script>
+        function updateStatus(message) {
+            document.getElementById('status').innerHTML = message;
+        }
+
+        async function clearAllCache() {
+            updateStatus('🔄 Clearing cache...');
+            
+            try {
+                // Clear all caches
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    for (let cacheName of cacheNames) {
+                        await caches.delete(cacheName);
+                        console.log('Deleted cache:', cacheName);
+                    }
+                    updateStatus('✅ Cleared ' + cacheNames.length + ' caches');
+                } else {
+                    updateStatus('ℹ️ No caches to clear');
+                }
+
+                // Clear localStorage
+                localStorage.clear();
+                console.log('Cleared localStorage');
+
+                // Clear sessionStorage
+                sessionStorage.clear();
+                console.log('Cleared sessionStorage');
+
+                // Clear IndexedDB
+                if ('indexedDB' in window) {
+                    try {
+                        const databases = await indexedDB.databases();
+                        for (let db of databases) {
+                            indexedDB.deleteDatabase(db.name);
+                        }
+                        updateStatus('✅ Cleared IndexedDB');
+                    } catch (e) {
+                        console.log('Could not clear IndexedDB:', e);
+                    }
+                }
+
+                updateStatus('✅ All cache cleared! Redirecting...');
+                
+                // Force reload with cache bypass
+                setTimeout(() => {
+                    window.location.href = '/?t=' + Date.now();
+                }, 2000);
+
+            } catch (error) {
+                updateStatus('❌ Error clearing cache: ' + error.message);
+                console.error('Cache clearing error:', error);
+            }
+        }
+
+        // Auto-clear on page load
+        window.addEventListener('load', () => {
+            setTimeout(clearAllCache, 1000);
+        });
+    </script>
+</body>
+</html>

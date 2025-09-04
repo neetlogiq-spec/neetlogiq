@@ -31,13 +31,13 @@ const UserPopup = () => {
       {/* User Avatar Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-2 p-2 rounded-lg backdrop-blur-sm transition-all duration-200 border ${
+        className={`flex items-center gap-1.5 px-2 py-1 rounded-lg backdrop-blur-sm transition-all duration-200 border ${
           isDarkMode 
             ? 'bg-white/10 hover:bg-white/20 border-white/20' 
             : 'bg-gray-100/80 hover:bg-gray-200/80 border-gray-200/50'
         }`}
       >
-        <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-white/30">
+        <div className="w-6 h-6 rounded-full overflow-hidden border-2 border-white/30">
           {user.imageUrl ? (
             <img
               src={user.imageUrl}
@@ -46,17 +46,17 @@ const UserPopup = () => {
             />
           ) : (
             <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
-              <User className="w-4 h-4 text-white" />
+              <User className="w-3 h-3 text-white" />
             </div>
           )}
         </div>
-        <span className={`text-sm font-medium hidden md:block ${
+        <span className={`text-xs font-medium hidden md:block ${
           isDarkMode ? 'text-white' : 'text-gray-900'
         }`}>
           {user.givenName || user.name}
         </span>
         <ChevronDown 
-          className={`w-4 h-4 transition-transform duration-200 ${
+          className={`w-3 h-3 transition-transform duration-200 ${
             isOpen ? 'rotate-180' : ''
           } ${isDarkMode ? 'text-white/70' : 'text-gray-600'}`} 
         />

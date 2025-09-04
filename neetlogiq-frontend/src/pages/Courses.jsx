@@ -5,12 +5,14 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { BookOpen, ChevronDown, ChevronUp, GraduationCap, MapPin, Users, Search } from 'lucide-react';
+import { BookOpen, ChevronDown, ChevronUp, GraduationCap, Search, MapPin, Users } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import AdvancedSearchBar from '../components/AdvancedSearchBar';
+import UnifiedSearchBar from '../components/UnifiedSearchBar';
 import BackToTopButton from '../components/BackToTopButton';
 import GoogleSignIn from '../components/GoogleSignIn';
 import UserPopup from '../components/UserPopup';
+import BlurredOverlay from '../components/BlurredOverlay';
+import ResponsiveHeader from '../components/ResponsiveHeader';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Vortex } from '../components/ui/vortex';
@@ -47,9 +49,12 @@ const Courses = () => {
       setIsLoading(true);
       console.log('🔍 Loading courses with filters:', newFilters, 'page:', newPage);
       
+      // Use default limit of 24 for loading all courses, or pagination limit if it's reasonable
+      const limit = pagination.limit && pagination.limit > 1 ? pagination.limit : 24;
+      
       const params = new URLSearchParams({
         page: newPage,
-        limit: pagination.limit  // Use proper pagination limit
+        limit: limit
       });
       
       if (newFilters.stream && newFilters.stream !== 'all') {
@@ -60,36 +65,77 @@ const Courses = () => {
         params.append('search', newFilters.search);
       }
       
-      const response = await fetch(`https://neetlogiq-backend.neetlogiq.workers.dev/api/courses?${params}`);
+      const response = await fetch(`http://localhost:8787/api/courses?${params}`);
       const data = await response.json();
       
       console.log('🔍 Courses API Response:', data);
       console.log('🔍 Sample course data:', data.data ? data.data.slice(0, 3) : 'No data');
       
       setCourses(data.data || []);
+      setFilteredCourses(data.data || []); // Also update filtered courses
       setPagination(data.pagination || {
         page: newPage,
-        limit: pagination.limit,
+        limit: limit,
         totalPages: 1,
         totalItems: 0
       });
     } catch (error) {
       console.error('Failed to load courses:', error);
       setCourses([]);
+      setFilteredCourses([]);
     } finally {
       setIsLoading(false);
     }
   }, [pagination.limit]);
 
-  // Backend integration
+  // Backend integration - only load on initial mount
   useEffect(() => {
-    loadCourses();
-  }, [loadCourses]);
+    const initialLoad = async () => {
+      try {
+        setIsLoading(true);
+        console.log('🔍 Loading courses with filters:', {}, 'page:', 1);
+        
+        const params = new URLSearchParams({
+          page: 1,
+          limit: 24  // Use default limit for initial load
+        });
+        
+        const response = await fetch(`http://localhost:8787/api/courses?${params}`);
+        const data = await response.json();
+        
+        console.log('🔍 Courses API Response:', data);
+        console.log('🔍 Sample course data:', data.data ? data.data.slice(0, 3) : 'No data');
+        
+        setCourses(data.data || []);
+        setFilteredCourses(data.data || []);
+        setPagination(data.pagination || {
+          page: 1,
+          limit: 24,
+          totalPages: 1,
+          totalItems: 0
+        });
+      } catch (error) {
+        console.error('Failed to load courses:', error);
+        setCourses([]);
+        setFilteredCourses([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    
+    initialLoad();
+  }, []); // Empty dependency array - only run on mount
 
-  // Update filtered courses when courses change
+  // Update filtered courses when courses change (but not during search)
   useEffect(() => {
-    setFilteredCourses(courses);
-  }, [courses]);
+    // Only update filteredCourses if we're not in the middle of a search
+    // This prevents overriding search results
+    console.log('🔍 useEffect triggered - courses:', courses.length, 'filteredCourses:', filteredCourses.length);
+    if (courses.length > 0 && filteredCourses.length === 0) {
+      console.log('🔍 Updating filteredCourses from courses:', courses.length);
+      setFilteredCourses(courses);
+    }
+  }, [courses, filteredCourses.length]);
 
 
 
@@ -111,12 +157,13 @@ const Courses = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const toggleCourseExpansion = (courseName) => {
+  const toggleCourseExpansion = (courseName, stream, level, index) => {
+    const uniqueKey = `${courseName}-${stream}-${level}-${index}`;
     const newExpanded = new Set(expandedCourses);
-    if (newExpanded.has(courseName)) {
-      newExpanded.delete(courseName);
+    if (newExpanded.has(uniqueKey)) {
+      newExpanded.delete(uniqueKey);
     } else {
-      newExpanded.add(courseName);
+      newExpanded.add(uniqueKey);
     }
     setExpandedCourses(newExpanded);
   };
@@ -155,7 +202,8 @@ const Courses = () => {
   ];
 
   return (
-    <div className="min-h-screen relative overflow-hidden transition-all duration-500">
+    <BlurredOverlay>
+      <div className="min-h-screen relative overflow-hidden transition-all duration-500">
       {/* Dynamic Background based on theme */}
       {isDarkMode ? (
         <Vortex
@@ -193,85 +241,92 @@ const Courses = () => {
 
       {/* Content */}
       <div className="relative z-20 min-h-screen flex flex-col">
-        {/* Header - Same style as landing page */}
+        {/* Desktop Header - Original Design */}
+        <div className="hidden md:block">
       <motion.header
-          className="flex items-center justify-between p-8"
+            className="flex items-center justify-between p-8"
         initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -20 }}
-          transition={{ duration: 0.3, delay: 0.1 }}
-        >
-          <div className="flex items-center space-x-3">
-            <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center">
-              <GraduationCap className="w-8 h-8 text-white" />
+            animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -20 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
+            <div className="flex items-center space-x-3">
+              <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center">
+                <GraduationCap className="w-8 h-8 text-white" />
+              </div>
+              <h1 className={`text-3xl font-bold transition-colors duration-300 ${
+                isDarkMode ? 'text-white' : 'text-gray-900'
+              }`}>NeetLogIQ</h1>
             </div>
-            <h1 className={`text-3xl font-bold transition-colors duration-300 ${
-              isDarkMode ? 'text-white' : 'text-gray-900'
-            }`}>NeetLogIQ</h1>
-          </div>
 
-          <div className="flex items-center space-x-6 navbar">
-            <nav className="hidden md:flex items-center space-x-8">
-              <Link 
-                to="/" 
-                className={`transition-colors duration-300 ${
-                  isDarkMode 
-                    ? 'text-white/80 hover:text-white' 
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
-              >
-                Home
-              </Link>
-              <Link 
-                to="/colleges" 
-                className={`transition-colors duration-300 ${
-                  isDarkMode 
-                    ? 'text-white/80 hover:text-white' 
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
-              >
-                Colleges
-              </Link>
-              <Link 
-                to="/courses" 
-                className={`font-semibold transition-colors duration-300 ${
-                  isDarkMode ? 'text-white' : 'text-gray-900'
-                }`}
-              >
+            <div className="flex items-center space-x-6 navbar">
+              <nav className="hidden md:flex items-center space-x-8">
+                <Link 
+                  to="/" 
+                  className={`transition-colors duration-300 ${
+                    isDarkMode 
+                      ? 'text-white/80 hover:text-white' 
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  Home
+                </Link>
+                <Link 
+                  to="/colleges" 
+                  className={`transition-colors duration-300 ${
+                    isDarkMode 
+                      ? 'text-white/80 hover:text-white' 
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  Colleges
+                </Link>
+                <Link 
+                  to="/courses" 
+                  className={`font-semibold transition-colors duration-300 ${
+                    isDarkMode ? 'text-white' : 'text-gray-900'
+                  }`}
+                >
             Courses
-              </Link>
-              <Link 
-                to="/cutoffs" 
-                className={`transition-colors duration-300 ${
-                  isDarkMode 
-                    ? 'text-white/80 hover:text-white' 
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
-              >
-                Cutoffs
-              </Link>
-              <Link 
-                to="/about" 
-                className={`transition-colors duration-300 ${
-                  isDarkMode 
-                    ? 'text-white/80 hover:text-white' 
-                    : 'text-gray-700 hover:text-gray-900'
-                }`}
-              >
-                About
-              </Link>
-            </nav>
-            
-            {/* Theme Toggle and Authentication Section */}
-            <div className="flex items-center gap-4">
-              <ThemeToggle />
-              {isAuthenticated ? (
-                <UserPopup />
-              ) : (
-                <GoogleSignIn text="signin" size="medium" width={120} />
-              )}
+                </Link>
+                <Link 
+                  to="/cutoffs" 
+                  className={`transition-colors duration-300 ${
+                    isDarkMode 
+                      ? 'text-white/80 hover:text-white' 
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  Cutoffs
+                </Link>
+                <Link 
+                  to="/about" 
+                  className={`transition-colors duration-300 ${
+                    isDarkMode 
+                      ? 'text-white/80 hover:text-white' 
+                      : 'text-gray-700 hover:text-gray-900'
+                  }`}
+                >
+                  About
+                </Link>
+              </nav>
+              
+              {/* Theme Toggle and Authentication Section */}
+              <div className="flex items-center gap-4">
+                <ThemeToggle />
+                {isAuthenticated ? (
+                  <UserPopup />
+                ) : (
+                  <GoogleSignIn text="signin" size="medium" width={120} />
+                )}
+              </div>
             </div>
+          </motion.header>
         </div>
-      </motion.header>
+
+        {/* Mobile Header - Responsive Design */}
+        <div className="md:hidden">
+          <ResponsiveHeader />
+        </div>
 
       {/* Main Content */}
         <main className="flex-1 flex flex-col items-center justify-center px-8 py-16">
@@ -307,71 +362,63 @@ const Courses = () => {
               animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 15 }}
               transition={{ duration: 0.3, delay: 0.4 }}
             >
-              <AdvancedSearchBar
-                placeholder="Search medical courses with AI-powered algorithms..."
-                onSearchSubmit={async (query) => {
-                  console.log('🔍 Search query:', query);
+              <UnifiedSearchBar
+                placeholder="Search medical courses with AI-powered intelligence..."
+                contentType="courses"
+                onSearchResults={(searchResult) => {
+                  console.log("🔍 Unified search results for courses:", searchResult);
                   
-                  if (query && query.trim()) {
-                    try {
-                      // Use backend search API to search all courses
-                      const searchParams = new URLSearchParams({
-                        search: query.trim(),
-                        page: 1,
-                        limit: 1000 // Get more results for search
-                      });
-                      
-                      const response = await fetch(`https://neetlogiq-backend.neetlogiq.workers.dev/api/courses?${searchParams}`);
-                      const data = await response.json();
-                      
-                      if (data.data) {
-                        console.log('🔍 Search results from backend:', data.data.length);
-                        setFilteredCourses(data.data);
-                        // Update pagination for search results
-                        setPagination(prev => ({
-                          ...prev,
-                          page: 1,
-                          totalPages: Math.ceil(data.data.length / prev.limit),
-                          totalItems: data.data.length
-                        }));
-                      } else {
-                        console.log('🔍 No search results found');
-                        setFilteredCourses([]);
-                      }
-                    } catch (error) {
-                      console.error('🔍 Search error:', error);
-                      // Fallback to local search if backend fails
-                      const searchTerm = query.toLowerCase().trim();
-                      const filtered = courses.filter(course => 
-                        (course.course_name && course.course_name.toLowerCase().includes(searchTerm)) ||
-                        (course.stream && course.stream.toLowerCase().includes(searchTerm)) ||
-                        (course.branch && course.branch.toLowerCase().includes(searchTerm)) ||
-                        (course.level && course.level.toLowerCase().includes(searchTerm))
-                      );
-                      setFilteredCourses(filtered);
+                  if (searchResult.results && searchResult.results.length > 0) {
+                    console.log("🔍 Setting courses to search results:", searchResult.results.length, "courses");
+                    
+                    // Convert search results to course format for display
+                    const searchCourses = searchResult.results.map(result => ({
+                      course_name: result.course_name,
+                      stream: result.stream,
+                      branch: result.branch || '',
+                      level: result.level,
+                      duration: result.duration || 'N/A',
+                      total_seats: result.total_seats || 0,
+                      college_count: result.total_colleges || 0,
+                      college_names: result.college_names || '',
+                      colleges: result.colleges || []
+                    }));
+                    
+                    console.log("🔍 Before setting courses - current courses:", courses.length, "filteredCourses:", filteredCourses.length);
+                    console.log("🔍 Search courses data:", searchCourses.map(c => ({ name: c.course_name, seats: c.total_seats, colleges: c.college_count })));
+                    setCourses(searchCourses);
+                    setFilteredCourses(searchCourses);
+                    setPagination({
+                      page: 1,
+                      limit: searchCourses.length,
+                      totalPages: 1,
+                      totalItems: searchCourses.length
+                    });
+                    console.log("🔍 Courses state updated successfully - searchCourses:", searchCourses.length);
+                  } else if (searchResult && searchResult.searchType === 'none') {
+                    // Only clear search when explicitly clearing (searchType: 'none')
+                    console.log("🔍 Clearing search results for courses");
+                    // Reset pagination to default values before reloading
+                    setPagination({
+                      page: 1,
+                      limit: 24,
+                      totalPages: 1,
+                      totalItems: 0
+                    });
+                    // Reload the original courses
+                    const currentFilters = {};
+                    if (selectedStream && selectedStream !== 'all') {
+                      currentFilters.stream = selectedStream;
                     }
+                    loadCourses(currentFilters, 1);
                   } else {
-                    // Clear search - reload all courses
-                    console.log('🔍 Clearing search - reloading all courses');
-                    loadCourses({}, 1);
+                    console.log("🔍 No search results to display for courses");
+                    // Don't clear courses array for empty results
                   }
                 }}
-                data={courses.map(course => ({
-                  id: course.course_name,
-                  course_name: course.course_name,
-                  specialization: course.branch || course.level,
-                  course_type: course.stream,
-                  level: course.level,
-                  colleges: course.colleges
-                }))}
-                onClear={() => {
-                  console.log('🔍 Search cleared manually');
-                  setFilteredCourses(courses);
-                }}
-                searchFields={['course_name', 'specialization', 'course_type', 'level', 'branch']}
-                showSuggestions={true}
-                showAlgorithmInfo={true}
                 debounceMs={300}
+                showSuggestions={true}
+                showAIInsight={true}
               />
             </motion.div>
 
@@ -482,17 +529,19 @@ const Courses = () => {
                   console.log('🔍 Rendering courses grid:', {
                     totalCourses: filteredCourses.length,
                     paginationLimit: pagination.limit,
-                    expectedGrid: `${Math.ceil(filteredCourses.length / 2)} rows × 2 columns`
+                    expectedGrid: `${Math.ceil(filteredCourses.length / 2)} rows × 2 columns`,
+                    courseNames: filteredCourses.map(c => c.course_name)
                   });
                   return filteredCourses;
                 })()
                   .map((course, index) => {
                     const IconComponent = getStreamIcon(course.stream);
-                    const isExpanded = expandedCourses.has(course.course_name);
+                    const uniqueKey = `${course.course_name}-${course.stream}-${course.level}-${index}`;
+                    const isExpanded = expandedCourses.has(uniqueKey);
                     
                     return (
                       <motion.div
-                        key={course.course_name}
+                        key={`${course.course_name}-${course.stream}-${course.level}-${index}`}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 10 }}
                         transition={{ delay: 0.7 + index * 0.05, duration: 0.3 }}
@@ -513,22 +562,9 @@ const Courses = () => {
                       
                       <div className="space-y-2 mb-4">
                         {(() => {
-                          // Calculate aggregated college count and total seats
-                          const aggregatedColleges = course.colleges.reduce((acc, college) => {
-                            const existingCollege = acc.find(c => c.college_name === college.college_name);
-                            if (existingCollege) {
-                              existingCollege.total_seats += college.total_seats;
-                            } else {
-                              acc.push({
-                                ...college,
-                                total_seats: college.total_seats
-                              });
-                            }
-                            return acc;
-                          }, []);
-                          
-                          const actualCollegeCount = aggregatedColleges.length;
-                          const actualTotalSeats = aggregatedColleges.reduce((sum, college) => sum + college.total_seats, 0);
+                          // Use direct values from search results or calculate from colleges
+                          const actualCollegeCount = course.college_count || (course.colleges ? course.colleges.length : 0);
+                          const actualTotalSeats = course.total_seats || (course.colleges ? course.colleges.reduce((sum, college) => sum + (college.total_seats || 0), 0) : 0);
                           
                           return (
                             <>
@@ -559,7 +595,7 @@ const Courses = () => {
                       {/* Expandable Colleges Section */}
                       <div className="mb-4">
                         <button
-                          onClick={() => toggleCourseExpansion(course.course_name)}
+                          onClick={() => toggleCourseExpansion(course.course_name, course.stream, course.level, index)}
                           className={`w-full flex items-center justify-between text-sm font-semibold transition-colors p-3 rounded-lg ${
                             isDarkMode 
                               ? 'text-white/90 hover:text-white bg-white/10 hover:bg-white/20' 
@@ -567,8 +603,8 @@ const Courses = () => {
                           }`}
                         >
                           {(() => {
-                            // Calculate aggregated college count for button text
-                            const aggregatedColleges = course.colleges.reduce((acc, college) => {
+                            // Calculate aggregated college count for button text (original logic)
+                            const aggregatedColleges = course.colleges ? course.colleges.reduce((acc, college) => {
                               const existingCollege = acc.find(c => c.college_name === college.college_name);
                               if (existingCollege) {
                                 existingCollege.total_seats += college.total_seats;
@@ -579,7 +615,7 @@ const Courses = () => {
                                 });
                               }
                               return acc;
-                            }, []);
+                            }, []) : [];
                             
                             const actualCollegeCount = aggregatedColleges.length;
                             return <span>View Colleges ({actualCollegeCount})</span>;
@@ -601,8 +637,8 @@ const Courses = () => {
                               className="mt-4 space-y-2 max-h-48 overflow-y-auto"
                             >
                               {(() => {
-                                // Aggregate colleges by name and sum their seats
-                                const aggregatedColleges = course.colleges.reduce((acc, college) => {
+                                // Aggregate colleges by name and sum their seats (original logic)
+                                const aggregatedColleges = course.colleges ? course.colleges.reduce((acc, college) => {
                                   const existingCollege = acc.find(c => c.college_name === college.college_name);
                                   if (existingCollege) {
                                     existingCollege.total_seats += college.total_seats;
@@ -613,7 +649,7 @@ const Courses = () => {
                                     });
                                   }
                                   return acc;
-                                }, []);
+                                }, []) : [];
                                 
                                 return aggregatedColleges.map((college, collegeIndex) => (
                                   <div key={collegeIndex} className={`p-3 rounded-lg border-2 backdrop-blur-md shadow-md ${
@@ -989,6 +1025,7 @@ const Courses = () => {
         </div>
         <BackToTopButton />
     </div>
+    </BlurredOverlay>
   );
 };
 
