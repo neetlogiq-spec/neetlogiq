@@ -81,20 +81,18 @@ const Tooltip = ({
   };
 
   useEffect(() => {
-    if (isVisible) {
+    if (isVisible && tooltipRef.current && triggerRef.current) {
       updatePosition();
-      const handleResize = () => updatePosition();
-      const handleScroll = () => updatePosition();
-      
-      window.addEventListener('resize', handleResize);
-      window.addEventListener('scroll', handleScroll, true);
-      
-      return () => {
-        window.removeEventListener('resize', handleResize);
-        window.removeEventListener('scroll', handleScroll, true);
-      };
     }
-  }, [isVisible, position]);
+
+    window.addEventListener('resize', updatePosition);
+    window.addEventListener('scroll', updatePosition, true);
+
+    return () => {
+      window.removeEventListener('resize', updatePosition);
+      window.removeEventListener('scroll', updatePosition, true);
+    };
+  }, [isVisible, updatePosition]);
 
   const getArrowClasses = () => {
     const baseClasses = 'absolute w-2 h-2 transform rotate-45';

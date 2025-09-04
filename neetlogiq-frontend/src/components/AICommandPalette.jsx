@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { Search, BrainCircuit, X, MapPin, GraduationCap, Calendar, Building } from 'lucide-react';
+import { Search, BrainCircuit, X, MapPin, Calendar, Building } from 'lucide-react';
 
 // Custom debounce hook
 const useDebounce = (value, delay) => {

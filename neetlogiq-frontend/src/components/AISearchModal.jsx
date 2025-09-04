@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, X, BrainCircuit, GraduationCap, BookOpen, TrendingUp, MapPin, Building, Calendar, Users } from 'lucide-react';
+import { Search, X, BrainCircuit, GraduationCap, BookOpen, TrendingUp, MapPin, Building, Calendar } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import unifiedSearchService from '../services/unifiedSearchService';
@@ -122,19 +122,6 @@ const AISearchModal = ({ isVisible, onClose, initialQuery = '' }) => {
         return <TrendingUp className="w-4 h-4" />;
       default:
         return <GraduationCap className="w-4 h-4" />;
-    }
-  };
-
-  const getCategoryColor = (category) => {
-    switch (category) {
-      case 'colleges':
-        return isDarkMode ? 'text-blue-400' : 'text-blue-600';
-      case 'courses':
-        return isDarkMode ? 'text-green-400' : 'text-green-600';
-      case 'cutoffs':
-        return isDarkMode ? 'text-purple-400' : 'text-purple-600';
-      default:
-        return isDarkMode ? 'text-gray-400' : 'text-gray-600';
     }
   };
 
