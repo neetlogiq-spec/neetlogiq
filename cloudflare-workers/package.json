@@ -20,6 +20,8 @@
   "dependencies": {
     "csv-parse": "^6.1.0",
     "itty-router": "^4.0.0",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7",
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
