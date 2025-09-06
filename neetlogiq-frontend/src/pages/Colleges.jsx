@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Building2, GraduationCap, Database, X } from 'lucide-react';
+import { Building2, GraduationCap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import IntelligentFilters from '../components/IntelligentFilters';
 import ResponsiveHeader from '../components/ResponsiveHeader';
@@ -57,176 +57,11 @@ const Colleges = () => {
   
   
   // Advanced search hook - initialized with ALL colleges, not just current page
-  const {
-    searchService,
-    isInitialized: isAdvancedSearchReady,
-    isLoading: isAdvancedSearchLoading,
-    performSearch: performAdvancedSearch
-  } = useAdvancedSearch(allCollegesForSearch);
+  useAdvancedSearch(allCollegesForSearch);
 
   // Unified search integration
-  const { 
-    performSearch: performUnifiedSearch, 
-    isInitialized: isUnifiedSearchInitialized
-    // performanceMetrics: unifiedSearchMetrics // Available if needed for debugging
-  } = useUnifiedSearch(allCollegesForSearch, { contentType: 'colleges' });
+  useUnifiedSearch(allCollegesForSearch, { contentType: 'colleges' });
 
-  // Search colleges by query (hybrid approach)
-  const searchColleges = async (searchQuery) => {
-    try {
-      setIsLoading(true); // Show loading state during search
-      if (!searchQuery || searchQuery.trim() === '') {
-        // Clear search - reset to normal pagination
-        console.log('🔍 Clearing search - returning to default college list');
-        setCurrentSearchQuery('');
-        
-        // Reset pagination to default values before loading
-        setPagination({
-          page: 1,
-          limit: 24,
-          totalPages: 1,
-          totalItems: 0
-        });
-        
-        // Load default colleges with current filters
-        await loadColleges(appliedFilters, 1);
-        return;
-      }
-      
-      console.log('🔍 Searching for:', searchQuery);
-      
-      // Try unified search first if available
-      if (isUnifiedSearchInitialized && performUnifiedSearch) {
-        try {
-          console.log('🚀 Using unified search engine...');
-          const unifiedResults = await performUnifiedSearch(searchQuery.trim(), { contentType: 'colleges' });
-          
-          if (unifiedResults && unifiedResults.length > 0) {
-            console.log(`✅ Unified search found ${unifiedResults.length} results`);
-            
-            const firstPageResults = unifiedResults.slice(0, pagination.limit);
-            setColleges(firstPageResults);
-            setCurrentSearchQuery(searchQuery.trim());
-            setPagination({
-              page: 1,
-              limit: pagination.limit,
-              totalPages: Math.ceil(unifiedResults.length / pagination.limit),
-              totalItems: unifiedResults.length
-            });
-            return;
-          }
-        } catch (unifiedError) {
-          console.warn('⚠️ Unified search failed, falling back to backend search:', unifiedError.message);
-        }
-      }
-      
-      // Try advanced search as fallback (temporarily disabled to use backend search)
-      if (false && isAdvancedSearchReady && searchService) {
-        try {
-          console.log('🚀 Using advanced search service...');
-          console.log('🔍 Search service status:', searchService);
-          console.log('🔍 All colleges for search:', allCollegesForSearch.length);
-          
-          const advancedResults = await performAdvancedSearch(searchQuery.trim());
-          console.log('🔍 Advanced search results:', advancedResults);
-          
-          if (advancedResults && advancedResults.length > 0) {
-            console.log(`🤖 Advanced search found ${advancedResults.length} results`);
-            
-            // If advanced search returns very few results, also try backend search for comparison
-            if (advancedResults.length < 5) {
-              console.log('⚠️ Advanced search returned few results, also trying backend search...');
-              try {
-                const backendResponse = await apiService.searchColleges(searchQuery.trim(), 1, 100);
-                if (backendResponse && backendResponse.data && backendResponse.data.length > advancedResults.length) {
-                  console.log(`🔄 Backend search found ${backendResponse.data.length} results, using backend results`);
-                  // Use backend results if they're more comprehensive
-                  const firstPageResults = backendResponse.data.slice(0, pagination.limit);
-                  setColleges(firstPageResults);
-                  setCurrentSearchQuery(searchQuery.trim());
-                  setPagination({
-                    page: 1,
-                    limit: pagination.limit,
-                    totalPages: Math.ceil(backendResponse.data.length / pagination.limit),
-                    totalItems: backendResponse.data.length
-                  });
-                  return;
-                }
-              } catch (backendError) {
-                console.warn('⚠️ Backend search failed:', backendError);
-              }
-            }
-            
-            // Use advanced search results
-            const firstPageResults = advancedResults.slice(0, pagination.limit);
-            setColleges(firstPageResults);
-            setCurrentSearchQuery(searchQuery.trim());
-            setPagination({
-              page: 1,
-              limit: pagination.limit,
-              totalPages: Math.ceil(advancedResults.length / pagination.limit),
-              totalItems: advancedResults.length
-            });
-            
-            return;
-          } else {
-            console.log('⚠️ Advanced search returned no results, falling back to backend');
-          }
-        } catch (advancedError) {
-          console.warn('⚠️ Advanced search failed, falling back to backend:', advancedError);
-        }
-      } else {
-        console.log('⚠️ Advanced search not ready:', { isAdvancedSearchReady, searchService });
-      }
-      
-      // Fallback to backend search
-      console.log('🔄 Falling back to backend search...');
-      console.log('🔍 Backend search query:', searchQuery.trim());
-      
-      const response = await apiService.searchColleges(searchQuery.trim(), 1, pagination.limit);
-      console.log('🔍 Backend search response:', response);
-      
-      if (response && response.data) {
-        console.log(`🔍 Backend search results: ${response.data.length} colleges found`);
-        console.log('📊 Pagination info:', response.pagination);
-        console.log('🔍 Sample results:', response.data.slice(0, 3));
-        
-        // Always show only first page results to maintain grid
-        const firstPageResults = response.data.slice(0, pagination.limit);
-        setColleges(firstPageResults);
-        setCurrentSearchQuery(searchQuery.trim());
-        setPagination({
-          page: 1, // Reset to first page when searching
-          limit: pagination.limit,
-          totalPages: response.pagination?.totalPages || Math.ceil(response.pagination?.totalItems / pagination.limit),
-          totalItems: response.pagination?.totalItems || response.data.length
-        });
-        
-      } else {
-        console.error('❌ Invalid search response:', response);
-        setColleges([]);
-        setCurrentSearchQuery('');
-        setPagination({
-          page: 1,
-          limit: 24,
-          totalPages: 0,
-          totalItems: 0
-        });
-      }
-    } catch (error) {
-      console.error('❌ Search error:', error);
-      setColleges([]);
-      setCurrentSearchQuery('');
-      setPagination({
-        page: 1,
-        limit: 24,
-        totalPages: 0,
-        totalItems: 0
-      });
-    } finally {
-      setIsLoading(false); // Hide loading state after search
-    }
-  };
 
   // Load colleges from backend with chunked loading
   const loadColleges = useCallback(async (newFilters = {}, newPage = 1, isAppend = false) => {
@@ -672,33 +507,6 @@ const Colleges = () => {
               animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 30 }}
               transition={{ duration: 0.2, delay: 0.2 }}
             >
-              {/* Search Status */}
-              <div className="text-center mb-4">
-                <div className="flex items-center justify-center gap-3">
-                  <div className="inline-flex items-center gap-2 bg-blue-500/20 text-blue-300 px-4 py-2 rounded-full text-sm">
-                    <Database className="w-4 h-4" />
-                                            {currentSearchQuery ? (
-                          <>
-                            Search Results: {colleges.length} colleges found for "{currentSearchQuery}"
-                            {isAdvancedSearchLoading && <span className="animate-pulse"> (Searching...)</span>}
-                          </>
-                        ) : (
-                      <>
-                      </>
-                    )}
-            </div>
-            
-                  {currentSearchQuery && (
-                    <button
-                      onClick={() => searchColleges('')}
-                      className="inline-flex items-center gap-2 bg-red-500/20 text-red-300 px-3 py-2 rounded-full text-sm hover:bg-red-500/30 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                      Clear Search
-                    </button>
-                  )}
-                </div>
-              </div>
                               <UnifiedSearchBar
                   placeholder="Search medical colleges with unified AI intelligence..."
                   onSearchResults={async (searchResult) => {
@@ -780,7 +588,7 @@ const Colleges = () => {
                   debounceMs={300}
                   contentType="colleges"
                   collegesData={allCollegesForSearch}
-                  showAdvancedFeatures={isUnifiedSearchInitialized}
+                  showAdvancedFeatures={false}
                   showPerformanceMetrics={true}
                 />
             </motion.div>

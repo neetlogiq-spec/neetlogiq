@@ -313,27 +313,8 @@ const UnifiedSearchBar = ({
         </div>
       )}
       
-      {/* Performance Metrics */}
-      {getPerformanceDisplay()}
       
       {/* Search Status */}
-      {showAdvancedFeatures && (
-        <div className="mt-2 text-xs text-gray-500">
-          {isInitialized ? (
-            <span className="flex items-center gap-1">
-              <BrainCircuit className="w-3 h-3" />
-              Unified Search Engine Ready
-              {searchMetadata?.engines && (
-                <span className="ml-2">
-                  ({searchMetadata.engines.join(', ')})
-                </span>
-              )}
-            </span>
-          ) : (
-            <span>Initializing search engine...</span>
-          )}
-        </div>
-      )}
       
       {/* Error Display */}
       {error && (
