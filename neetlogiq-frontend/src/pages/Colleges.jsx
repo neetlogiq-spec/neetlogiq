@@ -504,7 +504,7 @@ const Colleges = () => {
       console.log(`🔍 Fetching courses for college ID: ${collegeId}`);
       
       // Use the specific college courses endpoint with higher limit
-              const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8787'}/api/courses?college_id=${collegeId}&limit=100`);
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://neetlogiq-backend.neetlogiq.workers.dev'}/api/courses?college_id=${collegeId}&limit=100`);
       
       if (response.ok) {
         const data = await response.json();

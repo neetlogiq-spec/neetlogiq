@@ -3,7 +3,7 @@
 
 class TypesenseService {
   constructor() {
-    this.baseURL = 'http://localhost:8787/api';
+    this.baseURL = `${process.env.REACT_APP_API_URL || 'https://neetlogiq-backend.neetlogiq.workers.dev'}/api`;
     this.searchCache = new Map();
     this.cacheTimeout = 30000; // 30 seconds
   }

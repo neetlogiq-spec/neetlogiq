@@ -109,7 +109,7 @@ const Courses = () => {
         console.log('🔍 Initial loading with proper pagination');
         
         // Load colleges data for search engine
-        const collegesPromise = fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8787'}/api/colleges?limit=100`)
+        const collegesPromise = fetch(`${process.env.REACT_APP_API_URL || 'https://neetlogiq-backend.neetlogiq.workers.dev'}/api/colleges?limit=100`)
           .then(response => response.json())
           .then(data => {
             console.log('🏫 Loaded colleges for search:', data.data?.length || 0);
@@ -122,7 +122,7 @@ const Courses = () => {
           });
 
         // Load first page of courses with proper pagination
-        const coursesPromise = fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8787'}/api/courses?page=1&limit=24`)
+        const coursesPromise = fetch(`${process.env.REACT_APP_API_URL || 'https://neetlogiq-backend.neetlogiq.workers.dev'}/api/courses?page=1&limit=24`)
           .then(response => response.json())
           .then(data => {
             console.log('📚 Loaded courses:', data.data?.length || 0);

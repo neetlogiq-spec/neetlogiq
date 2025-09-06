@@ -40,7 +40,7 @@ const AdvancedSearchBar = ({
         contentType = 'cutoffs';
       }
       
-      const response = await fetch(`http://localhost:8787/api/ai-search?q=${encodeURIComponent(searchQuery)}&type=${contentType}`);
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://neetlogiq-backend.neetlogiq.workers.dev'}/api/ai-search?q=${encodeURIComponent(searchQuery)}&type=${contentType}`);
       if (response.ok) {
         const data = await response.json();
         console.log('🤖 AI search results:', data);
