@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { GraduationCap, MapPin, TrendingUp, Shield, Zap, Brain, Target } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { GraduationCap, MapPin, TrendingUp, Shield, Zap, Brain, Target, BookOpen, BarChart3 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import GoogleSignIn from '../components/GoogleSignIn';
 import UserPopup from '../components/UserPopup';
 import { useAuth } from '../contexts/AuthContext';
@@ -11,7 +11,6 @@ import { LightVortex } from '../components/ui/LightVortex';
 import ThemeToggle from '../components/ThemeToggle';
 import AISearchModal from '../components/AISearchModal';
 import ResponsiveHeader from '../components/ResponsiveHeader';
-import MobileOptimizedSearchBar from '../components/MobileOptimizedSearchBar';
 
 const LandingPage = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -19,7 +18,6 @@ const LandingPage = () => {
   const [isAISearchModalOpen, setIsAISearchModalOpen] = useState(false);
   const { isAuthenticated } = useAuth();
   const { isDarkMode } = useTheme();
-  const navigate = useNavigate();
 
   useEffect(() => {
     // Simulate loading delay for the opening animation
@@ -113,11 +111,11 @@ const LandingPage = () => {
       <div className="relative z-20 min-h-screen flex flex-col">
         {/* Header - Original Design for Desktop, Responsive for Mobile */}
         <div className="hidden md:block">
-          <motion.header
+      <motion.header
             className="flex items-center justify-between p-8"
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -50 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
+            transition={{ duration: 0.25, delay: 0.05 }}
           >
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center">
@@ -210,7 +208,7 @@ const LandingPage = () => {
               }`}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: isLoaded ? 1 : 0, scale: isLoaded ? 1 : 0.8 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
+              transition={{ duration: 0.3, delay: 0.1 }}
             >
               NeetLogIQ
             </motion.h1>
@@ -222,52 +220,99 @@ const LandingPage = () => {
               }`}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 30 }}
-              transition={{ duration: 0.4, delay: 0.3 }}
+              transition={{ duration: 0.25, delay: 0.15 }}
             >
               Your Gateway to Medical Education Excellence
             </motion.p>
 
-            {/* Search Bar */}
+            {/* Hero Section with CTA Buttons */}
             <motion.div
-              className="max-w-3xl mx-auto mb-16"
+              className="max-w-4xl mx-auto mb-16"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 30 }}
               transition={{ duration: 0.4, delay: 0.4 }}
             >
-              <MobileOptimizedSearchBar
-                placeholder="Search colleges, courses, or cutoffs with AI..."
-                contentType="all"
-                onSearchResults={(searchResult) => {
-                  if (searchResult.results && searchResult.results.length > 0) {
-                    // Navigate to appropriate page based on search results
-                    const firstResult = searchResult.results[0];
-                    if (firstResult.category === 'colleges') {
-                      navigate(`/colleges?search=${encodeURIComponent(firstResult.name)}`);
-                    } else if (firstResult.category === 'courses') {
-                      navigate(`/courses?search=${encodeURIComponent(firstResult.name)}`);
-                    } else if (firstResult.category === 'cutoffs') {
-                      navigate(`/cutoffs?search=${encodeURIComponent(firstResult.college || firstResult.course)}`);
-                    } else {
-                      navigate(`/colleges?search=${encodeURIComponent(firstResult.name)}`);
-                    }
-                  }
-                }}
-                showSuggestions={true}
-                showAIInsight={true}
-              />
-              
-              {/* AI Search Hint */}
-              <div className="mt-3 text-center">
-                <p className={`text-sm ${
-                  isDarkMode ? 'text-white/70' : 'text-gray-600'
-                }`}>
-                  Try our <span className="font-semibold text-blue-500">AI-powered search</span> for natural language queries
-                </p>
-                <p className={`text-xs mt-1 ${
-                  isDarkMode ? 'text-white/50' : 'text-gray-500'
-                }`}>
-                  Press <kbd className="px-1 py-0.5 bg-gray-200 dark:bg-gray-600 rounded text-xs">Ctrl+K</kbd> for quick access
-                </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                {/* Colleges Card */}
+                <Link to="/colleges" className="group">
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="bg-gradient-to-br from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white p-6 rounded-xl text-center transition-all duration-300 shadow-lg hover:shadow-xl h-full flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-white/30 transition-all duration-300">
+                        <GraduationCap className="w-6 h-6" />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">Explore Colleges</h3>
+                      <p className="text-blue-100 text-sm">Browse 2,400+ medical colleges across India</p>
+                    </div>
+                    <div className="flex items-center justify-center text-blue-200 text-xs mt-3">
+                      <span>Discover Now</span>
+                      <motion.div
+                        className="ml-1"
+                        animate={{ x: [0, 3, 0] }}
+                        transition={{ repeat: Infinity, duration: 1.5 }}
+                      >
+                        →
+                      </motion.div>
+                    </div>
+                  </motion.div>
+                </Link>
+                
+                {/* Courses Card */}
+                <Link to="/courses" className="group">
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="bg-gradient-to-br from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700 text-white p-6 rounded-xl text-center transition-all duration-300 shadow-lg hover:shadow-xl h-full flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-white/30 transition-all duration-300">
+                        <BookOpen className="w-6 h-6" />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">View Courses</h3>
+                      <p className="text-purple-100 text-sm">Discover medical courses and specializations</p>
+                    </div>
+                    <div className="flex items-center justify-center text-purple-200 text-xs mt-3">
+                      <span>Explore Courses</span>
+                      <motion.div
+                        className="ml-1"
+                        animate={{ x: [0, 3, 0] }}
+                        transition={{ repeat: Infinity, duration: 1.5, delay: 0.2 }}
+                      >
+                        →
+                      </motion.div>
+                    </div>
+                  </motion.div>
+                </Link>
+                
+                {/* Cutoffs Card */}
+                <Link to="/cutoffs" className="group">
+                  <motion.div
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    className="bg-gradient-to-br from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white p-6 rounded-xl text-center transition-all duration-300 shadow-lg hover:shadow-xl h-full flex flex-col justify-between"
+                  >
+                    <div>
+                      <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3 group-hover:bg-white/30 transition-all duration-300">
+                        <BarChart3 className="w-6 h-6" />
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">Check Cutoffs</h3>
+                      <p className="text-green-100 text-sm">View admission cutoffs and requirements</p>
+                    </div>
+                    <div className="flex items-center justify-center text-green-200 text-xs mt-3">
+                      <span>View Cutoffs</span>
+                      <motion.div
+                        className="ml-1"
+                        animate={{ x: [0, 3, 0] }}
+                        transition={{ repeat: Infinity, duration: 1.5, delay: 0.4 }}
+                      >
+                        →
+                      </motion.div>
+                    </div>
+                  </motion.div>
+                </Link>
               </div>
             </motion.div>
 
@@ -417,6 +462,7 @@ const LandingPage = () => {
             </motion.div>
           </div>
         </main>
+
 
         {/* Footer */}
         <motion.footer

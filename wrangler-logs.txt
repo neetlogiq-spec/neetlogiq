@@ -1,0 +1,37 @@
+
+ ⛅️ wrangler 4.33.2 (update available 4.34.0)
+─────────────────────────────────────────────
+
+[31m✘ [41;31m[[41;97mERROR[41;31m][0m [1mMissing entry-point to Worker script or to assets directory[0m
+
+  
+  If there is code to deploy, you can either:
+  - Specify an entry-point to your Worker script via the command line (ex: `npx wrangler dev src/index.ts`)
+  - Or create a "wrangler.jsonc" file containing:
+  
+  ```
+  {
+    "name": "worker-name",
+    "compatibility_date": "2025-09-05",
+    "main": "src/index.ts"
+  }
+  ```
+  
+  
+  If are uploading a directory of assets, you can either:
+  - Specify the path to the directory of assets via the command line: (ex: `npx wrangler dev --assets=./dist`)
+  - Or create a "wrangler.jsonc" file containing:
+  
+  ```
+  {
+    "name": "worker-name",
+    "compatibility_date": "2025-09-05",
+    "assets": {
+      "directory": "./dist"
+    }
+  }
+  ```
+  
+
+
+🪵  Logs were written to "/Users/kashyapanand/.wrangler/logs/wrangler-2025-09-05_19-48-43_060.log"

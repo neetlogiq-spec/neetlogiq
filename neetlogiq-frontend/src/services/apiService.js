@@ -1,6 +1,6 @@
 // API Service for NeetLogIQ Cloudflare Worker Integration
 
-const API_BASE_URL = 'https://neetlogiq-backend.neetlogiq.workers.dev/api';
+const API_BASE_URL = 'http://localhost:8787/api';
 
 class ApiService {
   constructor() {
@@ -73,12 +73,12 @@ class ApiService {
 
   async searchColleges(query, page = 1, limit = 24) {
     const queryParams = new URLSearchParams();
-    queryParams.append('search', query); // Use 'search' parameter as expected by backend
-    queryParams.append('page', page); // Add pagination support
-    queryParams.append('limit', limit); // Use 24 for proper pagination
+    queryParams.append('q', query); // Use 'q' parameter as expected by aliases search
+    queryParams.append('entityType', 'college'); // Specify entity type
+    queryParams.append('limit', limit); // Use the limit for results
     
-    // Use the existing colleges endpoint with search parameter
-    return this.apiCall(`/colleges?${queryParams.toString()}`);
+    // Use the new aliases search endpoint
+    return this.apiCall(`/aliases/search?${queryParams.toString()}`);
   }
 
   async getCollegeById(id) {
@@ -183,6 +183,42 @@ class ApiService {
         error: error.message,
         timestamp: new Date().toISOString()
       };
+    }
+  }
+
+  async search(query, options = {}) {
+    const { limit = 100, contentType = 'colleges' } = options;
+    const page = 1;
+    const searchParams = new URLSearchParams({ search: query, page: page.toString(), limit: limit.toString() });
+
+    const endpoint = contentType === 'courses' ? '/api/courses' : '/api/colleges';
+    const url = `${this.baseURL}${endpoint}?${searchParams.toString()}`;
+
+    console.log(`🌐 API Call URL: ${url}`);
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('🌐 API Response data:', data);
+      
+      // Check for BMAD optimization headers
+      const bmadOptimized = response.headers.get('X-BMAD-Optimized');
+      if (bmadOptimized) {
+        console.log('🤖 BMAD optimization detected:', bmadOptimized);
+      }
+      
+      return data;
+    } catch (error) {
+      console.error(`API call failed for ${endpoint}:`, error);
+      throw error;
     }
   }
 }

@@ -97,12 +97,9 @@ class UnifiedSearchService {
     // Fallback to legacy search methods
     console.log('🔄 Using legacy search methods...');
     
-    // For courses, use regular search directly as AI search returns wrong format
     if (contentType === 'courses') {
-      console.log('🔍 Using regular search for courses (AI search returns wrong format)');
-      const regularResult = await this.performRegularSearch(normalizedQuery, contentType, options);
-      cacheManager.set(cacheKey, regularResult, this.cacheTimeout);
-      return regularResult;
+      console.log(' unifiedSearchService.js: Bypassing AI, performing regular search for courses');
+      return await this.performRegularSearch(query, 'courses');
     }
 
     try {

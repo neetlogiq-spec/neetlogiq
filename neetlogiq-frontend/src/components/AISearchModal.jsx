@@ -4,6 +4,7 @@ import { Search, X, BrainCircuit, GraduationCap, BookOpen, TrendingUp, MapPin, B
 import { useNavigate } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import unifiedSearchService from '../services/unifiedSearchService';
+import useScrollLock from '../hooks/useScrollLock';
 
 // Custom debounce hook
 const useDebounce = (value, delay) => {
@@ -33,6 +34,9 @@ const AISearchModal = ({ isVisible, onClose, initialQuery = '' }) => {
   const inputRef = useRef(null);
   const navigate = useNavigate();
   const { isDarkMode } = useTheme();
+  
+  // Lock body scroll when modal is open
+  useScrollLock(isVisible);
 
   useEffect(() => {
     if (isVisible) {

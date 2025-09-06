@@ -5,11 +5,11 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Building2, Wifi, WifiOff, GraduationCap, Database, ChevronUp, ChevronDown, X, Sparkles, Zap } from 'lucide-react';
+import { Building2, Wifi, WifiOff, GraduationCap, Database, X, Sparkles, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import IntelligentFilters from '../components/IntelligentFilters';
 import ResponsiveHeader from '../components/ResponsiveHeader';
-// import MobileOptimizedSearchBar from '../components/MobileOptimizedSearchBar'; // Replaced with UnifiedSearchBar
+import CollegeCard from '../components/ResponsiveCollegeCard';
 import UnifiedSearchBar from '../components/UnifiedSearchBar';
 import BlurredOverlay from '../components/BlurredOverlay';
 import apiService from '../services/apiService';
@@ -32,7 +32,6 @@ const Colleges = () => {
   const { isDarkMode } = useTheme();
   const [isAICommandPaletteOpen, setIsAICommandPaletteOpen] = useState(false);
 
-  const [expandedCards, setExpandedCards] = useState(new Set());
   const [collegeCourses, setCollegeCourses] = useState({});
 
 
@@ -84,7 +83,14 @@ const Colleges = () => {
         console.log('🔍 Clearing search - returning to default college list');
         setCurrentSearchQuery('');
         setAllSearchResults([]); // Clear stored search results
-        setPagination(prev => ({ ...prev, page: 1 })); // Reset to first page
+        
+        // Reset pagination to default values before loading
+        setPagination({
+          page: 1,
+          limit: 24,
+          totalPages: 1,
+          totalItems: 0
+        });
         
         // Load default colleges with current filters
         await loadColleges(appliedFilters, 1);
@@ -257,7 +263,7 @@ const Colleges = () => {
       setColleges(response.data || []);
       setPagination(response.pagination || {
         page: newPage,
-        limit: pagination.limit,
+        limit: 24, // Use default limit instead of pagination.limit
         totalPages: 1,
         totalItems: 0
       });
@@ -339,7 +345,7 @@ const Colleges = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoaded(true);
-    }, 200); // Reduced from 500ms to 200ms
+    }, 100); // Reduced from 200ms to 100ms for snappier feel
     return () => clearTimeout(timer);
   }, []);
 
@@ -452,19 +458,6 @@ const Colleges = () => {
 
 
 
-  const toggleCardExpansion = (collegeId) => {
-    setExpandedCards(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(collegeId)) {
-        newSet.delete(collegeId);
-      } else {
-        newSet.add(collegeId);
-        // Fetch courses when expanding
-        fetchCollegeCourses(collegeId);
-      }
-      return newSet;
-    });
-  };
 
   const fetchCollegeCourses = async (collegeId) => {
     if (collegeCourses[collegeId]) return; // Already fetched
@@ -472,8 +465,8 @@ const Colleges = () => {
     try {
       console.log(`🔍 Fetching courses for college ID: ${collegeId}`);
       
-      // Use the specific college courses endpoint
-              const response = await fetch(`http://localhost:8787/api/courses?college_id=${collegeId}`);
+      // Use the specific college courses endpoint with higher limit
+              const response = await fetch(`http://localhost:8787/api/courses?college_id=${collegeId}&limit=100`);
       
       if (response.ok) {
         const data = await response.json();
@@ -575,7 +568,7 @@ const Colleges = () => {
             className="flex items-center justify-between p-8"
             initial={{ opacity: 0, y: -50 }}
             animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -50 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
+            transition={{ duration: 0.2, delay: 0.05 }}
           >
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center">
@@ -621,7 +614,7 @@ const Colleges = () => {
               className={`text-5xl md:text-7xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
               initial={{ opacity: 0, scale: 0.8 }}
               animate={{ opacity: isLoaded ? 1 : 0, scale: isLoaded ? 1 : 0.8 }}
-              transition={{ duration: 0.4, delay: 0.2 }}
+              transition={{ duration: 0.25, delay: 0.1 }}
             >
               Medical Colleges
             </motion.h1>
@@ -631,7 +624,7 @@ const Colleges = () => {
               className={`text-xl md:text-2xl mb-12 max-w-3xl mx-auto ${isDarkMode ? 'text-white/90' : 'text-gray-600'}`}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 30 }}
-              transition={{ duration: 0.3, delay: 0.6 }}
+              transition={{ duration: 0.2, delay: 0.15 }}
             >
               Discover top medical colleges across India with detailed information, courses, and seat availability
             </motion.p>
@@ -641,7 +634,7 @@ const Colleges = () => {
               className="max-w-3xl mx-auto mb-8"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 30 }}
-              transition={{ duration: 0.3, delay: 0.8 }}
+              transition={{ duration: 0.2, delay: 0.2 }}
             >
               {/* Search Status */}
               <div className="text-center mb-4">
@@ -691,7 +684,16 @@ const Colleges = () => {
                       // Only clear search when explicitly clearing (searchType: 'none')
                       console.log("🔍 Clearing search results");
                       setCurrentSearchQuery('');
-                      // Don't clear colleges array - let the initial load handle it
+                      setAllSearchResults([]);
+                      // Reset pagination to default values
+                      setPagination({
+                        page: 1,
+                        limit: 24,
+                        totalPages: 1,
+                        totalItems: 0
+                      });
+                      // Load default colleges
+                      loadColleges(appliedFilters, 1);
                     } else {
                       console.log("🔍 No search results to display");
                       // Don't clear colleges array for empty results
@@ -709,7 +711,7 @@ const Colleges = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
-              transition={{ delay: 0.9, duration: 0.4 }}
+              transition={{ delay: 0.25, duration: 0.2 }}
               className="flex items-center justify-center gap-4 mb-8 flex-wrap"
             >
               {apiStatus === 'connected' ? (
@@ -770,7 +772,7 @@ const Colleges = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
-              transition={{ delay: 0.8, duration: 0.4 }}
+              transition={{ delay: 0.3, duration: 0.2 }}
               className="mb-6 p-4 bg-blue-500/20 rounded-lg border border-blue-500/30"
             >
               <div className="text-center text-blue-300 text-sm">
@@ -849,7 +851,7 @@ const Colleges = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
-              transition={{ delay: 1.0, duration: 0.4 }}
+              transition={{ delay: 0.35, duration: 0.2 }}
               className="mb-16"
             >
               <IntelligentFilters
@@ -869,7 +871,7 @@ const Colleges = () => {
               className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 30 }}
-              transition={{ duration: 0.3, delay: 1.2 }}
+              transition={{ duration: 0.2, delay: 0.4 }}
             >
               {isLoading ? (
                 // Beautiful loading animation
@@ -878,146 +880,19 @@ const Colleges = () => {
                 </div>
               ) : colleges.length > 0 ? (
                 colleges.map((college, index) => (
-                <motion.div
-                  key={college.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
-                  transition={{ delay: 1.4 + index * 0.1, duration: 0.4 }}
-                  className={`backdrop-blur-md p-6 rounded-2xl border-2 transition-all shadow-lg ${
-                    isDarkMode 
-                      ? 'bg-white/10 border-white/20 hover:bg-white/20 shadow-white/10' 
-                      : 'bg-green-50/40 border-green-200/60 hover:bg-green-50/50 shadow-green-200/30'
-                  }`}
-                >
-                  <div className="text-center mb-4">
-                    <div className="w-16 h-16 bg-primary-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                      <Building2 className="w-8 h-8 text-primary-400" />
-                    </div>
-                    <h3 className={`text-xl font-semibold mb-2 ${
-                      isDarkMode ? 'text-white' : 'text-gray-900'
-                    }`}>{college.name}</h3>
-                  </div>
-                  
-                  {/* Reordered College Information */}
-                                           <div className="space-y-2 mb-4">
-                           <div className={`flex items-center justify-between text-sm ${
-                             isDarkMode ? 'text-white/80' : 'text-gray-600'
-                           }`}>
-                             <span>Type: <span className={`px-2 py-1 text-xs font-semibold rounded-full ${
-                               college.college_type === 'MEDICAL' ? 'bg-blue-100 text-blue-800 border border-blue-200' :
-                               college.college_type === 'DENTAL' ? 'bg-green-100 text-green-800 border border-green-200' :
-                               college.college_type === 'DNB' ? 'bg-purple-100 text-purple-800 border border-purple-200' :
-                               'bg-gray-100 text-gray-800 border border-gray-200'
-                             }`}>
-                               {college.college_type || 'N/A'}
-                             </span></span>
-                             <span>State: {college.state || 'N/A'}</span>
-                           </div>
-                           <div className={`flex items-center justify-between text-sm ${
-                             isDarkMode ? 'text-white/80' : 'text-gray-600'
-                           }`}>
-                             <span>Est. {college.establishment_year || 'N/A'}</span>
-                             <span>Management: {college.management_type || 'N/A'}</span>
-                           </div>
-                         </div>
-
-                  {/* University Information */}
-                  <div className="mb-4">
-                    <div className={`p-3 rounded-lg border-2 backdrop-blur-md shadow-md ${
-                      isDarkMode 
-                        ? 'bg-white/10 border-white/20 shadow-white/5' 
-                        : 'bg-green-50/35 border-green-200/50 shadow-green-200/20'
-                    }`}>
-                      <div className="text-center">
-                        <div className={`text-xs mb-1 ${
-                          isDarkMode ? 'text-white/70' : 'text-gray-600'
-                        }`}>University</div>
-                        <div className={`text-xs font-medium leading-tight ${
-                          isDarkMode ? 'text-white' : 'text-gray-900'
-                        }`}>
-                          {college.university || 'N/A'}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Expandable Courses Section */}
-                  <div className="mb-4">
-                    <button
-                      onClick={() => toggleCardExpansion(college.id)}
-                      className={`w-full flex items-center justify-between text-sm font-semibold transition-colors p-3 rounded-lg ${
-                        isDarkMode 
-                          ? 'text-white/90 hover:text-white bg-white/10 hover:bg-white/20' 
-                          : 'text-gray-700 hover:text-gray-900 bg-gray-100/80 hover:bg-gray-200/80'
-                      }`}
-                    >
-                      <span>View Courses</span>
-                      {expandedCards.has(college.id) ? (
-                        <ChevronUp className="w-4 h-4" />
-                      ) : (
-                        <ChevronDown className="w-4 h-4" />
-                      )}
-                    </button>
-                    
-                    {expandedCards.has(college.id) && (
-                      <div className="mt-4 space-y-2">
-                        <div className="max-h-48 overflow-y-auto space-y-2 courses-scroll-container">
-                          {collegeCourses[college.id] ? (
-                            collegeCourses[college.id].length > 0 ? (
-                              collegeCourses[college.id].map((course, courseIndex) => (
-                                                                  <div key={courseIndex} className={`p-3 rounded-lg border-2 backdrop-blur-md shadow-md ${
-                                                                    isDarkMode 
-                                                                      ? 'bg-white/10 border-white/20 shadow-white/5' 
-                                                                      : 'bg-green-50/35 border-green-200/50 shadow-green-200/20'
-                                                                  }`}>
-                                    <div className="flex justify-between items-center">
-                                      <h5 className={`font-semibold text-sm flex-1 pr-3 ${
-                                        isDarkMode ? 'text-white' : 'text-gray-900'
-                                      }`}>{course.name}</h5>
-                                      <span className={`text-xs px-2 py-1 rounded-full font-medium border whitespace-nowrap ${
-                                        isDarkMode 
-                                          ? 'bg-primary-500/20 text-primary-300 border-primary-500/30' 
-                                          : 'bg-blue-100 text-blue-800 border-blue-300'
-                                      }`}>
-                                        {course.total_seats} seats
-                                      </span>
-                                    </div>
-                                  </div>
-                              ))
-                            ) : (
-                              <div className={`p-3 rounded-lg border-2 backdrop-blur-md shadow-md ${
-                                isDarkMode 
-                                  ? 'bg-white/10 border-white/20 shadow-white/5' 
-                                  : 'bg-green-50/35 border-green-200/50 shadow-green-200/20'
-                              }`}>
-                                <div className={`text-center text-xs ${
-                                  isDarkMode ? 'text-white/70' : 'text-gray-600'
-                                }`}>
-                                  <div className="mb-2">⚠️ Backend API not available</div>
-                                  <div className={`text-xs ${
-                                    isDarkMode ? 'text-white/50' : 'text-gray-500'
-                                  }`}>
-                                    Please start the backend server to view real courses data
-                                  </div>
-                                </div>
-                              </div>
-                            )
-                          ) : (
-                            <div className={`p-3 rounded-lg border-2 backdrop-blur-md shadow-md ${
-                              isDarkMode 
-                                ? 'bg-white/10 border-white/20 shadow-white/5' 
-                                : 'bg-green-50/35 border-green-200/50 shadow-green-200/20'
-                            }`}>
-                              <div className="text-center">
-                                <BeautifulLoader size="small" showText={true} text="Loading courses..." />
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </motion.div>
+                  <motion.div
+                    key={college.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
+                    transition={{ delay: 0.45 + index * 0.05, duration: 0.2 }}
+                  >
+                    <CollegeCard 
+                      college={college} 
+                      index={index}
+                      courses={collegeCourses[college.id] || []}
+                      onFetchCourses={() => fetchCollegeCourses(college.id)}
+                    />
+                  </motion.div>
                 ))
               ) : (
                 // No colleges found
@@ -1039,7 +914,7 @@ const Colleges = () => {
                 className="flex flex-col items-center gap-4 mb-12"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
-                transition={{ delay: 1.3, duration: 0.4 }}
+                transition={{ delay: 0.5, duration: 0.2 }}
               >
                 {/* Loading indicator for pagination */}
                 {isLoading && (
@@ -1292,7 +1167,7 @@ const Colleges = () => {
           }`}
           initial={{ opacity: 0 }}
           animate={{ opacity: isLoaded ? 1 : 0 }}
-          transition={{ duration: 0.3, delay: 2.0 }}
+          transition={{ duration: 0.2, delay: 0.6 }}
         >
           <p>&copy; 2024 NeetLogIQ. All rights reserved. Built with ❤️ for medical aspirants.</p>
         </motion.footer>

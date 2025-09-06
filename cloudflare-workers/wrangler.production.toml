@@ -1,0 +1,32 @@
+name = "neetlogiq-backend"
+main = "src/index.js"
+compatibility_date = "2024-09-06"
+
+# D1 Database configuration
+[[d1_databases]]
+binding = "DB"
+database_name = "neetlogiq-db"
+database_id = "769bb466-8366-4584-bd51-b78bb60d5e6c"
+
+# AI Model binding
+[ai]
+binding = "AI"
+
+# Vectorize database for AI embeddings
+[[vectorize]]
+binding = "VECTORIZE_INDEX"
+index_name = "neetlogiq-index"
+
+# Production environment variables
+[vars]
+ENVIRONMENT = "production"
+INDEXER_AUTH_SECRET = "production-secret-key-change-this"
+
+# CORS configuration for production
+[env.production.vars]
+CORS_ORIGIN = "https://your-frontend-domain.com"
+
+# Development environment (for testing)
+[env.development]
+name = "neetlogiq-backend-dev"
+vars = { ENVIRONMENT = "development", CORS_ORIGIN = "http://localhost:3000" }

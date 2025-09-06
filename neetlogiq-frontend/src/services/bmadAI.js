@@ -26,19 +26,45 @@ class BMADAI {
     try {
       this.userProfile = userProfile;
       
-      const recommendations = {
-        colleges: await this.recommendColleges(),
-        courses: await this.recommendCourses(),
-        careerPaths: await this.recommendCareerPaths(),
-        studyPlans: await this.generateStudyPlans(),
-        insights: await this.generateInsights()
-      };
-
-      return recommendations;
+      // Call the real backend API for AI recommendations
+      const response = await fetch('http://localhost:8787/api/ai/recommendations', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(userProfile)
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('🤖 BMAD AI recommendations generated successfully');
+        return data.recommendations;
+      } else {
+        throw new Error(data.error || 'Failed to generate recommendations');
+      }
     } catch (error) {
       console.error('❌ Recommendation generation failed:', error);
-      return null;
+      // Fallback to simulated recommendations if API fails
+      return await this.generateFallbackRecommendations();
     }
+  }
+
+  // Fallback recommendations if API fails
+  async generateFallbackRecommendations() {
+    console.log('🔄 Using fallback recommendations...');
+    
+    return {
+      colleges: await this.recommendColleges(),
+      courses: await this.recommendCourses(),
+      careerPaths: await this.recommendCareerPaths(),
+      studyPlans: await this.generateStudyPlans(),
+      insights: await this.generateInsights()
+    };
   }
 
   // Recommend colleges based on user preferences and scores

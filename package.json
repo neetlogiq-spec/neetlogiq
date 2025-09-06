@@ -1,14 +1,36 @@
 {
-  "name": "neetlogiq",
-  "version": "1.0.0",
+  "name": "neetlogiq-v2",
+  "version": "2.1.0",
   "description": "NEET Logiq - Medical College Search Platform",
-  "private": true,
   "scripts": {
-    "build": "cd neetlogiq-frontend && npm run build",
-    "start": "cd neetlogiq-frontend && npm start",
-    "install-frontend": "cd neetlogiq-frontend && npm install"
+    "start:worker": "cd cloudflare-workers && npx wrangler dev --port 8787",
+    "start:worker:prod": "cd cloudflare-workers && npx wrangler dev --experimental-vectorize-bind-to-prod --port 8787",
+    "start:worker:minimal": "cd cloudflare-workers && npx wrangler dev --config minimal-wrangler.toml --port 8784",
+    "start:frontend": "cd neetlogiq-frontend && npm start",
+    "start:frontend:vite": "cd frontend && npm run dev",
+    "start:all": "concurrently \"npm run start:worker\" \"npm run start:frontend\"",
+    "deploy:worker": "cd cloudflare-workers && npx wrangler deploy",
+    "deploy:worker:dev": "cd cloudflare-workers && npx wrangler deploy --env development",
+    "deploy:worker:prod": "cd cloudflare-workers && npx wrangler deploy --env production",
+    "build:frontend": "cd neetlogiq-frontend && npm run build",
+    "build:frontend:vite": "cd frontend && npm run build",
+    "db:migrate": "cd cloudflare-workers && npx wrangler d1 migrations apply neetlogiq-db --local",
+    "db:migrate:remote": "cd cloudflare-workers && npx wrangler d1 migrations apply neetlogiq-db --remote",
+    "db:backup": "cd cloudflare-workers && npx wrangler d1 export neetlogiq-db --output backup.sql"
   },
-  "workspaces": [
-    "neetlogiq-frontend"
-  ]
+  "keywords": [
+    "neet",
+    "medical",
+    "college",
+    "search",
+    "cloudflare",
+    "workers"
+  ],
+  "author": "NEET Logiq Team",
+  "license": "UNLICENSED",
+  "private": true,
+  "devDependencies": {
+    "wrangler": "^4.33.2",
+    "concurrently": "^8.2.2"
+  }
 }

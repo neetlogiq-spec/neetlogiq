@@ -30,12 +30,12 @@ const AboutUs = () => {
 
   const teamMembers = [
     {
-      name: 'Anonymous Doctor',
+      name: 'Dr. Anonymous',
       role: 'Founder & Creator',
-      expertise: 'Medical Data Analysis & Research',
-      experience: 'Medical Professional',
+      expertise: 'Clinical Medicine & Medical Education Technology',
+      experience: '2+ Years in Medical Practice & 4+ Years in Research',
       image: '/images/team/doctor.jpg',
-      description: 'A dedicated doctor who created this platform to help medical aspirants. Specialized in medical data analysis and research methodology. Committed to providing accurate, comprehensive information to help students achieve their medical career goals.'
+      description: 'A dedicated physician and medical education innovator who founded NeetLogIQ to bridge the gap between medical aspirants and comprehensive career guidance. Combining clinical experience with research expertise, Dr. Anonymous created this platform to provide data-driven insights and personalized recommendations for students pursuing medical careers.'
     }
   ];
 
@@ -118,7 +118,7 @@ const AboutUs = () => {
             className="flex items-center justify-between p-8"
         initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -20 }}
-            transition={{ duration: 0.3, delay: 0.1 }}
+            transition={{ duration: 0.2, delay: 0.05 }}
           >
             <div className="flex items-center space-x-3">
               <div className="w-12 h-12 bg-gradient-to-r from-primary-500 to-secondary-500 rounded-xl flex items-center justify-center">
@@ -164,7 +164,7 @@ const AboutUs = () => {
               className={`text-5xl md:text-7xl font-bold mb-6 ${isDarkMode ? 'text-white' : 'text-gray-900'}`}
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: isLoaded ? 1 : 0, scale: isLoaded ? 1 : 0.95 }}
-              transition={{ duration: 0.4, delay: 0.2 }}
+              transition={{ duration: 0.25, delay: 0.1 }}
             >
               About NeetLogIQ
             </motion.h1>
@@ -174,7 +174,7 @@ const AboutUs = () => {
               className={`text-xl md:text-2xl mb-12 max-w-3xl mx-auto ${isDarkMode ? 'text-white/90' : 'text-gray-600'}`}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 15 }}
-              transition={{ duration: 0.3, delay: 0.3 }}
+              transition={{ duration: 0.2, delay: 0.15 }}
             >
               Empowering medical aspirants with intelligent insights, comprehensive data, and personalized guidance
             </motion.p>
@@ -188,7 +188,7 @@ const AboutUs = () => {
               }`}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 15 }}
-              transition={{ duration: 0.3, delay: 0.4 }}
+              transition={{ duration: 0.2, delay: 0.2 }}
             >
               <div className="flex items-center justify-center mb-6">
                 <div className="w-20 h-20 bg-primary-500/20 rounded-2xl flex items-center justify-center">
@@ -212,14 +212,14 @@ const AboutUs = () => {
               className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-16"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 15 }}
-              transition={{ duration: 0.3, delay: 0.5 }}
+              transition={{ duration: 0.2, delay: 0.25 }}
             >
               {stats.map((stat, index) => (
                 <motion.div
                   key={index}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 10 }}
-                  transition={{ delay: 0.6 + index * 0.05, duration: 0.3 }}
+                  transition={{ delay: 0.3 + index * 0.03, duration: 0.2 }}
                   className="text-center"
                 >
                   <div className="w-16 h-16 bg-primary-500/20 rounded-2xl flex items-center justify-center mx-auto mb-3">
@@ -238,7 +238,7 @@ const AboutUs = () => {
               className="mb-16"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 15 }}
-              transition={{ duration: 0.3, delay: 0.7 }}
+              transition={{ duration: 0.2, delay: 0.35 }}
             >
               <h2 className={`text-3xl font-bold mb-8 text-center ${
                 isDarkMode ? 'text-white' : 'text-gray-900'
@@ -249,7 +249,7 @@ const AboutUs = () => {
                     key={index}
                     initial={{ opacity: 0, x: index % 2 === 0 ? -10 : 10 }}
                     animate={{ opacity: isLoaded ? 1 : 0, x: isLoaded ? 0 : (index % 2 === 0 ? -10 : 10) }}
-                    transition={{ delay: 0.8 + index * 0.1, duration: 0.3 }}
+                    transition={{ delay: 0.4 + index * 0.05, duration: 0.2 }}
                     className={`backdrop-blur-md p-6 rounded-2xl border-2 transition-all shadow-lg ${
                       isDarkMode 
                         ? 'bg-white/10 border-white/20 hover:bg-white/20 shadow-white/10' 
@@ -275,7 +275,7 @@ const AboutUs = () => {
               className="mb-16"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 15 }}
-              transition={{ duration: 0.3, delay: 0.9 }}
+              transition={{ duration: 0.2, delay: 0.45 }}
             >
               <h2 className={`text-3xl font-bold mb-8 text-center ${
                 isDarkMode ? 'text-white' : 'text-gray-900'
@@ -287,7 +287,7 @@ const AboutUs = () => {
                     key={index}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
-                    transition={{ delay: 1.0 + index * 0.1, duration: 0.3 }}
+                    transition={{ delay: 0.5 + index * 0.05, duration: 0.2 }}
                     className={`backdrop-blur-md p-6 rounded-2xl border-2 transition-all text-center shadow-lg ${
                       isDarkMode 
                         ? 'bg-white/10 border-white/20 hover:bg-white/20 shadow-white/10' 
@@ -325,7 +325,7 @@ const AboutUs = () => {
               }`}
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 15 }}
-              transition={{ duration: 0.3, delay: 1.2 }}
+              transition={{ duration: 0.2, delay: 0.5 }}
             >
               <h2 className={`text-3xl font-bold mb-8 text-center ${
                 isDarkMode ? 'text-white' : 'text-gray-900'
@@ -366,7 +366,7 @@ const AboutUs = () => {
               className="text-center mt-12"
               initial={{ opacity: 0 }}
               animate={{ opacity: isLoaded ? 1 : 0 }}
-              transition={{ duration: 0.3, delay: 1.3 }}
+              transition={{ duration: 0.2, delay: 0.55 }}
             >
               <Link to="/">
                 <button className="bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all transform hover:scale-105">
@@ -384,7 +384,7 @@ const AboutUs = () => {
           }`}
           initial={{ opacity: 0 }}
           animate={{ opacity: isLoaded ? 1 : 0 }}
-          transition={{ duration: 0.3, delay: 1.4 }}
+          transition={{ duration: 0.2, delay: 0.6 }}
         >
           <p>&copy; 2024 NeetLogIQ. All rights reserved. Built with ❤️ for medical aspirants.</p>
         </motion.footer>

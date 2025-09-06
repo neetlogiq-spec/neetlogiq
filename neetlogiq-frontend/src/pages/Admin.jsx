@@ -195,13 +195,13 @@ const Admin = () => {
                       <div className="text-sm text-white/70">{stat.change}</div>
                       <TrendingUp className="w-4 h-4 text-green-400" />
                     </div>
-                  </div>
+            </div>
                   <div className="text-2xl font-bold text-white mb-1">{stat.value}</div>
                   <div className="text-white/70">{stat.title}</div>
                 </motion.div>
               ))}
             </motion.div>
-
+            
             {/* Admin Tabs */}
             <motion.div
               className="bg-white/10 backdrop-blur-sm rounded-2xl border border-white/20 p-6 mb-8"

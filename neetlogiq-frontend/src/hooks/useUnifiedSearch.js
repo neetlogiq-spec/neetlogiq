@@ -57,8 +57,8 @@ export const useUnifiedSearch = (collegesData = [], options = {}) => {
 
       // Initialize with a small delay to prevent rapid re-initialization
       initializationTimeoutRef.current = setTimeout(initializeSearchEngine, 100);
-    } else if (!isInitialized) {
-      // If no colleges data but not initialized, try to initialize anyway (for backend-only search)
+    } else if (!isInitialized && collegesData && collegesData.length === 0) {
+      // Only initialize with empty data if we explicitly have empty colleges data
       console.log('⚠️ No colleges data available, initializing with empty data...');
       initializeSearchEngine();
     }
@@ -137,7 +137,7 @@ export const useUnifiedSearch = (collegesData = [], options = {}) => {
     try {
       // Use a lightweight, fast search for suggestions
       const suggestions = await searchEngine.search(query, {
-        contentType: 'colleges',
+        contentType: options.contentType || 'colleges',
         strategy: {
           name: 'suggestions-fast',
           engines: ['advanced', 'simple'], // Use only fast, client-side engines
@@ -153,7 +153,7 @@ export const useUnifiedSearch = (collegesData = [], options = {}) => {
       console.error('❌ Failed to get suggestions:', err);
       return [];
     }
-  }, [searchEngine, isInitialized]);
+  }, [searchEngine, isInitialized, options.contentType]);
 
   // Update colleges data
   const updateCollegesData = useCallback(async (newCollegesData) => {

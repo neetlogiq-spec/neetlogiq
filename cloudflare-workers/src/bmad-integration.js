@@ -13,10 +13,18 @@ class BMADIntegration {
     };
     this.aiRecommendations = [];
     this.optimizationRules = new Map();
+    this.aiAvailable = !!env.AI;
+    
+    console.log(`BMAD AI availability: ${this.aiAvailable ? 'Available' : 'Not available'}`);
   }
 
   // AI-powered request optimization
   async optimizeRequest(request, context) {
+    // Check if AI is available
+    if (!this.aiAvailable) {
+      return request;
+    }
+    
     const startTime = Date.now();
     
     // Collect analytics
@@ -37,6 +45,11 @@ class BMADIntegration {
 
   // AI-powered response optimization
   async optimizeResponse(response, request) {
+    // Check if AI is available
+    if (!this.aiAvailable) {
+      return response;
+    }
+    
     // Apply AI recommendations for response optimization
     const optimizedResponse = await this.applyResponseOptimizations(response, request);
     
@@ -49,6 +62,11 @@ class BMADIntegration {
 
   // AI-powered search optimization
   async optimizeSearch(query, results) {
+    // Check if AI is available
+    if (!this.aiAvailable) {
+      return results;
+    }
+    
     // Analyze search patterns
     this.analytics.searchQueries.push({
       query,
@@ -78,6 +96,16 @@ class BMADIntegration {
 
   // Real-time performance monitoring
   async monitorPerformance() {
+    // Check if AI is available
+    if (!this.aiAvailable) {
+      return {
+        averageResponseTime: 0,
+        errorRate: 0,
+        throughput: 0,
+        searchAccuracy: 0
+      };
+    }
+    
     const metrics = {
       averageResponseTime: this.calculateAverageResponseTime(),
       errorRate: this.calculateErrorRate(),
@@ -97,6 +125,15 @@ class BMADIntegration {
   // AI-powered error detection and resolution
   async detectAndResolveErrors(error, context) {
     this.analytics.errors++;
+    
+    // Check if AI is available
+    if (!this.aiAvailable) {
+      return { 
+        errorAnalysis: { type: error.name, message: error.message },
+        recommendations: [],
+        fixedError: { fixed: false, message: 'AI not available for error analysis' }
+      };
+    }
     
     // Analyze error patterns
     const errorAnalysis = this.analyzeErrorPatterns(error, context);
@@ -168,9 +205,12 @@ class BMADIntegration {
     // Apply AI-learned optimization rules
     const url = new URL(request.url);
     
+    // Create new headers instead of modifying existing ones
+    const newHeaders = new Headers(request.headers);
+    
     // Cache optimization
     if (url.pathname.startsWith('/api/colleges')) {
-      request.headers.set('Cache-Control', 'public, max-age=300');
+      newHeaders.set('Cache-Control', 'public, max-age=300');
     }
     
     // Query optimization
@@ -180,7 +220,11 @@ class BMADIntegration {
       url.searchParams.set('search', optimizedTerm);
     }
     
-    return new Request(url.toString(), request);
+    return new Request(url.toString(), {
+      method: request.method,
+      headers: newHeaders,
+      body: request.body
+    });
   }
 
   async applyResponseOptimizations(response, request) {
@@ -463,105 +507,12 @@ class BMADIntegration {
     };
   }
 
-  // Apply optimization rules
-  async applyOptimizationRules(request) {
-    // Simple optimization rules
-    return request;
+  // Optimize search term
+  async optimizeSearchTerm(term) {
+    // Simple search term optimization
+    return term ? term.trim() : '';
   }
 
-  // Apply response optimizations
-  async applyResponseOptimizations(response, request) {
-    // Simple response optimizations
-    return response;
-  }
-
-  // Apply search optimizations
-  async applySearchOptimizations(query, results) {
-    // Simple search optimizations
-    return results;
-  }
-
-  // Generate search recommendations
-  async generateSearchRecommendations(query, results) {
-    // Simple search recommendations
-    return [];
-  }
-
-  // Analyze query performance
-  async analyzeQueryPerformance(query, params) {
-    return {
-      query,
-      params,
-      estimatedCost: 1,
-      optimizationSuggestions: []
-    };
-  }
-
-  // Apply query optimizations
-  async applyQueryOptimizations(query, params, analysis) {
-    return { query, params, optimized: true };
-  }
-
-  // Store metrics
-  async storeMetrics(metrics) {
-    try {
-      if (this.env && this.env.DB) {
-        await this.env.DB.prepare(`
-          INSERT INTO performance_metrics (timestamp, avg_response_time, error_rate, throughput, search_accuracy)
-          VALUES (?, ?, ?, ?, ?)
-        `).bind(
-          Date.now(),
-          metrics.averageResponseTime,
-          metrics.errorRate,
-          metrics.throughput,
-          metrics.searchAccuracy
-        ).run();
-      }
-    } catch (error) {
-      console.error('Failed to store metrics:', error);
-    }
-  }
-
-  // Generate performance insights
-  async generatePerformanceInsights(metrics) {
-    return {
-      insights: [
-        {
-          type: 'performance',
-          message: `Average response time: ${metrics.averageResponseTime}ms`,
-          priority: metrics.averageResponseTime > 1000 ? 'high' : 'low'
-        }
-      ]
-    };
-  }
-
-  // Calculate response time trend
-  calculateResponseTimeTrend() {
-    if (this.analytics.responseTimes.length < 2) {
-      return 0;
-    }
-    
-    const recent = this.analytics.responseTimes.slice(-5);
-    const older = this.analytics.responseTimes.slice(-10, -5);
-    
-    const recentAvg = recent.reduce((a, b) => a + b, 0) / recent.length;
-    const olderAvg = older.length > 0 ? older.reduce((a, b) => a + b, 0) / older.length : recentAvg;
-    
-    return recentAvg - olderAvg;
-  }
-
-  // Calculate error rate trend
-  calculateErrorRateTrend() {
-    // Simple error rate trend calculation
-    const totalRequests = this.analytics.requests;
-    const totalErrors = this.analytics.errors;
-    
-    if (totalRequests === 0) {
-      return 0;
-    }
-    
-    return totalErrors / totalRequests;
-  }
 }
 
 export default BMADIntegration;

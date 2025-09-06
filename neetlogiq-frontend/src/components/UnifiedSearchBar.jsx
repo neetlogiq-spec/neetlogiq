@@ -17,7 +17,8 @@ const UnifiedSearchBar = ({
   collegesData = [],
   showAdvancedFeatures = true,
   showPerformanceMetrics = false,
-  autoFocus = false
+  autoFocus = false,
+  showSuggestions: enableSuggestions = true
 }) => {
   const [query, setQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -56,12 +57,29 @@ const UnifiedSearchBar = ({
       clearTimeout(debounceTimer.current);
     }
 
-    if (value.trim().length > 1) {
+    if (value && value.trim().length > 1) {
       setShowSuggestions(true);
       debounceTimer.current = setTimeout(async () => {
-        const fetchedSuggestions = await getSuggestions(value, 5);
-        setSuggestions(fetchedSuggestions);
-      }, debounceMs);
+        if (enableSuggestions) {
+          const fetchedSuggestions = await getSuggestions(value, 5);
+          setSuggestions(fetchedSuggestions);
+        }
+        
+        // Also perform real-time search for immediate results
+        try {
+          const results = await performSearch(value, { contentType });
+          if (onSearchResults) {
+            onSearchResults({
+              results: results,
+              query: value,
+              searchType: 'realtime',
+              metadata: searchMetadata
+            });
+          }
+        } catch (error) {
+          console.error('Real-time search error:', error);
+        }
+      }, debounceMs); // Use configurable debounce timing
     } else {
       setShowSuggestions(false);
       setSuggestions([]);
@@ -70,11 +88,11 @@ const UnifiedSearchBar = ({
         onSearchResults({ results: [], query: '', searchType: 'none' });
       }
     }
-  }, [getSuggestions, debounceMs, onSearchResults]);
+  }, [getSuggestions, onSearchResults, performSearch, contentType, searchMetadata, enableSuggestions, debounceMs]);
 
   // Handle search submission
   const handleSearchSubmit = useCallback(async (searchQuery = null) => {
-    const queryToSearch = searchQuery || query.trim();
+    const queryToSearch = searchQuery || (query ? query.trim() : '');
     
     if (!queryToSearch) return;
     
@@ -230,10 +248,10 @@ const UnifiedSearchBar = ({
         {/* Search Button */}
         <button
           onClick={() => handleSearchSubmit()}
-          disabled={!query.trim() || !isInitialized || isLoading}
+          disabled={!query || !query.trim() || !isInitialized || isLoading}
           className={`
             px-4 py-2 mr-1 rounded-md
-            ${query.trim() && isInitialized && !isLoading
+            ${query && query.trim() && isInitialized && !isLoading
               ? 'bg-blue-600 hover:bg-blue-700 text-white'
               : isDarkMode 
                 ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
@@ -249,12 +267,12 @@ const UnifiedSearchBar = ({
       </div>
       
       {/* Search Suggestions Dropdown */}
-      {showSuggestions && (suggestions.length > 0 || searchHistory.length > 0) && (
+      {enableSuggestions && showSuggestions && (suggestions.length > 0 || searchHistory.length > 0) && (
         <div className={`
           absolute top-full left-0 right-0 mt-1 z-50
           ${isDarkMode ? 'bg-gray-800 border-gray-700' : 'bg-white border-gray-200'}
           border rounded-lg shadow-lg
-          max-h-80 overflow-y-auto
+          ${suggestions.length <= 3 ? 'h-auto' : 'max-h-80 overflow-y-auto'}
         `}>
           {suggestions.length > 0 && (
             <div className="p-2">

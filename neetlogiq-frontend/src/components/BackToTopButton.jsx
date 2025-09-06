@@ -36,7 +36,7 @@ const BackToTopButton = () => {
       className="back-to-top-button"
       aria-label="Back to top"
     >
-      <ChevronUp className="svg-icon" size={12} />
+      <ChevronUp className="svg-icon" size={16} />
     </button>
   );
 };

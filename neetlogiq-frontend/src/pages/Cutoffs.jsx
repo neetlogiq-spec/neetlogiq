@@ -175,9 +175,9 @@ const Cutoffs = () => {
       <div className="relative z-20 min-h-screen flex flex-col">
         {/* Desktop Header - Original Design */}
         <div className="hidden md:block">
-          <motion.header
+      <motion.header
             className="flex items-center justify-between p-8"
-            initial={{ opacity: 0, y: -20 }}
+        initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -20 }}
             transition={{ duration: 0.3, delay: 0.1 }}
           >
@@ -493,7 +493,7 @@ const Cutoffs = () => {
           <p>&copy; 2024 NeetLogIQ. All rights reserved. Built with ❤️ for medical aspirants.</p>
         </motion.footer>
         </div>
-      </div>
+    </div>
     </BlurredOverlay>
   );
 };

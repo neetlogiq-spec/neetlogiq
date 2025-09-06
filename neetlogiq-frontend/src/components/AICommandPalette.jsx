@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { Search, BrainCircuit, X, MapPin, Calendar, Building } from 'lucide-react';
+import useScrollLock from '../hooks/useScrollLock';
 
 // Custom debounce hook
 const useDebounce = (value, delay) => {
@@ -26,6 +27,9 @@ const AICommandPalette = ({ isVisible, onClose }) => {
   const [error, setError] = useState('');
   const debouncedQuery = useDebounce(query, 350);
   const inputRef = useRef(null);
+  
+  // Lock body scroll when modal is open
+  useScrollLock(isVisible);
 
   useEffect(() => {
     if (isVisible) {

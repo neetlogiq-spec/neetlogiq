@@ -112,7 +112,9 @@ const IntelligentFilters = ({
 
   return (
     <motion.div 
-      className={`backdrop-blur-md rounded-2xl border-2 p-6 mb-8 shadow-lg ${
+      className={`backdrop-blur-md rounded-2xl border-2 mb-8 shadow-lg transition-all duration-300 ${
+        isExpanded ? 'p-6' : 'p-4'
+      } ${
         isDarkMode 
           ? 'bg-white/10 border-white/20 shadow-white/10' 
           : 'bg-green-50/40 border-green-200/60 shadow-green-200/30'
@@ -122,7 +124,7 @@ const IntelligentFilters = ({
       transition={{ duration: 0.5 }}
     >
       {/* Filter Header */}
-      <div className="flex items-center justify-between mb-6">
+      <div className={`flex items-center justify-between ${isExpanded ? 'mb-6' : 'mb-0'}`}>
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-primary-500/20 rounded-xl flex items-center justify-center">
             <Filter className="w-5 h-5 text-primary-400" />
@@ -131,13 +133,15 @@ const IntelligentFilters = ({
             <h3 className={`text-xl font-semibold ${
               isDarkMode ? 'text-white' : 'text-gray-900'
             }`}>
-              Intelligent Filters
+              Filters
             </h3>
-            <p className={`text-sm ${
-              isDarkMode ? 'text-white/70' : 'text-gray-600'
-            }`}>
-              {type === 'colleges' ? 'Filter colleges by multiple criteria' : 'Filter courses by multiple criteria'}
-            </p>
+            {isExpanded && (
+              <p className={`text-sm ${
+                isDarkMode ? 'text-white/70' : 'text-gray-600'
+              }`}>
+                {type === 'colleges' ? 'Filter colleges by multiple criteria' : 'Filter courses by multiple criteria'}
+              </p>
+            )}
           </div>
         </div>
         
@@ -174,6 +178,25 @@ const IntelligentFilters = ({
           </button>
         </div>
       </div>
+
+      {/* Collapsed State Summary */}
+      {!isExpanded && filterCount > 0 && (
+        <div className={`text-sm ${
+          isDarkMode ? 'text-white/70' : 'text-gray-600'
+        }`}>
+          {Object.entries(appliedFilters || {}).map(([key, value]) => {
+            if (!value) return null;
+            const label = key === 'stream' ? 'Stream' : 
+                         key === 'state' ? 'State' : 
+                         key === 'college_type' ? 'Type' : key;
+            return (
+              <span key={key} className="inline-block mr-3">
+                <span className="font-medium">{label}:</span> {value}
+              </span>
+            );
+          }).filter(Boolean)}
+        </div>
+      )}
 
       {/* Filter Content */}
       <AnimatePresence>

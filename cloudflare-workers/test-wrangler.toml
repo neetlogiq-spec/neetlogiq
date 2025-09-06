@@ -1,0 +1,7 @@
+name = "neetlogiq-test"
+main = "src/test-worker.js"
+compatibility_date = "2024-01-15"
+
+# Environment variables
+[vars]
+ENVIRONMENT = "development"

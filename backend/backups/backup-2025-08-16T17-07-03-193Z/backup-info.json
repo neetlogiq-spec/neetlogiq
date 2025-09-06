@@ -1,0 +1,15 @@
+{
+  "timestamp": "2025-08-16T17-07-03-193Z",
+  "originalPath": "/Users/kashyapanand/Music/ideal-doodle/backend/database",
+  "backupPath": "/Users/kashyapanand/Music/ideal-doodle/backend/backups/backup-2025-08-16T17-07-03-193Z",
+  "databases": [
+    "colleges.db",
+    "medical_seats.db",
+    "dental_seats.db",
+    "dnb_seats.db",
+    "counselling.db",
+    "cutoff_ranks.db",
+    "users.db"
+  ],
+  "createdAt": "2025-08-16T17:07:03.730Z"
+}
