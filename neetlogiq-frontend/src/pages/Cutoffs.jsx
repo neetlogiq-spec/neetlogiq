@@ -217,6 +217,25 @@ const Cutoffs = () => {
           <ResponsiveHeader />
         </div>
 
+        {/* COMING SOON Banner */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -20 }}
+          transition={{ duration: 0.6 }}
+          className="relative z-20 bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 px-4 text-center"
+        >
+          <div className="max-w-4xl mx-auto">
+            <div className="flex items-center justify-center space-x-2">
+              <Award className="w-6 h-6 animate-pulse" />
+              <span className="text-lg font-bold">🚀 COMING SOON</span>
+              <Award className="w-6 h-6 animate-pulse" />
+            </div>
+            <p className="text-sm mt-1 opacity-90">
+              NEET Cutoff Analysis feature is under development. Stay tuned for comprehensive cutoff data and trends!
+            </p>
+          </div>
+        </motion.div>
+
       {/* Main Content */}
         <main className="flex-1 flex flex-col items-center justify-center px-8 py-16">
           <div className="text-center max-w-6xl w-full">
