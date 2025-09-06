@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Building2, Wifi, WifiOff, GraduationCap, Database, X, Sparkles, Zap } from 'lucide-react';
+import { Building2, GraduationCap, Database, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import IntelligentFilters from '../components/IntelligentFilters';
 import ResponsiveHeader from '../components/ResponsiveHeader';
@@ -45,7 +45,6 @@ const Colleges = () => {
   const [currentSearchQuery, setCurrentSearchQuery] = useState('');
   // const [isSearching, setIsSearching] = useState(false); // Removed unused state
 
-  const [apiStatus, setApiStatus] = useState('checking');
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 24, // 3x8 grid = 24 college cards per page
@@ -62,7 +61,6 @@ const Colleges = () => {
     searchService,
     isInitialized: isAdvancedSearchReady,
     isLoading: isAdvancedSearchLoading,
-    initializationProgress,
     performSearch: performAdvancedSearch
   } = useAdvancedSearch(allCollegesForSearch);
 
@@ -289,9 +287,9 @@ const Colleges = () => {
   const checkApiStatus = async () => {
     try {
       const status = await apiService.getApiStatus();
-      setApiStatus(status.status);
+      console.log('API Status:', status.status);
     } catch (error) {
-      setApiStatus('error');
+      console.error('API Status check failed:', error);
     }
   };
 
@@ -686,8 +684,6 @@ const Colleges = () => {
                           </>
                         ) : (
                       <>
-                        Showing {colleges.length} colleges
-                        {pagination.totalItems > 0 && ` of ${pagination.totalItems} total`}
                       </>
                     )}
             </div>
@@ -796,138 +792,8 @@ const Colleges = () => {
               transition={{ delay: 0.25, duration: 0.2 }}
               className="flex items-center justify-center gap-4 mb-8 flex-wrap"
             >
-              {apiStatus === 'connected' ? (
-                <div className="flex items-center gap-2 bg-green-500/20 text-green-300 px-3 py-1 rounded-full text-sm">
-                  <Wifi className="w-4 h-4" />
-                  Backend Connected
-                </div>
-              ) : apiStatus === 'checking' ? (
-                <div className="flex items-center gap-2 bg-yellow-500/20 text-yellow-300 px-3 py-1 rounded-full text-sm">
-                  <Database className="w-4 h-4 animate-pulse" />
-                  Checking Connection...
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 bg-red-500/20 text-red-300 px-3 py-1 rounded-full text-sm">
-                  <WifiOff className="w-4 h-4" />
-                  Backend Disconnected
-                </div>
-              )}
-              
-              {/* Advanced Search Status */}
-              {isAdvancedSearchReady ? (
-                <div className="flex items-center gap-2 bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full text-sm">
-                  <Sparkles className="w-4 h-4" />
-                  AI Search Ready
-                </div>
-              ) : isAdvancedSearchLoading ? (
-                <div className="flex items-center gap-2 bg-yellow-500/20 text-yellow-300 px-3 py-1 rounded-full text-sm">
-                  <Zap className="w-4 h-4 animate-pulse" />
-                  <div className="flex flex-col gap-1">
-                    <span className="text-xs">{initializationProgress?.message || 'Loading AI Search...'}</span>
-                    {initializationProgress?.progress > 0 && (
-                      <div className="w-20 h-1 bg-yellow-500/30 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-yellow-400 transition-all duration-500 ease-out"
-                          style={{ width: `${initializationProgress.progress}%` }}
-                        ></div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="flex items-center gap-2 bg-gray-500/20 text-gray-300 px-3 py-1 rounded-full text-sm">
-                  <Zap className="w-4 h-4" />
-                  {initializationProgress?.stage === 'waiting' ? 'Waiting for data...' : 'AI Search Offline'}
-                </div>
-              )}
-              
-              {/* Search Results Indicator */}
-              {appliedFilters.search && (
-                <div className="flex items-center gap-2 bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full text-sm">
-                  <Database className="w-4 h-4" />
-                  Search: "{appliedFilters.search}" • {pagination.totalItems} results
-                </div>
-              )}
             </motion.div>
 
-            {/* Debug Information */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
-              transition={{ delay: 0.3, duration: 0.2 }}
-              className="mb-6 p-4 bg-blue-500/20 rounded-lg border border-blue-500/30"
-            >
-              <div className="text-center text-blue-300 text-sm">
-                <div className="font-semibold mb-2">🔍 Debug Information</div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-                  <div>
-                    <span className="font-medium">Total Colleges:</span> {pagination.totalItems}
-                  </div>
-                  <div>
-                    <span className="font-medium">Current Filters:</span> {Object.keys(appliedFilters).filter(k => appliedFilters[k]).join(', ') || 'None'}
-                  </div>
-                  <div>
-                    <span className="font-medium">Page:</span> {pagination.page} of {pagination.totalPages}
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs mt-2">
-                  <div>
-                    <span className="font-medium">AI Search:</span> {isAdvancedSearchReady ? '✅ Ready' : isAdvancedSearchLoading ? `⏳ ${initializationProgress?.message || 'Loading'}` : `❌ ${initializationProgress?.stage === 'waiting' ? 'Waiting for data' : 'Offline'}`}
-                    {initializationProgress?.progress > 0 && (
-                      <span className="ml-2 text-xs text-blue-300">
-                        ({Math.round(initializationProgress.progress)}%)
-                      </span>
-                    )}
-                  </div>
-                  <div>
-                    <span className="font-medium">Search Type:</span> {currentSearchQuery ? 'AI + Backend' : 'Backend Only'}
-                  </div>
-                  <div>
-                    <span className="font-medium">Advanced Features:</span> {isAdvancedSearchReady ? '🚀 Active' : '⚠️ Disabled'}
-                  </div>
-                </div>
-                <div className="mt-3 flex justify-center gap-2">
-                  <button
-                    onClick={() => loadColleges(appliedFilters, 1)}
-                    className="px-3 py-1 bg-blue-500/30 hover:bg-blue-500/50 text-blue-200 text-xs rounded border border-blue-400/50 transition-colors"
-                  >
-                    🔄 Refresh Data
-                  </button>
-                  <button
-                    onClick={() => console.log('Current state:', { colleges: colleges.length, pagination, appliedFilters, filters })}
-                    className="px-3 py-1 bg-green-500/30 hover:bg-green-500/50 text-green-200 text-xs rounded border border-green-400/50 transition-colors"
-                  >
-                    📊 Log State
-                  </button>
-                  <button
-                    onClick={async () => {
-                      if (searchService) {
-                        const status = searchService.getStatus();
-                        console.log('🔍 Advanced Search Service Status:', status);
-                        
-                        // Test search functionality
-                        let testResult = 'Not tested';
-                        if (status.isInitialized) {
-                          try {
-                            const test = await searchService.testSearch();
-                            testResult = test.success ? '✅ Working' : `❌ Failed: ${test.error}`;
-                          } catch (error) {
-                            testResult = `❌ Error: ${error.message}`;
-                          }
-                        }
-                        
-                        alert(`AI Search Status:\n- Initialized: ${status.isInitialized}\n- Lunr Index: ${status.lunrIndex}\n- TF Model: ${status.tfModel}\n- Colleges: ${status.collegesCount}\n- Search Test: ${testResult}`);
-                      } else {
-                        alert('Advanced Search Service not available');
-                      }
-                    }}
-                    className="px-3 py-1 bg-purple-500/30 hover:bg-purple-500/50 text-purple-200 text-xs rounded border border-purple-400/50 transition-colors"
-                  >
-                    🤖 AI Status & Test
-                  </button>
-                </div>
-              </div>
-            </motion.div>
 
             {/* Intelligent Filters */}
             <motion.div
@@ -1012,9 +878,6 @@ const Colleges = () => {
                 <div className={`text-sm text-center ${
                   isDarkMode ? 'text-white/70' : 'text-gray-600'
                 }`}>
-                  <div className="mb-1">
-                    Showing {colleges.length} of {pagination.totalItems} colleges
-                  </div>
                 </div>
                 
                 {/* Load More Button - Replaces pagination for better UX */}
@@ -1049,16 +912,6 @@ const Colleges = () => {
                 )}
                 
                 {/* Results Summary */}
-                <div className={`text-center text-sm ${
-                  isDarkMode ? 'text-white/60' : 'text-gray-500'
-                }`}>
-                  Showing {colleges.length} of {pagination.totalItems} colleges
-                  {pagination.hasNext && (
-                    <span className="ml-2 text-xs">
-                      (Scroll down or click "Load More" to see more)
-                    </span>
-                  )}
-                </div>
               </motion.div>
             )}
 

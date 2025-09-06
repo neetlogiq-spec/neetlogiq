@@ -217,23 +217,28 @@ const Cutoffs = () => {
           <ResponsiveHeader />
         </div>
 
-        {/* COMING SOON Banner */}
+        {/* COMING SOON Banner - Bigger and More Prominent */}
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -20 }}
-        transition={{ duration: 0.6 }}
-          className="relative z-20 bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 px-4 text-center"
+          transition={{ duration: 0.6 }}
+          className="relative z-20 bg-gradient-to-r from-orange-500 to-red-500 text-white py-8 px-4 text-center shadow-2xl"
         >
-          <div className="max-w-4xl mx-auto">
-            <div className="flex items-center justify-center space-x-2">
-              <Award className="w-6 h-6 animate-pulse" />
-              <span className="text-lg font-bold">🚀 COMING SOON</span>
-              <Award className="w-6 h-6 animate-pulse" />
+          <div className="max-w-6xl mx-auto">
+            <div className="flex items-center justify-center space-x-3 mb-3">
+              <Award className="w-8 h-8 animate-pulse" />
+              <span className="text-2xl md:text-3xl font-bold">🚀 COMING SOON</span>
+              <Award className="w-8 h-8 animate-pulse" />
             </div>
-            <p className="text-sm mt-1 opacity-90">
+            <p className="text-lg md:text-xl mb-3 opacity-95 font-semibold">
               NEET Cutoff Analysis feature is under development. Stay tuned for comprehensive cutoff data and trends!
-          </p>
-        </div>
+            </p>
+            <div className="bg-yellow-400/20 border border-yellow-300/30 rounded-lg p-4 mt-4">
+              <p className="text-yellow-100 text-base md:text-lg font-medium">
+                ⚠️ <strong>Important Notice:</strong> The cutoff data displayed below is mock data for demonstration purposes only and does not represent actual NEET cutoff information.
+              </p>
+            </div>
+          </div>
         </motion.div>
 
       {/* Main Content */}
