@@ -1,9 +1,9 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useAuth } from '../contexts/AuthContext';
-import { Loader2 } from 'lucide-react';
+import { LogIn, Loader2 } from 'lucide-react';
 
-const GoogleSignIn = ({ 
+const FirebaseGoogleSignIn = ({ 
   className = "", 
   text = "Sign in with Google",
   size = "large",
@@ -71,7 +71,7 @@ const GoogleSignIn = ({
   };
 
   return (
-    <div className={`${className} google-signin-container`}>
+    <div className={`${className} firebase-google-signin-container`}>
       <motion.button
         onClick={handleClick}
         disabled={isLoading}
@@ -134,4 +134,4 @@ const GoogleSignIn = ({
   );
 };
 
-export default GoogleSignIn;
+export default FirebaseGoogleSignIn;

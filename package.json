@@ -30,7 +30,10 @@
   "license": "UNLICENSED",
   "private": true,
   "devDependencies": {
-    "wrangler": "^4.33.2",
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "wrangler": "^4.33.2"
+  },
+  "dependencies": {
+    "firebase": "^12.2.1"
   }
 }

@@ -77,10 +77,11 @@ const BlurredOverlay = ({ children }) => {
             </p>
 
                               {/* Sign-in Button */}
-                  <div className="mb-4 w-full flex justify-center items-center">
-                    <div className="w-full max-w-sm mx-auto text-center">
-                      <GoogleSignIn className="inline-block" />
-                    </div>
+                  <div className="mb-4 flex justify-center">
+                    <GoogleSignIn 
+                      size="medium"
+                      width={240}
+                    />
                   </div>
             
             {/* Benefits List */}

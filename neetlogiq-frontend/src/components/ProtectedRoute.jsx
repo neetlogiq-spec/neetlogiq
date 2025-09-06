@@ -44,7 +44,13 @@ const ProtectedRoute = ({ children, fallback = null, showSignInPrompt = true }) 
             </div>
 
             <div className="space-y-4">
-              <GoogleSignIn className="w-full" />
+              <div className="flex justify-center">
+                <GoogleSignIn 
+                  className="inline-block" 
+                  size="medium"
+                  width={240}
+                />
+              </div>
               
               <div className="text-sm text-gray-500">
                 <p className="mb-2">With a free account, you get access to:</p>

@@ -158,9 +158,9 @@ const ResponsiveHeader = () => {
               ) : (
                 <Link
                   to="/login"
-                  className="flex items-center space-x-2 px-4 py-2 rounded-lg transition-all duration-200 bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:from-purple-600 hover:to-blue-600"
+                  className="flex items-center space-x-2 px-3 py-1.5 rounded-lg transition-all duration-200 bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:from-purple-600 hover:to-blue-600 text-sm"
                 >
-                  <User size={18} />
+                  <User size={16} />
                   <span className="font-medium">Sign In</span>
                 </Link>
               )}
@@ -296,10 +296,10 @@ const ResponsiveHeader = () => {
                     ) : (
                       <Link
                         to="/login"
-                        className="flex items-center space-x-3 px-4 py-3 rounded-lg transition-all duration-200 bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:from-purple-600 hover:to-blue-600"
+                        className="flex items-center space-x-3 px-3 py-2 rounded-lg transition-all duration-200 bg-gradient-to-r from-purple-500 to-blue-500 text-white hover:from-purple-600 hover:to-blue-600 text-sm"
                         onClick={() => setIsMobileMenuOpen(false)}
                       >
-                        <User size={20} />
+                        <User size={18} />
                         <span className="font-medium">Sign In</span>
                       </Link>
                     )}

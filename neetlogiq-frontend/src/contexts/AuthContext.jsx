@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { GOOGLE_CONFIG } from '../config/auth';
+import firebaseAuthService from '../services/firebaseAuth';
 
 const AuthContext = createContext();
 
@@ -15,68 +15,125 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authError, setAuthError] = useState(null);
 
-  // Google OAuth configuration
-  const GOOGLE_CLIENT_ID = GOOGLE_CONFIG.CLIENT_ID;
-
+  // Initialize Firebase auth listener
   useEffect(() => {
-    // Check if user is already logged in (from localStorage)
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      try {
-        const userData = JSON.parse(savedUser);
+    const unsubscribe = firebaseAuthService.onAuthStateChange((firebaseUser) => {
+      console.log('🔥 Auth state changed:', firebaseUser ? 'Signed In' : 'Signed Out');
+      
+      if (firebaseUser) {
+        const userData = {
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName,
+          email: firebaseUser.email,
+          image: firebaseUser.photoURL,
+          givenName: firebaseUser.displayName?.split(' ')[0] || '',
+          familyName: firebaseUser.displayName?.split(' ').slice(1).join(' ') || '',
+          emailVerified: firebaseUser.emailVerified,
+        };
+        
         setUser(userData);
         setIsAuthenticated(true);
-      } catch (error) {
-        console.error('Error parsing saved user data:', error);
+        setAuthError(null);
+        
+        // Save to localStorage for persistence
+        localStorage.setItem('user', JSON.stringify(userData));
+      } else {
+        setUser(null);
+        setIsAuthenticated(false);
+        setAuthError(null);
         localStorage.removeItem('user');
       }
-    }
-    setIsLoading(false);
+      
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const handleGoogleSuccess = (response) => {
-    console.log('Google login success:', response);
-    
-    // Decode the JWT token to get user information
-    const payload = JSON.parse(atob(response.credential.split('.')[1]));
-    
-    const userData = {
-      id: payload.sub,
-      name: payload.name,
-      email: payload.email,
-      image: payload.picture,
-      givenName: payload.given_name,
-      familyName: payload.family_name,
-    };
-
-    setUser(userData);
-    setIsAuthenticated(true);
-    localStorage.setItem('user', JSON.stringify(userData));
-    
-    // You can also send this data to your backend for verification
-    // sendUserDataToBackend(userData);
+  // Sign in with Google using Firebase
+  const handleGoogleSignIn = async () => {
+    try {
+      setAuthError(null);
+      setIsLoading(true);
+      
+      const result = await firebaseAuthService.signInWithGoogle();
+      
+      if (result.success) {
+        console.log('✅ Firebase Google sign-in successful');
+        // User state will be updated by the auth state listener
+      } else {
+        setAuthError(result.error);
+        console.error('❌ Firebase Google sign-in failed:', result.error);
+      }
+    } catch (error) {
+      const errorMessage = firebaseAuthService.getErrorMessage(error);
+      setAuthError(errorMessage);
+      console.error('❌ Firebase Google sign-in error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleGoogleFailure = (error) => {
-    console.error('Google login failed:', error);
-    // Handle login failure
+  // Sign out using Firebase
+  const handleLogout = async () => {
+    try {
+      setAuthError(null);
+      setIsLoading(true);
+      
+      const result = await firebaseAuthService.signOut();
+      
+      if (result.success) {
+        console.log('✅ Firebase sign-out successful');
+        // User state will be updated by the auth state listener
+      } else {
+        setAuthError(result.error);
+        console.error('❌ Firebase sign-out failed:', result.error);
+      }
+    } catch (error) {
+      const errorMessage = firebaseAuthService.getErrorMessage(error);
+      setAuthError(errorMessage);
+      console.error('❌ Firebase sign-out error:', error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    setIsAuthenticated(false);
-    localStorage.removeItem('user');
+  // Clear auth error
+  const clearAuthError = () => {
+    setAuthError(null);
+  };
+
+  // Get user display name
+  const getDisplayName = () => {
+    return firebaseAuthService.getDisplayName();
+  };
+
+  // Get user photo URL
+  const getPhotoURL = () => {
+    return firebaseAuthService.getPhotoURL();
+  };
+
+  // Check if auth is initialized
+  const isAuthInitialized = () => {
+    return firebaseAuthService.isAuthInitialized();
   };
 
   const value = {
     user,
     isAuthenticated,
     isLoading,
-    handleGoogleSuccess,
-    handleGoogleFailure,
+    authError,
+    handleGoogleSignIn,
     handleLogout,
-    GOOGLE_CLIENT_ID,
+    clearAuthError,
+    getDisplayName,
+    getPhotoURL,
+    isAuthInitialized,
+    // Legacy compatibility
+    handleGoogleSuccess: handleGoogleSignIn,
+    handleGoogleFailure: (error) => setAuthError(firebaseAuthService.getErrorMessage(error)),
   };
 
   return (

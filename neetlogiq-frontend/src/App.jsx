@@ -17,6 +17,7 @@ const Admin = lazy(() => import('./pages/Admin'));
 const SearchDemo = lazy(() => import('./pages/SearchDemo'));
 const LoadingDemo = lazy(() => import('./components/LoadingDemo'));
 const AuthTest = lazy(() => import('./pages/AuthTest'));
+const FirebaseAuthTest = lazy(() => import('./components/FirebaseAuthTest'));
 const VortexDemo = lazy(() => import('./components/VortexDemo'));
 
 const App = () => {
@@ -122,6 +123,7 @@ const App = () => {
                     <AuthTest />
                   </ProtectedRoute>
                 } />
+                <Route path="/firebase-auth-test" element={<FirebaseAuthTest />} />
                 <Route path="/vortex-demo" element={<VortexDemo />} />
               </Routes>
             </Suspense>
