@@ -1,4 +1,4 @@
-import React, { useState, memo } from 'react';
+import React, { useState, memo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   MapPin, 
@@ -16,6 +16,11 @@ const ResponsiveCollegeCard = ({
 }) => {
   const { isDarkMode } = useTheme();
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+
+  // Debug modal state changes
+  useEffect(() => {
+    console.log('🔍 Modal state changed:', { isDetailsModalOpen, college: college?.name });
+  }, [isDetailsModalOpen, college?.name]);
 
 
   const getCollegeTypeColor = (type) => {
@@ -99,9 +104,14 @@ const ResponsiveCollegeCard = ({
         {/* Action Button */}
         <div className="mt-auto">
           <button
-            onClick={() => {
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('🔍 Button clicked, opening modal for college:', college.name);
               setIsDetailsModalOpen(true);
               if (onFetchCourses) {
+                console.log('🔍 Fetching courses for college:', college.id);
                 onFetchCourses();
               }
             }}

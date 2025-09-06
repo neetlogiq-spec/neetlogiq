@@ -22,6 +22,8 @@ const CollegeDetailsModal = ({ isOpen, onClose, college, courses = [], isLoading
   // Lock body scroll when modal is open
   useScrollLock(isOpen);
 
+  console.log('🔍 CollegeDetailsModal render:', { isOpen, college: college?.name, courses: courses?.length });
+
   if (!isOpen || !college) return null;
 
   const getManagementBadgeColor = (management) => {
