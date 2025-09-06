@@ -1,16 +1,15 @@
 // API Service for NeetLogIQ Cloudflare Worker Integration
-
-const API_BASE_URL = 'http://localhost:8787/api';
+import { getApiUrl, getBaseUrl } from '../config/api';
 
 class ApiService {
   constructor() {
-    this.baseURL = API_BASE_URL;
+    this.baseURL = getBaseUrl();
   }
 
   // Generic API call method with BMAD integration
   async apiCall(endpoint, options = {}) {
     try {
-      const url = `${this.baseURL}${endpoint}`;
+      const url = getApiUrl(endpoint);
       console.log('🌐 API Call URL:', url);
       const response = await fetch(url, {
         headers: {
@@ -55,7 +54,7 @@ class ApiService {
     queryParams.append('page', page);
     queryParams.append('limit', limit);
     
-    return this.apiCall(`/colleges?${queryParams.toString()}`);
+    return this.apiCall(`/api/colleges?${queryParams.toString()}`);
   }
 
   async getCollegeFilters(currentFilters = {}) {
@@ -68,7 +67,7 @@ class ApiService {
       }
     });
     
-    return this.apiCall(`/colleges/filters?${queryParams.toString()}`);
+    return this.apiCall(`/api/colleges/filters?${queryParams.toString()}`);
   }
 
   async searchColleges(query, page = 1, limit = 24) {
@@ -78,15 +77,15 @@ class ApiService {
     queryParams.append('limit', limit); // Use the limit for results
     
     // Use the new aliases search endpoint
-    return this.apiCall(`/aliases/search?${queryParams.toString()}`);
+    return this.apiCall(`/api/aliases/search?${queryParams.toString()}`);
   }
 
   async getCollegeById(id) {
-    return this.apiCall(`/colleges/${id}`);
+    return this.apiCall(`/api/colleges/${id}`);
   }
 
   async getCollegePrograms(collegeId) {
-    return this.apiCall(`/colleges/${collegeId}/programs`);
+    return this.apiCall(`/api/colleges/${collegeId}/programs`);
   }
 
   // Courses API
@@ -104,7 +103,7 @@ class ApiService {
     queryParams.append('page', page);
     queryParams.append('limit', limit);
     
-    return this.apiCall(`/courses?${queryParams.toString()}`);
+    return this.apiCall(`/api/courses?${queryParams.toString()}`);
   }
 
   async getCourseFilters() {
@@ -121,7 +120,7 @@ class ApiService {
       }
     });
     
-    return this.apiCall(`/courses?${queryParams.toString()}`);
+    return this.apiCall(`/api/courses?${queryParams.toString()}`);
   }
 
   async getCourseById(id) {
