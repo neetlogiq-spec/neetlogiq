@@ -1,0 +1,13 @@
+# Cloudflare Pages Configuration
+[build]
+command = "npm run build"
+publish = "build"
+
+[build.environment_variables]
+REACT_APP_API_URL = "https://neetlogiq-backend.neetlogiq.workers.dev"
+REACT_APP_ENVIRONMENT = "production"
+GENERATE_SOURCEMAP = "false"
+NODE_VERSION = "18"
+
+[build.placement]
+mode = "smart"

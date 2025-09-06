@@ -2,7 +2,7 @@
   "name": "neetlogiq-frontend",
   "version": "0.1.0",
   "private": true,
-  "homepage": ".",
+  "homepage": "https://neetlogiq.com",
   "dependencies": {
     "@leeoniya/ufuzzy": "^1.0.19",
     "@tensorflow/tfjs": "^4.22.0",

@@ -1,5 +1,2 @@
-# Cloudflare Pages Redirects Configuration
-# This ensures React Router works correctly with client-side routing
-
-# Redirect all non-file requests to index.html for client-side routing
+# Cloudflare Pages redirects for React Router
 /*    /index.html   200
