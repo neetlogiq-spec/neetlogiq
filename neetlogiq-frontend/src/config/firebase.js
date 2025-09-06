@@ -32,6 +32,12 @@ googleProvider.setCustomParameters({
   prompt: 'select_account'
 });
 
+// Add localhost to authorized domains for development
+if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+  // This is a workaround for development - the proper fix is to add localhost to Firebase console
+  console.warn('Firebase: Make sure to add localhost to authorized domains in Firebase Console');
+}
+
 // Auth helper functions
 export const signInWithGoogle = () => {
   return signInWithPopup(auth, googleProvider);
