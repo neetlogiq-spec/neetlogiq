@@ -221,7 +221,7 @@ const Cutoffs = () => {
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -20 }}
-          transition={{ duration: 0.6 }}
+        transition={{ duration: 0.6 }}
           className="relative z-20 bg-gradient-to-r from-orange-500 to-red-500 text-white py-4 px-4 text-center"
         >
           <div className="max-w-4xl mx-auto">
@@ -232,8 +232,8 @@ const Cutoffs = () => {
             </div>
             <p className="text-sm mt-1 opacity-90">
               NEET Cutoff Analysis feature is under development. Stay tuned for comprehensive cutoff data and trends!
-            </p>
-          </div>
+          </p>
+        </div>
         </motion.div>
 
       {/* Main Content */}

@@ -220,6 +220,111 @@ class ApiService {
       throw error;
     }
   }
+
+  // Advanced search using the new backend service
+  async advancedSearch(query, options = {}) {
+    const { 
+      type = 'all', 
+      limit = 50, 
+      threshold = 0.3, 
+      engines = ['fuse', 'flexsearch', 'ufuzzy', 'fuzzysort', 'neural', 'regex'] 
+    } = options;
+    
+    const searchParams = new URLSearchParams({
+      q: query,
+      type,
+      limit: limit.toString(),
+      threshold: threshold.toString(),
+      engines: engines.join(',')
+    });
+
+    const url = `${this.baseURL}/api/advanced-search?${searchParams.toString()}`;
+    console.log(`🚀 Advanced Search URL: ${url}`);
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('🚀 Advanced Search Response:', data);
+      
+      return data;
+    } catch (error) {
+      console.error('Advanced search failed:', error);
+      throw error;
+    }
+  }
+
+  // FTS5 search for colleges (ultra-fast full-text search)
+  async searchCollegesFTS5(query, page = 1, limit = 24) {
+    const searchParams = new URLSearchParams({
+      q: query,
+      page: page.toString(),
+      limit: limit.toString()
+    });
+
+    const url = `${this.baseURL}/api/search/fts5/colleges?${searchParams.toString()}`;
+    console.log(`🔍 FTS5 Colleges Search URL: ${url}`);
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('🔍 FTS5 Colleges Search Response:', data);
+      
+      return data;
+    } catch (error) {
+      console.error('FTS5 colleges search failed:', error);
+      throw error;
+    }
+  }
+
+  // FTS5 search for courses (ultra-fast full-text search)
+  async searchCoursesFTS5(query, page = 1, limit = 24) {
+    const searchParams = new URLSearchParams({
+      q: query,
+      page: page.toString(),
+      limit: limit.toString()
+    });
+
+    const url = `${this.baseURL}/api/search/fts5/courses?${searchParams.toString()}`;
+    console.log(`🔍 FTS5 Courses Search URL: ${url}`);
+
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      console.log('🔍 FTS5 Courses Search Response:', data);
+      
+      return data;
+    } catch (error) {
+      console.error('FTS5 courses search failed:', error);
+      throw error;
+    }
+  }
 }
 
 // Create and export singleton instance
@@ -242,5 +347,9 @@ export const {
   getBMADAnalytics,
   getBMADPerformance,
   healthCheck,
-  getApiStatus
+  getApiStatus,
+  search,
+  advancedSearch,
+  searchCollegesFTS5,
+  searchCoursesFTS5
 } = apiService;

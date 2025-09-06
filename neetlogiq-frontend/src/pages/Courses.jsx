@@ -19,6 +19,8 @@ import { useTheme } from '../context/ThemeContext';
 import { Vortex } from '../components/ui/vortex';
 import { LightVortex } from '../components/ui/LightVortex';
 import ThemeToggle from '../components/ThemeToggle';
+import apiService from '../services/apiService';
+import cacheService from '../services/cacheService';
 
 const Courses = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -47,51 +49,53 @@ const Courses = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Load courses from backend with proper pagination
-  const loadCourses = useCallback(async (newFilters = {}, newPage = 1) => {
+  // Load courses from backend with chunked loading
+  const loadCourses = useCallback(async (newFilters = {}, newPage = 1, isAppend = false) => {
     try {
       setIsLoading(true);
-      console.log('🔍 Loading courses with filters:', newFilters, 'page:', newPage);
+      console.log('🔍 Loading courses with filters:', newFilters, 'page:', newPage, 'append:', isAppend);
       
-      // Use proper pagination instead of chunked loading
-      const params = new URLSearchParams({
+      // Use smaller chunks for better performance
+      const chunkSize = 12; // Load 12 courses at a time
+      
+      // Use cache service for better performance
+      const response = await cacheService.cacheApiCall(
+        () => apiService.getCourses(newFilters, newPage, chunkSize),
+        'courses',
+        { filters: JSON.stringify(newFilters), page: newPage, limit: chunkSize },
+        5 * 60 * 1000 // 5 minutes cache
+      );
+      
+      console.log('🔍 Chunked loading complete:', {
         page: newPage,
-        limit: 24
-      });
-      
-      if (newFilters.stream && newFilters.stream !== 'all') {
-        params.append('stream', newFilters.stream);
-      }
-      
-      if (newFilters.search) {
-        params.append('search', newFilters.search);
-      }
-      
-      // Load single page with proper pagination
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8787'}/api/courses?${params}`);
-      const data = await response.json();
-      
-      console.log('🔍 Pagination loading complete:', {
-        page: newPage,
-        totalCourses: data.data?.length || 0,
-        pagination: data.pagination
+        totalCourses: response.data?.length || 0,
+        pagination: response.pagination
       });
       
       // Filter out courses with 0 total seats
-      const validCourses = (data.data || []).filter(course => course.total_seats > 0);
+      const validCourses = (response.data || []).filter(course => course.total_seats > 0);
       
-      setCourses(validCourses);
-      setFilteredCourses(validCourses);
+      // Append or replace data based on isAppend flag
+      if (isAppend && newPage > 1) {
+        setCourses(prevCourses => [...prevCourses, ...validCourses]);
+        setFilteredCourses(prevCourses => [...prevCourses, ...validCourses]);
+      } else {
+        setCourses(validCourses);
+        setFilteredCourses(validCourses);
+      }
+      
       setPagination({
         page: newPage,
-        limit: 24,
-        totalPages: data.pagination?.totalPages || 1,
-        totalItems: validCourses.length // Use filtered count
+        limit: chunkSize,
+        totalPages: response.pagination?.totalPages || 1,
+        totalItems: response.pagination?.totalItems || validCourses.length
       });
     } catch (error) {
       console.error('Failed to load courses:', error);
-      setCourses([]);
-      setFilteredCourses([]);
+      if (!isAppend) {
+        setCourses([]);
+        setFilteredCourses([]);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -162,6 +166,35 @@ const Courses = () => {
     
     initialLoad();
   }, []); // Empty dependency array - only run on mount
+
+  // Load more courses function for infinite scroll
+  const loadMoreCourses = useCallback(() => {
+    if (isLoading || !pagination.hasNext) return;
+    
+    const nextPage = Math.floor(courses.length / 12) + 1;
+    console.log('🔄 Loading more courses, page:', nextPage);
+    loadCourses({}, nextPage, true); // Append mode
+  }, [isLoading, pagination.hasNext, courses.length, loadCourses]);
+
+  // Infinite scroll handler
+  const handleScroll = useCallback(() => {
+    if (isLoading || !pagination.hasNext) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+    const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
+    
+    // Load more when user scrolls to 70% of the page
+    if (scrollPercentage > 0.7) {
+      console.log('🔄 Infinite scroll triggered for courses, loading next chunk...');
+      loadMoreCourses();
+    }
+  }, [isLoading, pagination.hasNext, loadMoreCourses]);
+
+  // Add scroll listener for infinite scroll
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   // Update filtered courses when courses change (but not during search)
   useEffect(() => {
@@ -400,7 +433,7 @@ const Courses = () => {
                 contentType="courses"
                 colleges={colleges}
                 showSuggestions={false}
-                onSearchResults={(searchResult) => {
+                onSearchResults={async (searchResult) => {
                   console.log("🔍 Unified search results for courses:", searchResult);
                   
                   if (searchResult.results && searchResult.results.length > 0) {
@@ -449,6 +482,65 @@ const Courses = () => {
                       currentFilters.stream = selectedStream;
                     }
                     loadCourses(currentFilters, 1);
+                  } else if (searchResult && searchResult.query) {
+                    // Use advanced search for better results
+                    try {
+                      console.log("🚀 Using advanced search for courses:", searchResult.query);
+                      const advancedResults = await apiService.advancedSearch(searchResult.query, {
+                        type: 'courses',
+                        limit: 50,
+                        threshold: 0.3
+                      });
+                      
+                      if (advancedResults.results && advancedResults.results.length > 0) {
+                        console.log("🚀 Advanced search results:", advancedResults.results.length, "courses");
+                        
+                        // Convert advanced search results to course format
+                        const advancedCourses = advancedResults.results.map(result => ({
+                          course_name: result.course_name,
+                          stream: result.stream,
+                          branch: result.branch || '',
+                          level: result.level,
+                          duration: result.duration || 'N/A',
+                          total_seats: result.total_seats || 0,
+                          total_colleges: result.total_colleges || 0,
+                          college_names: result.college_names || '',
+                          colleges: result.colleges || []
+                        }));
+                        
+                        // Filter out courses with 0 total seats
+                        const validAdvancedCourses = advancedCourses.filter(course => course.total_seats > 0);
+                        
+                        setCourses(validAdvancedCourses);
+                        setFilteredCourses(validAdvancedCourses);
+                        setPagination({
+                          page: 1,
+                          limit: validAdvancedCourses.length,
+                          totalPages: 1,
+                          totalItems: advancedResults.total
+                        });
+                      }
+                    } catch (error) {
+                      console.error("Advanced search failed:", error);
+                      // Fallback to regular search results
+                      if (searchResult.results && searchResult.results.length > 0) {
+                        const searchCourses = searchResult.results.map(result => ({
+                          course_name: result.course_name,
+                          stream: result.stream,
+                          branch: result.branch || '',
+                          level: result.level,
+                          duration: result.duration || 'N/A',
+                          total_seats: result.total_seats || 0,
+                          total_colleges: result.total_colleges || 0,
+                          college_names: result.college_names || '',
+                          colleges: result.colleges || []
+                        }));
+                        
+                        const validSearchCourses = searchCourses.filter(course => course.total_seats > 0);
+                        setCourses(validSearchCourses);
+                        setFilteredCourses(validSearchCourses);
+                      }
+                    }
                   } else {
                     console.log("🔍 No search results to display for courses");
                     // Don't clear courses array for empty results

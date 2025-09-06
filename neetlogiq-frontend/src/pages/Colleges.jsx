@@ -13,6 +13,7 @@ import CollegeCard from '../components/ResponsiveCollegeCard';
 import UnifiedSearchBar from '../components/UnifiedSearchBar';
 import BlurredOverlay from '../components/BlurredOverlay';
 import apiService from '../services/apiService';
+import cacheService from '../services/cacheService';
 import { useAdvancedSearch } from '../hooks/useAdvancedSearch';
 import { useUnifiedSearch } from '../hooks/useUnifiedSearch';
 import BeautifulLoader from '../components/BeautifulLoader';
@@ -55,8 +56,6 @@ const Colleges = () => {
   // State for all colleges (used for search index)
   const [allCollegesForSearch, setAllCollegesForSearch] = useState([]);
   
-  // State for storing all search results (for pagination)
-  const [allSearchResults, setAllSearchResults] = useState([]);
   
   // Advanced search hook - initialized with ALL colleges, not just current page
   const {
@@ -82,7 +81,6 @@ const Colleges = () => {
         // Clear search - reset to normal pagination
         console.log('🔍 Clearing search - returning to default college list');
         setCurrentSearchQuery('');
-        setAllSearchResults([]); // Clear stored search results
         
         // Reset pagination to default values before loading
         setPagination({
@@ -117,7 +115,6 @@ const Colleges = () => {
               totalPages: Math.ceil(unifiedResults.length / pagination.limit),
               totalItems: unifiedResults.length
             });
-            setAllSearchResults(unifiedResults);
             return;
           }
         } catch (unifiedError) {
@@ -155,7 +152,6 @@ const Colleges = () => {
                     totalPages: Math.ceil(backendResponse.data.length / pagination.limit),
                     totalItems: backendResponse.data.length
                   });
-                  setAllSearchResults(backendResponse.data);
                   return;
                 }
               } catch (backendError) {
@@ -174,8 +170,6 @@ const Colleges = () => {
               totalItems: advancedResults.length
             });
             
-            // Store all results for pagination
-            setAllSearchResults(advancedResults);
             return;
           } else {
             console.log('⚠️ Advanced search returned no results, falling back to backend');
@@ -210,8 +204,6 @@ const Colleges = () => {
           totalItems: response.pagination?.totalItems || response.data.length
         });
         
-        // Store all results for pagination
-        setAllSearchResults(response.data);
       } else {
         console.error('❌ Invalid search response:', response);
         setColleges([]);
@@ -227,7 +219,6 @@ const Colleges = () => {
       console.error('❌ Search error:', error);
       setColleges([]);
       setCurrentSearchQuery('');
-      setAllSearchResults([]);
       setPagination({
         page: 1,
         limit: 24,
@@ -239,8 +230,8 @@ const Colleges = () => {
     }
   };
 
-  // Load colleges from backend
-  const loadColleges = useCallback(async (newFilters = {}, newPage = 1) => {
+  // Load colleges from backend with chunked loading
+  const loadColleges = useCallback(async (newFilters = {}, newPage = 1, isAppend = false) => {
     // Don't load default colleges if there's an active search
     if (currentSearchQuery && currentSearchQuery.trim() !== '') {
       console.log('🔍 Skipping loadColleges - active search in progress');
@@ -249,9 +240,18 @@ const Colleges = () => {
     
     try {
       setIsLoading(true);
-      console.log('🔍 Loading colleges with filters:', newFilters, 'page:', newPage);
+      console.log('🔍 Loading colleges with filters:', newFilters, 'page:', newPage, 'append:', isAppend);
       
-      const response = await apiService.getColleges(newFilters, newPage, pagination.limit); // Use dynamic limit
+      // Use smaller chunks for better performance
+      const chunkSize = 12; // Load 12 colleges at a time instead of 24
+      
+      // Use cache service for better performance
+      const response = await cacheService.cacheApiCall(
+        () => apiService.getColleges(newFilters, newPage, chunkSize),
+        'colleges',
+        { filters: JSON.stringify(newFilters), page: newPage, limit: chunkSize },
+        5 * 60 * 1000 // 5 minutes cache
+      );
       
       console.log('🔍 API Response:', response);
       console.log('🔍 API Response keys:', Object.keys(response));
@@ -260,10 +260,16 @@ const Colleges = () => {
       console.log('🔍 Response.data exists:', !!response.data);
       console.log('🔍 Response.colleges exists:', !!response.colleges);
       
-      setColleges(response.data || []);
+      // Append or replace data based on isAppend flag
+      if (isAppend && newPage > 1) {
+        setColleges(prevColleges => [...prevColleges, ...(response.data || [])]);
+      } else {
+        setColleges(response.data || []);
+      }
+      
       setPagination(response.pagination || {
         page: newPage,
-        limit: 24, // Use default limit instead of pagination.limit
+        limit: chunkSize,
         totalPages: 1,
         totalItems: 0
       });
@@ -271,11 +277,13 @@ const Colleges = () => {
       // Note: API response doesn't include filters, they are managed separately
     } catch (error) {
       console.error('Failed to load colleges:', error);
-      setColleges([]);
+      if (!isAppend) {
+        setColleges([]);
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [currentSearchQuery, pagination.limit]); // Add currentSearchQuery and pagination.limit as dependencies
+  }, [currentSearchQuery]); // Remove pagination.limit dependency
 
   // Check API connection status
   const checkApiStatus = async () => {
@@ -331,7 +339,13 @@ const Colleges = () => {
   // Load available filters from backend
   const loadFilters = async () => {
     try {
-      const filterData = await apiService.getCollegeFilters();
+      // Use cache service for filters (longer TTL since filters don't change often)
+      const filterData = await cacheService.cacheApiCall(
+        () => apiService.getCollegeFilters(),
+        'college-filters',
+        {},
+        30 * 60 * 1000 // 30 minutes cache
+      );
       console.log('🔍 Initial filters loaded:', filterData);
       // Set filters with proper structure for the component
       setFilters({
@@ -349,12 +363,48 @@ const Colleges = () => {
     return () => clearTimeout(timer);
   }, []);
 
-  // Backend integration
+  // Backend integration with parallel chunked loading
   useEffect(() => {
-    checkApiStatus();
-    loadFilters();
-    loadColleges();
-    loadAllCollegesForSearch(); // Load all colleges for search index
+    const initializeData = async () => {
+      try {
+        console.log('🚀 Starting parallel chunked data loading...');
+        const startTime = performance.now();
+        
+        // Load critical data first (API status + filters + first page of colleges)
+        const criticalDataPromise = Promise.all([
+          checkApiStatus(),
+          loadFilters(),
+          loadColleges()
+        ]);
+        
+        // Load search data in parallel (non-blocking)
+        const searchDataPromise = loadAllCollegesForSearch();
+        
+        // Wait for critical data first
+        await criticalDataPromise;
+        console.log('✅ Critical data loaded, page is now interactive');
+        
+        // Load search data in background
+        searchDataPromise.then(() => {
+          console.log('✅ Search data loaded in background');
+        }).catch(error => {
+          console.error('Search data loading failed (non-critical):', error);
+        });
+        
+        // Warm up cache with common queries (non-blocking)
+        cacheService.warmUpCache(apiService).catch(error => {
+          console.error('Cache warm-up failed (non-critical):', error);
+        });
+        
+        const endTime = performance.now();
+        console.log(`🚀 Parallel loading completed in ${Math.round(endTime - startTime)}ms`);
+        
+      } catch (error) {
+        console.error('Failed to initialize data:', error);
+      }
+    };
+
+    initializeData();
   }, [loadColleges]);
 
   // Debug: Monitor filters state changes
@@ -411,46 +461,34 @@ const Colleges = () => {
     loadColleges({}, 1);
   };
 
-  // Handle pagination with scroll to top
-  const handlePageChange = async (newPage) => {
-    setPagination(prev => ({ ...prev, page: newPage }));
+  // Load more colleges function for infinite scroll
+  const loadMoreColleges = useCallback(() => {
+    if (isLoading || !pagination.hasNext) return;
     
-    if (currentSearchQuery && allSearchResults.length > 0) {
-      // If we're searching, use stored search results for pagination
-      const startIndex = (newPage - 1) * pagination.limit;
-      const endIndex = startIndex + pagination.limit;
-      const pageResults = allSearchResults.slice(startIndex, endIndex);
-      
-      setColleges(pageResults);
-      setPagination(prev => ({
-        ...prev,
-        page: newPage,
-        totalPages: Math.ceil(allSearchResults.length / pagination.limit)
-      }));
-    } else if (currentSearchQuery) {
-      // Fallback to API call if no stored results
-      try {
-        const response = await apiService.searchColleges(currentSearchQuery, newPage, pagination.limit);
-        if (response && response.data) {
-          setColleges(response.data);
-          setPagination(response.pagination || {
-            page: newPage,
-            limit: pagination.limit,
-            totalPages: Math.ceil(response.pagination?.totalItems / pagination.limit),
-            totalItems: response.pagination?.totalItems || response.data.length
-          });
-        }
-      } catch (error) {
-        console.error('Failed to load search results for page:', newPage, error);
-      }
-    } else {
-      // Normal pagination for filtered results
-      loadColleges(appliedFilters, newPage);
+    const nextPage = Math.floor(colleges.length / 12) + 1;
+    console.log('🔄 Loading more colleges, page:', nextPage);
+    loadColleges(appliedFilters, nextPage, true); // Append mode
+  }, [isLoading, pagination.hasNext, colleges.length, appliedFilters, loadColleges]);
+
+  // Infinite scroll handler - optimized for search-focused usage
+  const handleScroll = useCallback(() => {
+    if (isLoading || !pagination.hasNext) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
+    const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
+    
+    // Load more when user scrolls to 70% of the page (more aggressive loading)
+    if (scrollPercentage > 0.7) {
+      console.log('🔄 Infinite scroll triggered, loading next chunk...');
+      loadMoreColleges();
     }
-    
-    // Scroll to top when changing pages
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  }, [isLoading, pagination.hasNext, loadMoreColleges]);
+
+  // Add scroll listener for infinite scroll
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
 
 
@@ -667,7 +705,7 @@ const Colleges = () => {
               </div>
                               <UnifiedSearchBar
                   placeholder="Search medical colleges with unified AI intelligence..."
-                  onSearchResults={(searchResult) => {
+                  onSearchResults={async (searchResult) => {
                     console.log("🔍 Unified search results received:", searchResult);
                     if (searchResult && searchResult.results && searchResult.results.length > 0) {
                       console.log("🔍 Setting colleges to unified search results:", searchResult.results.length, "colleges");
@@ -684,7 +722,6 @@ const Colleges = () => {
                       // Only clear search when explicitly clearing (searchType: 'none')
                       console.log("🔍 Clearing search results");
                       setCurrentSearchQuery('');
-                      setAllSearchResults([]);
                       // Reset pagination to default values
                       setPagination({
                         page: 1,
@@ -694,6 +731,51 @@ const Colleges = () => {
                       });
                       // Load default colleges
                       loadColleges(appliedFilters, 1);
+                    } else if (searchResult && searchResult.query) {
+                      // Use FTS5 search for ultra-fast results
+                      try {
+                        console.log("🔍 Using FTS5 search for:", searchResult.query);
+                        const fts5Results = await apiService.searchCollegesFTS5(searchResult.query, 1, 50);
+                        
+                        if (fts5Results.data && fts5Results.data.length > 0) {
+                          console.log("🔍 FTS5 search results:", fts5Results.data.length, "colleges");
+                          setColleges(fts5Results.data);
+                          setCurrentSearchQuery(searchResult.query);
+                          setPagination({
+                            page: 1,
+                            limit: fts5Results.data.length,
+                            totalPages: fts5Results.pagination.totalPages,
+                            totalItems: fts5Results.pagination.totalItems
+                          });
+                        } else {
+                          // Fallback to advanced search
+                          console.log("🔄 FTS5 returned no results, trying advanced search...");
+                          const advancedResults = await apiService.advancedSearch(searchResult.query, {
+                            type: 'colleges',
+                            limit: 50,
+                            threshold: 0.3
+                          });
+                          
+                          if (advancedResults.results && advancedResults.results.length > 0) {
+                            console.log("🚀 Advanced search results:", advancedResults.results.length, "colleges");
+                            setColleges(advancedResults.results);
+                            setCurrentSearchQuery(searchResult.query);
+                            setPagination({
+                              page: 1,
+                              limit: advancedResults.results.length,
+                              totalPages: 1,
+                              totalItems: advancedResults.total
+                            });
+                          }
+                        }
+                      } catch (error) {
+                        console.error("FTS5 search failed:", error);
+                        // Fallback to regular search results
+                        if (searchResult.results && searchResult.results.length > 0) {
+                          setColleges(searchResult.results);
+                          setCurrentSearchQuery(searchResult.query);
+                        }
+                      }
                     } else {
                       console.log("🔍 No search results to display");
                       // Don't clear colleges array for empty results
@@ -931,225 +1013,51 @@ const Colleges = () => {
                   isDarkMode ? 'text-white/70' : 'text-gray-600'
                 }`}>
                   <div className="mb-1">
-                    Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.totalItems)} of {pagination.totalItems} colleges
-                  </div>
-                  <div className={`text-xs ${
-                    isDarkMode ? 'text-white/50' : 'text-gray-500'
-                  }`}>
-                    Page {pagination.page} of {pagination.totalPages} • {pagination.limit} colleges per page
+                    Showing {colleges.length} of {pagination.totalItems} colleges
                   </div>
                 </div>
                 
-                {/* Pagination Controls */}
-                <div className="flex justify-center items-center gap-2">
-                  {/* First Page */}
-                  <button
-                    onClick={() => handlePageChange(1)}
-                    disabled={pagination.page <= 1}
-                    className={`px-3 py-2 backdrop-blur-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm ${
-                      isDarkMode 
-                        ? 'bg-white/10 text-white hover:bg-white/20' 
-                        : 'bg-gray-100/80 text-gray-700 hover:bg-gray-200/80'
-                    }`}
-                  >
-                    First
-                  </button>
-                  
-                  {/* Previous Page */}
-                  <button
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={pagination.page <= 1}
-                    className={`px-4 py-2 backdrop-blur-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
-                      isDarkMode 
-                        ? 'bg-white/10 text-white hover:bg-white/20' 
-                        : 'bg-gray-100/80 text-gray-700 hover:bg-gray-200/80'
-                    }`}
-                  >
-                    Previous
-                  </button>
-                  
-                  {/* Page Numbers */}
-                  <div className="flex gap-1 flex-wrap justify-center max-w-md">
-                    {(() => {
-                      const pages = [];
-                      const totalPages = pagination.totalPages;
-                      const currentPage = pagination.page;
-                      
-                      // Always show first page
-                      pages.push(
-                        <button
-                          key={1}
-                          onClick={() => handlePageChange(1)}
-                          className={`px-3 py-2 rounded-lg transition-colors text-sm ${
-                            1 === currentPage
-                              ? isDarkMode ? 'bg-white/30 text-white' : 'bg-blue-500 text-white'
-                              : isDarkMode ? 'bg-white/10 text-white/70 hover:bg-white/20' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
-                        >
-                          1
-                        </button>
-                      );
-                      
-                      // Show ellipsis if we're far from the beginning
-                      if (currentPage > 4) {
-                        pages.push(
-                          <span key="ellipsis1" className={`px-2 py-2 text-sm ${
-                            isDarkMode ? 'text-white/50' : 'text-gray-500'
-                          }`}>
-                            ...
+                {/* Load More Button - Replaces pagination for better UX */}
+                {pagination.hasNext && (
+                  <div className="flex justify-center">
+                    <button
+                      onClick={loadMoreColleges}
+                      disabled={isLoading}
+                      className={`px-8 py-3 rounded-lg font-medium transition-all duration-200 ${
+                        isLoading
+                          ? 'opacity-50 cursor-not-allowed'
+                          : isDarkMode
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl'
+                          : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl'
+                      }`}
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center gap-2">
+                          <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                          Loading...
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2">
+                          <span>Load More Colleges</span>
+                          <span className="text-sm opacity-80">
+                            ({pagination.totalItems - colleges.length} remaining)
                           </span>
-                        );
-                      }
-                      
-                      // Show pages around current page
-                      const startPage = Math.max(2, currentPage - 2);
-                      const endPage = Math.min(totalPages - 1, currentPage + 2);
-                      
-                      for (let i = startPage; i <= endPage; i++) {
-                        if (i !== 1 && i !== totalPages) {
-                          pages.push(
-                            <button
-                              key={i}
-                              onClick={() => handlePageChange(i)}
-                              className={`px-3 py-2 rounded-lg transition-colors text-sm ${
-                                i === currentPage
-                                  ? isDarkMode ? 'bg-white/30 text-white' : 'bg-blue-500 text-white'
-                                  : isDarkMode ? 'bg-white/10 text-white/70 hover:bg-white/20' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                              }`}
-                            >
-                              {i}
-                            </button>
-                          );
-                        }
-                      }
-                      
-                      // Show ellipsis if we're far from the end
-                      if (currentPage < totalPages - 3) {
-                        pages.push(
-                          <span key="ellipsis2" className={`px-2 py-2 text-sm ${
-                            isDarkMode ? 'text-white/50' : 'text-gray-500'
-                          }`}>
-                            ...
-                          </span>
-                        );
-                      }
-                      
-                      // Always show last page (if more than 1 page)
-                      if (totalPages > 1) {
-                        pages.push(
-                          <button
-                            key={totalPages}
-                            onClick={() => handlePageChange(totalPages)}
-                            className={`px-3 py-2 rounded-lg transition-colors text-sm ${
-                              totalPages === currentPage
-                                ? isDarkMode ? 'bg-white/30 text-white' : 'bg-blue-500 text-white'
-                                : isDarkMode ? 'bg-white/10 text-white/70 hover:bg-white/20' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                            }`}
-                          >
-                            {totalPages}
-                          </button>
-                        );
-                      }
-                      
-                      return pages;
-                    })()}
+                        </div>
+                      )}
+                    </button>
                   </div>
-                  
-                  {/* Next Page */}
-                  <button
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={pagination.page >= pagination.totalPages}
-                    className={`px-4 py-2 backdrop-blur-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
-                      isDarkMode 
-                        ? 'bg-white/10 text-white hover:bg-white/20' 
-                        : 'bg-gray-100/80 text-gray-700 hover:bg-gray-200/80'
-                    }`}
-                  >
-                    Next
-                  </button>
-                  
-                  {/* Last Page */}
-                  <button
-                    onClick={() => handlePageChange(pagination.totalPages)}
-                    disabled={pagination.page >= pagination.totalPages}
-                    className={`px-3 py-2 backdrop-blur-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm ${
-                      isDarkMode 
-                        ? 'bg-white/10 text-white hover:bg-white/20' 
-                        : 'bg-gray-100/80 text-gray-700 hover:bg-gray-200/80'
-                    }`}
-                  >
-                    Last
-                  </button>
-                </div>
+                )}
                 
-                {/* Page Size Selector */}
-                <div className={`flex items-center gap-2 text-sm ${
-                  isDarkMode ? 'text-white/70' : 'text-gray-600'
+                {/* Results Summary */}
+                <div className={`text-center text-sm ${
+                  isDarkMode ? 'text-white/60' : 'text-gray-500'
                 }`}>
-                  <span>Show:</span>
-                  <select
-                    value={pagination.limit}
-                    onChange={(e) => {
-                      const newLimit = parseInt(e.target.value);
-                      setPagination(prev => ({ ...prev, limit: newLimit, page: 1 }));
-                      handlePageChange(1);
-                    }}
-                    className={`px-2 py-1 backdrop-blur-sm rounded border focus:outline-none ${
-                      isDarkMode 
-                        ? 'bg-white/10 text-white border-white/20 focus:border-white/40' 
-                        : 'bg-gray-100/80 text-gray-700 border-gray-300/50 focus:border-blue-400'
-                    }`}
-                  >
-                    <option value={12}>12</option>
-                    <option value={24}>24</option>
-                    <option value={48}>48</option>
-                    <option value={96}>96</option>
-                  </select>
-                  <span>per page</span>
-                </div>
-                
-                {/* Jump to Page */}
-                <div className={`flex items-center gap-2 text-sm ${
-                  isDarkMode ? 'text-white/70' : 'text-gray-600'
-                }`}>
-                  <span>Jump to:</span>
-                  <input
-                    type="number"
-                    min="1"
-                    max={pagination.totalPages}
-                    placeholder="Page"
-                    className={`w-20 px-2 py-1 backdrop-blur-sm rounded border focus:outline-none ${
-                      isDarkMode 
-                        ? 'bg-white/10 text-white border-white/20 focus:border-white/40 placeholder-white/50' 
-                        : 'bg-gray-100/80 text-gray-700 border-gray-300/50 focus:border-blue-400 placeholder-gray-500'
-                    }`}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        const pageNum = parseInt(e.target.value);
-                        if (pageNum >= 1 && pageNum <= pagination.totalPages) {
-                          handlePageChange(pageNum);
-                          e.target.value = '';
-                        }
-                      }
-                    }}
-                  />
-                  <button
-                    onClick={(e) => {
-                      const input = e.target.previousElementSibling;
-                      const pageNum = parseInt(input.value);
-                      if (pageNum >= 1 && pageNum <= pagination.totalPages) {
-                        handlePageChange(pageNum);
-                        input.value = '';
-                      }
-                    }}
-                    className={`px-3 py-1 backdrop-blur-sm rounded border transition-colors text-xs ${
-                      isDarkMode 
-                        ? 'bg-white/10 text-white border-white/20 hover:bg-white/20' 
-                        : 'bg-gray-100/80 text-gray-700 border-gray-300/50 hover:bg-gray-200/80'
-                    }`}
-                  >
-                    Go
-                  </button>
+                  Showing {colleges.length} of {pagination.totalItems} colleges
+                  {pagination.hasNext && (
+                    <span className="ml-2 text-xs">
+                      (Scroll down or click "Load More" to see more)
+                    </span>
+                  )}
                 </div>
               </motion.div>
             )}

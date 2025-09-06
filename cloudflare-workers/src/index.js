@@ -229,6 +229,467 @@ function buildSearchConditions(searchTerm, normalizedTerm) {
   return { conditions, params };
 }
 
+// Advanced Search Service - Ported from frontend
+class AdvancedSearchService {
+  constructor() {
+    this.searchEngines = {
+      fuse: this.createFuseEngine(),
+      flexsearch: this.createFlexSearchEngine(),
+      ufuzzy: this.createUFuzzyEngine(),
+      fuzzysort: this.createFuzzySortEngine(),
+      neural: this.createNeuralEngine(),
+      regex: this.createRegexEngine()
+    };
+  }
+
+  // Fuse.js-like fuzzy search
+  createFuseEngine() {
+    return {
+      search: (query, data, options = {}) => {
+        if (!query || !data || data.length === 0) return [];
+        
+        const threshold = options.threshold || 0.6;
+        const results = [];
+        
+        for (const item of data) {
+          const score = this.calculateFuzzyScore(query, item, options);
+          if (score >= threshold) {
+            results.push({ item, score });
+          }
+        }
+        
+        return results.sort((a, b) => b.score - a.score);
+      }
+    };
+  }
+
+  // FlexSearch-like full-text search
+  createFlexSearchEngine() {
+    return {
+      search: (query, data, options = {}) => {
+        if (!query || !data || data.length === 0) return [];
+        
+        const results = [];
+        const searchFields = options.fields || ['name', 'state', 'city', 'type', 'management_type'];
+        
+        for (const item of data) {
+          let score = 0;
+          let matches = 0;
+          
+          for (const field of searchFields) {
+            const fieldValue = this.getNestedValue(item, field);
+            if (fieldValue) {
+              const fieldScore = this.calculateFieldScore(query, fieldValue);
+              if (fieldScore > 0) {
+                score += fieldScore;
+                matches++;
+              }
+            }
+          }
+          
+          if (matches > 0) {
+            results.push({ item, score: score / matches });
+          }
+        }
+        
+        return results.sort((a, b) => b.score - a.score);
+      }
+    };
+  }
+
+  // uFuzzy-like fuzzy string matching
+  createUFuzzyEngine() {
+    return {
+      search: (query, data, options = {}) => {
+        if (!query || !data || data.length === 0) return [];
+        
+        const results = [];
+        const searchFields = options.fields || ['name', 'state', 'city'];
+        
+        for (const item of data) {
+          let bestScore = 0;
+          
+          for (const field of searchFields) {
+            const fieldValue = this.getNestedValue(item, field);
+            if (fieldValue) {
+              const score = this.calculateUFuzzyScore(query, fieldValue);
+              bestScore = Math.max(bestScore, score);
+            }
+          }
+          
+          if (bestScore > 0.3) {
+            results.push({ item, score: bestScore });
+          }
+        }
+        
+        return results.sort((a, b) => b.score - a.score);
+      }
+    };
+  }
+
+  // Fuzzysort-like fast fuzzy string matching
+  createFuzzySortEngine() {
+    return {
+      search: (query, data, options = {}) => {
+        if (!query || !data || data.length === 0) return [];
+        
+        const results = [];
+        const searchFields = options.fields || ['name', 'state', 'city'];
+        
+        for (const item of data) {
+          let bestScore = 0;
+          
+          for (const field of searchFields) {
+            const fieldValue = this.getNestedValue(item, field);
+            if (fieldValue) {
+              const score = this.calculateFuzzySortScore(query, fieldValue);
+              bestScore = Math.max(bestScore, score);
+            }
+          }
+          
+          if (bestScore > 0) {
+            results.push({ item, score: bestScore });
+          }
+        }
+        
+        return results.sort((a, b) => b.score - a.score);
+      }
+    };
+  }
+
+  // Neural network-like semantic search
+  createNeuralEngine() {
+    return {
+      search: (query, data, options = {}) => {
+        if (!query || !data || data.length === 0) return [];
+        
+        const results = [];
+        const searchFields = options.fields || ['name', 'state', 'city', 'type'];
+        
+        for (const item of data) {
+          let semanticScore = 0;
+          let fieldCount = 0;
+          
+          for (const field of searchFields) {
+            const fieldValue = this.getNestedValue(item, field);
+            if (fieldValue) {
+              const score = this.calculateSemanticScore(query, fieldValue);
+              semanticScore += score;
+              fieldCount++;
+            }
+          }
+          
+          if (fieldCount > 0) {
+            const avgScore = semanticScore / fieldCount;
+            if (avgScore > 0.2) {
+              results.push({ item, score: avgScore });
+            }
+          }
+        }
+        
+        return results.sort((a, b) => b.score - a.score);
+      }
+    };
+  }
+
+  // Regex-based pattern matching
+  createRegexEngine() {
+    return {
+      search: (query, data, options = {}) => {
+        if (!query || !data || data.length === 0) return [];
+        
+        const results = [];
+        const searchFields = options.fields || ['name', 'state', 'city', 'type', 'management_type'];
+        const flags = options.caseSensitive ? 'g' : 'gi';
+        
+        try {
+          const regex = new RegExp(query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), flags);
+          
+          for (const item of data) {
+            let score = 0;
+            let matches = 0;
+            
+            for (const field of searchFields) {
+              const fieldValue = this.getNestedValue(item, field);
+              if (fieldValue) {
+                const fieldMatches = (fieldValue.match(regex) || []).length;
+                if (fieldMatches > 0) {
+                  score += fieldMatches;
+                  matches++;
+                }
+              }
+            }
+            
+            if (matches > 0) {
+              results.push({ item, score: score / matches });
+            }
+          }
+        } catch (error) {
+          // If regex is invalid, fall back to simple string matching
+          return this.createSimpleSearchEngine().search(query, data, options);
+        }
+        
+        return results.sort((a, b) => b.score - a.score);
+      }
+    };
+  }
+
+  // Simple string matching fallback
+  createSimpleSearchEngine() {
+    return {
+      search: (query, data, options = {}) => {
+        if (!query || !data || data.length === 0) return [];
+        
+        const results = [];
+        const searchFields = options.fields || ['name', 'state', 'city'];
+        const lowerQuery = query.toLowerCase();
+        
+        for (const item of data) {
+          let score = 0;
+          let matches = 0;
+          
+          for (const field of searchFields) {
+            const fieldValue = this.getNestedValue(item, field);
+            if (fieldValue && fieldValue.toLowerCase().includes(lowerQuery)) {
+              score += 1;
+              matches++;
+            }
+          }
+          
+          if (matches > 0) {
+            results.push({ item, score: score / matches });
+          }
+        }
+        
+        return results.sort((a, b) => b.score - a.score);
+      }
+    };
+  }
+
+  // Helper methods
+  getNestedValue(obj, path) {
+    return path.split('.').reduce((current, key) => current?.[key], obj) || '';
+  }
+
+  calculateFuzzyScore(query, item, options = {}) {
+    const fields = options.fields || ['name', 'state', 'city'];
+    let bestScore = 0;
+    
+    for (const field of fields) {
+      const fieldValue = this.getNestedValue(item, field);
+      if (fieldValue) {
+        const score = this.levenshteinSimilarity(query.toLowerCase(), fieldValue.toLowerCase());
+        bestScore = Math.max(bestScore, score);
+      }
+    }
+    
+    return bestScore;
+  }
+
+  calculateFieldScore(query, fieldValue) {
+    const queryLower = query.toLowerCase();
+    const fieldLower = fieldValue.toLowerCase();
+    
+    if (fieldLower.includes(queryLower)) {
+      return 1.0;
+    }
+    
+    const words = queryLower.split(/\s+/);
+    let score = 0;
+    
+    for (const word of words) {
+      if (fieldLower.includes(word)) {
+        score += 0.8;
+      } else {
+        const similarity = this.levenshteinSimilarity(word, fieldLower);
+        if (similarity > 0.6) {
+          score += similarity * 0.6;
+        }
+      }
+    }
+    
+    return Math.min(score / words.length, 1.0);
+  }
+
+  calculateUFuzzyScore(query, text) {
+    const queryLower = query.toLowerCase();
+    const textLower = text.toLowerCase();
+    
+    if (textLower.includes(queryLower)) {
+      return 1.0;
+    }
+    
+    const queryWords = queryLower.split(/\s+/);
+    const textWords = textLower.split(/\s+/);
+    let score = 0;
+    
+    for (const queryWord of queryWords) {
+      let bestMatch = 0;
+      for (const textWord of textWords) {
+        const similarity = this.levenshteinSimilarity(queryWord, textWord);
+        bestMatch = Math.max(bestMatch, similarity);
+      }
+      score += bestMatch;
+    }
+    
+    return score / queryWords.length;
+  }
+
+  calculateFuzzySortScore(query, text) {
+    const queryLower = query.toLowerCase();
+    const textLower = text.toLowerCase();
+    
+    if (textLower === queryLower) return 1.0;
+    if (textLower.startsWith(queryLower)) return 0.9;
+    if (textLower.includes(queryLower)) return 0.8;
+    
+    const queryChars = queryLower.split('');
+    const textChars = textLower.split('');
+    let matches = 0;
+    let textIndex = 0;
+    
+    for (const queryChar of queryChars) {
+      const foundIndex = textChars.indexOf(queryChar, textIndex);
+      if (foundIndex !== -1) {
+        matches++;
+        textIndex = foundIndex + 1;
+      }
+    }
+    
+    return matches / queryChars.length;
+  }
+
+  calculateSemanticScore(query, text) {
+    const queryLower = query.toLowerCase();
+    const textLower = text.toLowerCase();
+    
+    // Exact match
+    if (textLower === queryLower) return 1.0;
+    
+    // Contains match
+    if (textLower.includes(queryLower)) return 0.9;
+    
+    // Word-based similarity
+    const queryWords = queryLower.split(/\s+/);
+    const textWords = textLower.split(/\s+/);
+    let score = 0;
+    
+    for (const queryWord of queryWords) {
+      for (const textWord of textWords) {
+        if (textWord.includes(queryWord) || queryWord.includes(textWord)) {
+          score += 0.7;
+        } else {
+          const similarity = this.levenshteinSimilarity(queryWord, textWord);
+          if (similarity > 0.6) {
+            score += similarity * 0.5;
+          }
+        }
+      }
+    }
+    
+    return Math.min(score / (queryWords.length * textWords.length), 1.0);
+  }
+
+  levenshteinSimilarity(str1, str2) {
+    const matrix = [];
+    const len1 = str1.length;
+    const len2 = str2.length;
+    
+    for (let i = 0; i <= len2; i++) {
+      matrix[i] = [i];
+    }
+    
+    for (let j = 0; j <= len1; j++) {
+      matrix[0][j] = j;
+    }
+    
+    for (let i = 1; i <= len2; i++) {
+      for (let j = 1; j <= len1; j++) {
+        if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
+          matrix[i][j] = matrix[i - 1][j - 1];
+        } else {
+          matrix[i][j] = Math.min(
+            matrix[i - 1][j - 1] + 1,
+            matrix[i][j - 1] + 1,
+            matrix[i - 1][j] + 1
+          );
+        }
+      }
+    }
+    
+    const distance = matrix[len2][len1];
+    const maxLength = Math.max(len1, len2);
+    return maxLength === 0 ? 1 : (maxLength - distance) / maxLength;
+  }
+
+  // Main search method that combines all engines
+  async search(query, data, options = {}) {
+    if (!query || !data || data.length === 0) {
+      return { results: [], total: 0, engines: [] };
+    }
+
+    const engines = options.engines || ['fuse', 'flexsearch', 'ufuzzy', 'fuzzysort', 'neural', 'regex'];
+    const limit = options.limit || 50;
+    const threshold = options.threshold || 0.3;
+    
+    const allResults = [];
+    const engineResults = {};
+    
+    // Run all search engines in parallel
+    for (const engineName of engines) {
+      try {
+        const engine = this.searchEngines[engineName];
+        if (engine) {
+          const results = engine.search(query, data, options);
+          engineResults[engineName] = results;
+          
+          // Add engine info to results
+          results.forEach(result => {
+            result.engine = engineName;
+            allResults.push(result);
+          });
+        }
+      } catch (error) {
+        console.error(`Error in ${engineName} engine:`, error);
+      }
+    }
+    
+    // Deduplicate and merge results
+    const uniqueResults = this.deduplicateResults(allResults);
+    
+    // Filter by threshold and sort by score
+    const filteredResults = uniqueResults
+      .filter(result => result.score >= threshold)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, limit);
+    
+    return {
+      results: filteredResults.map(result => result.item),
+      total: filteredResults.length,
+      engines: Object.keys(engineResults),
+      engineResults: engineResults
+    };
+  }
+
+  deduplicateResults(results) {
+    const seen = new Set();
+    const unique = [];
+    
+    for (const result of results) {
+      const key = `${result.item.id || result.item.name}`;
+      if (!seen.has(key)) {
+        seen.add(key);
+        unique.push(result);
+      }
+    }
+    
+    return unique;
+  }
+}
+
+// Create global instance
+const advancedSearchService = new AdvancedSearchService();
+
 // Enhanced search endpoint with FTS5-like optimization
 router.get('/api/search', async (request, env) => {
   try {
@@ -374,6 +835,309 @@ router.get('/api/search', async (request, env) => {
   }
 });
 
+// Advanced search endpoint using the advanced search service
+router.get('/api/advanced-search', async (request, env) => {
+  try {
+    const url = new URL(request.url);
+    const query = url.searchParams.get('q');
+    const type = url.searchParams.get('type') || 'all';
+    const limit = parseInt(url.searchParams.get('limit')) || 50;
+    const threshold = parseFloat(url.searchParams.get('threshold')) || 0.3;
+    const engines = url.searchParams.get('engines')?.split(',') || ['fuse', 'flexsearch', 'ufuzzy', 'fuzzysort', 'neural', 'regex'];
+    
+    if (!query) {
+      return new Response(JSON.stringify({
+        error: 'Query parameter is required'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    let allData = [];
+    
+    // Fetch all relevant data based on type
+    if (type === 'all' || type === 'colleges') {
+      const colleges = await env.DB.prepare(`
+        SELECT id, name, city, state, college_type, management_type, establishment_year, 
+               university, website, phone, email, address, code, district, pincode, 
+               accreditation, status, college_type_category
+        FROM colleges 
+        ORDER BY name
+      `).all();
+      
+      allData = allData.concat(colleges.results.map(college => ({
+        ...college,
+        type: 'college'
+      })));
+    }
+    
+    if (type === 'all' || type === 'courses') {
+      const courses = await env.DB.prepare(`
+        SELECT 
+          c.course_name,
+          c.stream,
+          c.program,
+          c.entrance_exam,
+          c.college_id,
+          c.total_seats,
+          col.name as college_name,
+          col.city,
+          col.state,
+          col.college_type,
+          col.management_type,
+          col.establishment_year
+        FROM courses c 
+        JOIN colleges col ON c.college_id = col.id 
+        ORDER BY c.course_name
+      `).all();
+      
+      // Group courses by course name
+      const groupedCourses = {};
+      courses.results.forEach(course => {
+        if (!groupedCourses[course.course_name]) {
+          groupedCourses[course.course_name] = {
+            course_name: course.course_name,
+            stream: course.stream,
+            program: course.program,
+            entrance_exam: course.entrance_exam,
+            colleges: [],
+            type: 'course'
+          };
+        }
+        
+        groupedCourses[course.course_name].colleges.push({
+          college_id: course.college_id,
+          college_name: course.college_name,
+          city: course.city,
+          state: course.state,
+          college_type: course.college_type,
+          management_type: course.management_type,
+          establishment_year: course.establishment_year,
+          total_seats: course.total_seats
+        });
+      });
+      
+      // Convert to array and calculate totals
+      const courseArray = Object.values(groupedCourses).map(course => {
+        const totalSeats = course.colleges.reduce((sum, college) => sum + (college.total_seats || 0), 0);
+        
+        return {
+          ...course,
+          total_seats: totalSeats,
+          total_colleges: course.colleges.length
+        };
+      });
+      
+      allData = allData.concat(courseArray);
+    }
+    
+    // Use advanced search service
+    const searchOptions = {
+      engines,
+      limit,
+      threshold,
+      fields: type === 'colleges' ? 
+        ['name', 'state', 'city', 'college_type', 'management_type', 'university'] :
+        type === 'courses' ?
+        ['course_name', 'stream', 'program', 'colleges.college_name', 'colleges.state', 'colleges.city'] :
+        ['name', 'state', 'city', 'college_type', 'management_type', 'course_name', 'stream', 'program']
+    };
+    
+    const searchResults = await advancedSearchService.search(query, allData, searchOptions);
+    
+    return new Response(JSON.stringify({
+      results: searchResults.results,
+      query,
+      type,
+      total: searchResults.total,
+      engines: searchResults.engines,
+      searchType: 'advanced',
+      performance: {
+        threshold,
+        engines_used: engines,
+        total_data_searched: allData.length
+      }
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+    
+  } catch (error) {
+    console.error('Advanced search error:', error);
+    return new Response(JSON.stringify({
+      error: 'Internal server error',
+      message: error.message
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+});
+
+// FTS5 Search endpoint for colleges
+router.get('/api/search/fts5/colleges', async (request, env) => {
+  try {
+    const url = new URL(request.url);
+    const query = url.searchParams.get('q');
+    const page = parseInt(url.searchParams.get('page')) || 1;
+    const limit = parseInt(url.searchParams.get('limit')) || 24;
+    const offset = (page - 1) * limit;
+    
+    if (!query) {
+      return new Response(JSON.stringify({
+        error: 'Query parameter "q" is required'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Format query for FTS5 (add wildcards and AND operators)
+    const ftsQuery = query.trim()
+      .split(/\s+/)
+      .filter(term => term.length > 0)
+      .map(term => `${term}*`)
+      .join(' AND ');
+    
+    console.log('🔍 FTS5 Search Query:', ftsQuery);
+    
+    // Search using FTS5
+    const searchResults = await env.DB.prepare(`
+      SELECT c.*, 
+             colleges_fts.rank,
+             snippet(colleges_fts, 0, '<mark>', '</mark>', '...', 32) as snippet
+      FROM colleges_fts 
+      JOIN colleges c ON colleges_fts.rowid = c.id
+      WHERE colleges_fts MATCH ?
+      ORDER BY colleges_fts.rank
+      LIMIT ? OFFSET ?
+    `).bind(ftsQuery, limit, offset).all();
+    
+    // Get total count for pagination
+    const countResult = await env.DB.prepare(`
+      SELECT COUNT(*) as total
+      FROM colleges_fts 
+      WHERE colleges_fts MATCH ?
+    `).bind(ftsQuery).first();
+    
+    const totalItems = countResult?.total || 0;
+    const totalPages = Math.ceil(totalItems / limit);
+    
+    return new Response(JSON.stringify({
+      data: searchResults.results,
+      pagination: {
+        page,
+        limit,
+        totalItems,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      },
+      query,
+      searchType: 'fts5',
+      performance: {
+        engine: 'FTS5',
+        totalSearched: totalItems,
+        queryTime: Date.now()
+      }
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+    
+  } catch (error) {
+    console.error('FTS5 search error:', error);
+    return new Response(JSON.stringify({
+      error: 'FTS5 search failed',
+      message: error.message
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+});
+
+// FTS5 Search endpoint for courses
+router.get('/api/search/fts5/courses', async (request, env) => {
+  try {
+    const url = new URL(request.url);
+    const query = url.searchParams.get('q');
+    const page = parseInt(url.searchParams.get('page')) || 1;
+    const limit = parseInt(url.searchParams.get('limit')) || 24;
+    const offset = (page - 1) * limit;
+    
+    if (!query) {
+      return new Response(JSON.stringify({
+        error: 'Query parameter "q" is required'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Format query for FTS5
+    const ftsQuery = query.trim()
+      .split(/\s+/)
+      .filter(term => term.length > 0)
+      .map(term => `${term}*`)
+      .join(' AND ');
+    
+    console.log('🔍 FTS5 Courses Search Query:', ftsQuery);
+    
+    // Search using FTS5
+    const searchResults = await env.DB.prepare(`
+      SELECT c.*, 
+             courses_fts.rank,
+             snippet(courses_fts, 0, '<mark>', '</mark>', '...', 32) as snippet
+      FROM courses_fts 
+      JOIN courses c ON courses_fts.rowid = c.id
+      WHERE courses_fts MATCH ?
+      ORDER BY courses_fts.rank
+      LIMIT ? OFFSET ?
+    `).bind(ftsQuery, limit, offset).all();
+    
+    // Get total count for pagination
+    const countResult = await env.DB.prepare(`
+      SELECT COUNT(*) as total
+      FROM courses_fts 
+      WHERE courses_fts MATCH ?
+    `).bind(ftsQuery).first();
+    
+    const totalItems = countResult?.total || 0;
+    const totalPages = Math.ceil(totalItems / limit);
+    
+    return new Response(JSON.stringify({
+      data: searchResults.results,
+      pagination: {
+        page,
+        limit,
+        totalItems,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      },
+      query,
+      searchType: 'fts5',
+      performance: {
+        engine: 'FTS5',
+        totalSearched: totalItems,
+        queryTime: Date.now()
+      }
+    }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+    
+  } catch (error) {
+    console.error('FTS5 courses search error:', error);
+    return new Response(JSON.stringify({
+      error: 'FTS5 courses search failed',
+      message: error.message
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+});
+
 // Health check endpoint
 // Real-time data updates endpoint
 router.get('/api/realtime/updates', async (request, env) => {
@@ -437,7 +1201,7 @@ router.get('/api/realtime/updates', async (request, env) => {
     updates.hasUpdates = updates.totalUpdates > 0;
     
     return new Response(JSON.stringify(updates), {
-      headers: { 
+  headers: {
         ...corsHeaders, 
         'Content-Type': 'application/json',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -840,7 +1604,7 @@ router.get('/api/ai-search', async (request, env) => {
     return new Response(JSON.stringify(responsePayload), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
-  } catch (error) {
+    } catch (error) {
     console.error('Error in ai-search:', error);
     // Fallback to regular search on error
     return await fallbackToRegularSearch(query, env, type);
@@ -867,7 +1631,7 @@ async function fallbackToRegularSearch(query, env, type = 'colleges') {
       aiInsight: 'Sorry, I encountered an error while searching. Please try again.',
       results: []
     }), {
-      status: 500,
+        status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
@@ -1257,10 +2021,10 @@ router.get('/api/colleges', async (request, env) => {
     let query = 'SELECT * FROM colleges';
     let countQuery = 'SELECT COUNT(*) as total FROM colleges';
     const conditions = [];
-    const params = [];
-    
+  const params = [];
+
     // Build search conditions - RESTORED TO ORIGINAL WORKING LOGIC
-    if (search) {
+  if (search) {
       const searchLower = search.toLowerCase();
       let searchTerms = [search];
       
@@ -1406,8 +2170,8 @@ router.get('/api/courses', async (request, env) => {
            
            if (stream && stream !== 'all') {
              whereClause += ' AND c.stream = ?';
-             params.push(stream);
-           }
+    params.push(stream);
+  }
 
                      if (search) {
             // Use FTS5 for better search performance
@@ -1818,7 +2582,7 @@ router.get('/api/aliases/search', async (request, env) => {
       return new Response(JSON.stringify({
         error: 'Invalid entity type. Supported types: college, course'
       }), {
-        status: 400,
+      status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
@@ -1916,7 +2680,7 @@ export default {
       }
       
       return optimizedResponse;
-    } catch (error) {
+  } catch (error) {
       // BMAD error detection and resolution if available
       let errorHandling = { recommendations: [] };
       if (aiServicesAvailable) {
@@ -1930,9 +2694,9 @@ export default {
         message: error.message,
         bmadRecommendations: errorHandling.recommendations
       }), {
-        status: 500,
+      status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
-    }
   }
+}
 };
