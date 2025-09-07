@@ -18,7 +18,7 @@ const AliasesManager = () => {
   const [showBulkForm, setShowBulkForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState('all');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage] = useState(1); // eslint-disable-line no-unused-vars
   const [itemsPerPage] = useState(20);
 
   // Form states
@@ -38,6 +38,7 @@ const AliasesManager = () => {
   useEffect(() => {
     loadAliases();
     loadStatistics();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentPage, filterType, searchQuery]);
 
   const loadAliases = async () => {
@@ -58,7 +59,7 @@ const AliasesManager = () => {
         params.append('search', searchQuery);
       }
 
-      const response = await apiService.apiCall(`/aliases?${params}`);
+      const response = await apiService.apiCall(`/api/aliases?${params}`);
       
       if (response.success) {
         setAliases(response.aliases || []);
@@ -74,7 +75,7 @@ const AliasesManager = () => {
 
   const loadStatistics = async () => {
     try {
-      const response = await apiService.apiCall('/aliases/statistics');
+      const response = await apiService.apiCall('/api/aliases/statistics');
       if (response.success) {
         setStatistics(response.statistics);
       }
@@ -89,7 +90,7 @@ const AliasesManager = () => {
       setLoading(true);
       setError(null);
 
-      const response = await apiService.apiCall('/aliases', {
+      const response = await apiService.apiCall('/api/aliases', {
         method: 'POST',
         body: JSON.stringify(formData)
       });
@@ -123,7 +124,7 @@ const AliasesManager = () => {
       setLoading(true);
       setError(null);
 
-      const response = await apiService.apiCall(`/aliases/${aliasId}`, {
+      const response = await apiService.apiCall(`/api/aliases/${aliasId}`, {
         method: 'PUT',
         body: JSON.stringify(updateData)
       });
@@ -150,7 +151,7 @@ const AliasesManager = () => {
       setLoading(true);
       setError(null);
 
-      const response = await apiService.apiCall(`/aliases/${aliasId}`, {
+      const response = await apiService.apiCall(`/api/aliases/${aliasId}`, {
         method: 'DELETE'
       });
       
@@ -189,7 +190,7 @@ const AliasesManager = () => {
         };
       }).filter(alias => alias.entityId > 0 && alias.aliasText);
 
-      const response = await apiService.apiCall('/aliases/bulk/create', {
+      const response = await apiService.apiCall('/api/aliases/bulk/create', {
         method: 'POST',
         body: JSON.stringify({ aliases })
       });
@@ -219,7 +220,7 @@ const AliasesManager = () => {
       setLoading(true);
       setError(null);
 
-      const response = await apiService.apiCall('/aliases/generate/all-colleges', {
+      const response = await apiService.apiCall('/api/aliases/generate/all-colleges', {
         method: 'POST'
       });
       
@@ -239,7 +240,7 @@ const AliasesManager = () => {
 
   const exportAliases = async () => {
     try {
-      const response = await apiService.apiCall('/aliases/export?format=csv');
+      const response = await apiService.apiCall('/api/aliases/export?format=csv');
       
       if (response.success) {
         // Create and download CSV file

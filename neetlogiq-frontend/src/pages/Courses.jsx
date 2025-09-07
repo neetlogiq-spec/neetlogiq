@@ -20,7 +20,7 @@ import { Vortex } from '../components/ui/vortex';
 import { LightVortex } from '../components/ui/LightVortex';
 import ThemeToggle from '../components/ThemeToggle';
 import apiService from '../services/apiService';
-import cacheService from '../services/cacheService';
+import InfiniteScrollTrigger from '../components/InfiniteScrollTrigger';
 
 const Courses = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -32,6 +32,7 @@ const Courses = () => {
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [colleges, setColleges] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false); // Separate state for infinite scroll
   const [selectedCourse, setSelectedCourse] = useState(null);
   const [isCollegesModalOpen, setIsCollegesModalOpen] = useState(false);
   const [pagination, setPagination] = useState({
@@ -45,26 +46,29 @@ const Courses = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
         setIsLoaded(true);
-    }, 200);
+    }, 50); // Reduced for faster loading
     return () => clearTimeout(timer);
   }, []);
+
+  // Note: Cache clearing removed for faster loading - browser cache is sufficient
 
   // Load courses from backend with chunked loading
   const loadCourses = useCallback(async (newFilters = {}, newPage = 1, isAppend = false) => {
     try {
-      setIsLoading(true);
+      // Use different loading states based on whether we're appending or replacing
+      if (isAppend) {
+        setIsLoadingMore(true);
+      } else {
+        setIsLoading(true);
+      }
+      
       console.log('🔍 Loading courses with filters:', newFilters, 'page:', newPage, 'append:', isAppend);
       
-      // Use smaller chunks for better performance
-      const chunkSize = 12; // Load 12 courses at a time
+      // Use optimal chunk size for fast loading
+      const chunkSize = 24; // Load 24 courses at a time for faster loading
       
-      // Use cache service for better performance
-      const response = await cacheService.cacheApiCall(
-        () => apiService.getCourses(newFilters, newPage, chunkSize),
-        'courses',
-        { filters: JSON.stringify(newFilters), page: newPage, limit: chunkSize },
-        5 * 60 * 1000 // 5 minutes cache
-      );
+      // Direct API call for faster loading (cache is handled by browser)
+      const response = await apiService.getCourses(newFilters, newPage, chunkSize);
       
       console.log('🔍 Chunked loading complete:', {
         page: newPage,
@@ -77,19 +81,37 @@ const Courses = () => {
       
       // Append or replace data based on isAppend flag
       if (isAppend && newPage > 1) {
-        setCourses(prevCourses => [...prevCourses, ...validCourses]);
-        setFilteredCourses(prevCourses => [...prevCourses, ...validCourses]);
+        setCourses(prevCourses => {
+          // Filter out duplicates based on course.id
+          const existingIds = new Set(prevCourses.map(course => course.id));
+          const newCourses = validCourses.filter(course => !existingIds.has(course.id));
+          console.log('📍 Adding new courses:', newCourses.length, 'Total will be:', prevCourses.length + newCourses.length);
+          return [...prevCourses, ...newCourses];
+        });
+        setFilteredCourses(prevCourses => {
+          const existingIds = new Set(prevCourses.map(course => course.id));
+          const newCourses = validCourses.filter(course => !existingIds.has(course.id));
+          return [...prevCourses, ...newCourses];
+        });
+        
+        // Update pagination to reflect the new page
+        setPagination(prevPagination => ({
+          ...prevPagination,
+          page: newPage,
+          hasNext: response.pagination?.hasNext || false,
+          totalItems: response.pagination?.totalItems || prevPagination.totalItems
+        }));
       } else {
         setCourses(validCourses);
         setFilteredCourses(validCourses);
+        setPagination({
+          page: newPage,
+          limit: chunkSize,
+          totalPages: response.pagination?.totalPages || 1,
+          totalItems: response.pagination?.totalItems || validCourses.length,
+          hasNext: response.pagination?.hasNext || false
+        });
       }
-      
-      setPagination({
-        page: newPage,
-        limit: chunkSize,
-        totalPages: response.pagination?.totalPages || 1,
-        totalItems: response.pagination?.totalItems || validCourses.length
-      });
     } catch (error) {
       console.error('Failed to load courses:', error);
       if (!isAppend) {
@@ -97,15 +119,16 @@ const Courses = () => {
         setFilteredCourses([]);
       }
     } finally {
+      // Reset both loading states
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   }, []);
 
-  // Backend integration - only load on initial mount with proper pagination
+  // Backend integration - load initial data
   useEffect(() => {
     const initialLoad = async () => {
       try {
-        setIsLoading(true);
         console.log('🔍 Initial loading with proper pagination');
         
         // Load colleges data for search engine
@@ -121,80 +144,36 @@ const Courses = () => {
             return { data: [] };
           });
 
-        // Load first page of courses with proper pagination
-        const coursesPromise = fetch(`${process.env.REACT_APP_API_URL || 'https://neetlogiq-backend.neetlogiq.workers.dev'}/api/courses?page=1&limit=24`)
-          .then(response => response.json())
-          .then(data => {
-            console.log('📚 Loaded courses:', data.data?.length || 0);
-            // Filter out courses with 0 total seats
-            const validCourses = (data.data || []).filter(course => course.total_seats > 0);
-            console.log('📚 Valid courses after filtering:', validCourses.length);
-            return { ...data, data: validCourses };
-          })
-          .catch(error => {
-            console.error('Failed to load courses:', error);
-            return { data: [], pagination: { totalItems: 0, totalPages: 1 } };
-          });
+        // Load first page of courses using the optimized loadCourses function
+        const coursesPromise = loadCourses({}, 1, false);
 
         // Load both courses and colleges in parallel
-        const [, coursesData] = await Promise.all([
+        await Promise.all([
           collegesPromise,
           coursesPromise
         ]);
         
-        console.log('🔍 Initial loading complete:', {
-          totalCourses: coursesData.data?.length || 0,
-          pagination: coursesData.pagination
-        });
-        
-        setCourses(coursesData.data || []);
-        setFilteredCourses(coursesData.data || []);
-        setPagination({
-          page: 1,
-          limit: 24,
-          totalPages: coursesData.pagination?.totalPages || 1,
-          totalItems: coursesData.data?.length || 0 // Use filtered count
-        });
+        console.log('🔍 Initial loading complete');
       } catch (error) {
         console.error('Failed to load courses:', error);
-        setCourses([]);
-        setFilteredCourses([]);
-      } finally {
-        setIsLoading(false);
       }
     };
     
     initialLoad();
-  }, []); // Empty dependency array - only run on mount
+  }, [loadCourses]); // Include loadCourses dependency
 
   // Load more courses function for infinite scroll
   const loadMoreCourses = useCallback(() => {
-    if (isLoading || !pagination.hasNext) return;
+    if (isLoading || isLoadingMore || !pagination.hasNext) {
+      console.log('🔄 Load more blocked:', { isLoading, isLoadingMore, hasNext: pagination.hasNext });
+      return;
+    }
     
-    const nextPage = Math.floor(courses.length / 12) + 1;
+    const nextPage = pagination.page + 1;
     console.log('🔄 Loading more courses, page:', nextPage);
     loadCourses({}, nextPage, true); // Append mode
-  }, [isLoading, pagination.hasNext, courses.length, loadCourses]);
+  }, [isLoading, isLoadingMore, pagination.hasNext, pagination.page, loadCourses]);
 
-  // Infinite scroll handler
-  const handleScroll = useCallback(() => {
-    if (isLoading || !pagination.hasNext) return;
-    
-    const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
-    const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
-    
-    // Load more when user scrolls to 70% of the page
-    if (scrollPercentage > 0.7) {
-      console.log('🔄 Infinite scroll triggered for courses, loading next chunk...');
-      loadMoreCourses();
-    }
-  }, [isLoading, pagination.hasNext, loadMoreCourses]);
-
-  // Add scroll listener for infinite scroll
-  useEffect(() => {
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
 
   // Update filtered courses when courses change (but not during search)
   useEffect(() => {
@@ -309,7 +288,7 @@ const Courses = () => {
       <div className="relative z-20 min-h-screen flex flex-col">
         {/* Desktop Header - Original Design */}
         <div className="hidden md:block">
-        <motion.header
+      <motion.header
             className="flex items-center justify-between p-8"
         initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -20 }}
@@ -382,7 +361,7 @@ const Courses = () => {
                 {isAuthenticated ? (
                   <UserPopup />
                 ) : (
-                  <GoogleSignIn text="signin" size="medium" width={120} />
+                  <GoogleSignIn text="Sign In" size="medium" width={120} />
                 )}
               </div>
             </div>
@@ -766,7 +745,56 @@ const Courses = () => {
                   </p>
                 </div>
               )}
+              
+              {/* Skeleton cards for loading more */}
+              {isLoadingMore && (
+                <>
+                  {Array.from({ length: 6 }).map((_, skeletonIndex) => (
+                    <div key={`skeleton-${skeletonIndex}`} className={`backdrop-blur-md p-6 rounded-2xl border-2 animate-pulse shadow-lg ${
+                      isDarkMode 
+                        ? 'bg-white/10 border-white/20 shadow-white/10' 
+                        : 'bg-blue-50/40 border-blue-200/60 shadow-blue-200/30'
+                    }`}>
+                      <div className={`w-16 h-16 rounded-2xl mx-auto mb-3 ${
+                        isDarkMode ? 'bg-white/20' : 'bg-gray-200/50'
+                      }`}></div>
+                      <div className={`h-4 rounded mb-2 ${
+                        isDarkMode ? 'bg-white/20' : 'bg-gray-200/50'
+                      }`}></div>
+                      <div className={`h-3 rounded mb-1 ${
+                        isDarkMode ? 'bg-white/20' : 'bg-gray-200/50'
+                      }`}></div>
+                      <div className={`h-3 rounded ${
+                        isDarkMode ? 'bg-white/20' : 'bg-gray-200/50'
+                      }`}></div>
+                    </div>
+                  ))}
+                </>
+              )}
             </motion.div>
+
+            {/* Infinite Scroll Trigger - loads more courses when user reaches 80% of current content */}
+            {filteredCourses.length > 0 && pagination.hasNext && (
+              <InfiniteScrollTrigger
+                onLoadMore={loadMoreCourses}
+                hasMore={pagination.hasNext}
+                isLoading={isLoadingMore}
+                threshold={0.8}
+                rootMargin="200px"
+              >
+                {/* Loading indicator is now handled by skeleton cards in the grid */}
+              </InfiniteScrollTrigger>
+            )}
+
+            {/* End of content indicator */}
+            {filteredCourses.length > 0 && !pagination.hasNext && (
+              <div className="col-span-full text-center py-8">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:bg-green-300">
+                  <BookOpen className="w-4 h-4" />
+                  <span className="text-sm font-medium">You've reached the end! All courses loaded.</span>
+                </div>
+              </div>
+            )}
 
             {/* Enhanced Pagination */}
             {pagination.totalPages > 1 && (

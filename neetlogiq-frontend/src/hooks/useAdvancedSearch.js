@@ -16,6 +16,16 @@ export const useAdvancedSearch = (collegesData = []) => {
   // Initialize the search service
   // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => {
+    // Only initialize if we haven't already initialized
+    if (isInitialized) {
+      return;
+    }
+    
+    // Only initialize if we have data
+    if (!collegesData || collegesData.length === 0) {
+      return;
+    }
+
     const initializeService = async () => {
       try {
         setIsLoading(true);
@@ -54,7 +64,7 @@ export const useAdvancedSearch = (collegesData = []) => {
         clearTimeout(currentTimeoutRef.current);
       }
     };
-  }, [collegesData]);
+  }, [collegesData, isInitialized]);
 
   // Perform advanced search
   const performSearch = useCallback(async (query, options = {}) => {

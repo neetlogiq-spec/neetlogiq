@@ -274,12 +274,12 @@ class SecurityService {
     // Remove any remaining HTML tags
     const cleanInput = sanitized.replace(/<[^>]*>/g, '');
 
-    // Additional validation
-    if (!validator.isAlphanumeric(cleanInput.replace(/[\s\-_]/g, ''))) {
+    // Additional validation - allow common characters in college names
+    if (!validator.isAlphanumeric(cleanInput.replace(/[\s\-_&.'"]/g, ''))) {
       return { 
         isValid: false, 
         sanitized: '', 
-        error: 'Only alphanumeric characters, spaces, hyphens, and underscores are allowed' 
+        error: 'Only alphanumeric characters, spaces, hyphens, underscores, ampersands, periods, and apostrophes are allowed' 
       };
     }
 

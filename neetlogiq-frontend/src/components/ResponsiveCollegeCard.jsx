@@ -34,9 +34,17 @@ const ResponsiveCollegeCard = ({
   return (
     <>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.15, delay: index * 0.03 }}
+        initial={{ opacity: 0, y: 20, scale: 0.95 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        transition={{ 
+          duration: 0.4, 
+          delay: index * 0.05,
+          ease: [0.25, 0.46, 0.45, 0.94] // Custom easing for smoother animation
+        }}
+        whileHover={{ 
+          scale: 1.02,
+          transition: { duration: 0.2 }
+        }}
         className={`h-full flex flex-col rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden backdrop-blur-md border-2 ${
           isDarkMode 
             ? 'bg-green-50/10 border-green-200/20 shadow-green-200/10' 

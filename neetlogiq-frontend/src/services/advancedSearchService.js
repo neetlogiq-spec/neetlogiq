@@ -687,7 +687,7 @@ class AdvancedSearchService {
 
       try {
         // Call aliases API
-        const aliasesResponse = await apiService.apiCall(`/aliases/search?q=${encodeURIComponent(searchQuery)}&entityType=college&limit=100`);
+        const aliasesResponse = await apiService.apiCall(`/api/aliases/search?q=${encodeURIComponent(searchQuery)}&entityType=college&limit=100`);
         
         if (aliasesResponse.success && aliasesResponse.results) {
           // Convert aliases results to search results format

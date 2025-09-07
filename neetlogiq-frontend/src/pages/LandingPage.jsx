@@ -186,7 +186,7 @@ const LandingPage = () => {
                 {isAuthenticated ? (
                   <UserPopup />
                 ) : (
-                  <GoogleSignIn text="signin" size="medium" width={120} />
+                  <GoogleSignIn text="Sign In" size="medium" width={120} />
                 )}
               </div>
             </div>

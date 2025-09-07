@@ -123,3 +123,17 @@ out/
 # Local development files
 local/
 dev/
+
+# Large data files
+*.csv
+*.sql
+temp_*.sql
+*_data.sql
+uploads/
+
+# Security and sensitive files
+*credentials*
+*secrets*
+*-test.html
+admin-test.html
+simple-admin-test.html

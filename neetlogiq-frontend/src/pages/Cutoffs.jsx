@@ -205,7 +205,7 @@ const Cutoffs = () => {
                 {isAuthenticated ? (
                   <UserPopup />
                 ) : (
-                  <GoogleSignIn text="signin" size="medium" width={120} />
+                  <GoogleSignIn text="Sign In" size="medium" width={120} />
                 )}
               </div>
             </div>
@@ -221,7 +221,7 @@ const Cutoffs = () => {
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -20 }}
-          transition={{ duration: 0.6 }}
+        transition={{ duration: 0.6 }}
           className="relative z-20 bg-gradient-to-r from-orange-500 to-red-500 text-white py-8 px-4 text-center shadow-2xl"
         >
           <div className="max-w-6xl mx-auto">
@@ -236,8 +236,8 @@ const Cutoffs = () => {
             <div className="bg-yellow-400/20 border border-yellow-300/30 rounded-lg p-4 mt-4">
               <p className="text-yellow-100 text-base md:text-lg font-medium">
                 ⚠️ <strong>Important Notice:</strong> The cutoff data displayed below is mock data for demonstration purposes only and does not represent actual NEET cutoff information.
-              </p>
-            </div>
+          </p>
+        </div>
           </div>
         </motion.div>
 

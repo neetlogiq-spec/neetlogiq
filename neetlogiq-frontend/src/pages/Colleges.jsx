@@ -3,7 +3,7 @@
 // Template: react-page
 // Date: 2025-08-28
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Building2, GraduationCap } from 'lucide-react';
 import { Link } from 'react-router-dom';
@@ -13,8 +13,9 @@ import CollegeCard from '../components/ResponsiveCollegeCard';
 import CollegeDetailsModal from '../components/CollegeDetailsModal';
 import UnifiedSearchBar from '../components/UnifiedSearchBar';
 import BlurredOverlay from '../components/BlurredOverlay';
+import InfiniteScrollTrigger from '../components/InfiniteScrollTrigger';
+import CollegeCardSkeleton from '../components/CollegeCardSkeleton';
 import apiService from '../services/apiService';
-import cacheService from '../services/cacheService';
 import securityService from '../services/securityService';
 import { useAdvancedSearch } from '../hooks/useAdvancedSearch';
 import { useUnifiedSearch } from '../hooks/useUnifiedSearch';
@@ -43,6 +44,7 @@ const Colleges = () => {
   const [filters, setFilters] = useState({});
   const [appliedFilters, setAppliedFilters] = useState({});
   const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false); // Separate state for infinite scroll
   const [currentSearchQuery, setCurrentSearchQuery] = useState('');
   // const [isSearching, setIsSearching] = useState(false); // Removed unused state
 
@@ -66,15 +68,24 @@ const Colleges = () => {
 
   // State for all colleges (used for search index)
   const [allCollegesForSearch, setAllCollegesForSearch] = useState([]);
+  const [searchIndexLoading, setSearchIndexLoading] = useState(false);
+  const [searchIndexProgress, setSearchIndexProgress] = useState(0);
+  const [searchIndexComplete, setSearchIndexComplete] = useState(false);
+  const [searchIndexLoaded, setSearchIndexLoaded] = useState(false);
   
+  // Ref to track if initialization has already happened
+  const isInitialized = useRef(false);
+  
+  // Memoize the search data to prevent infinite re-renders
+  const searchData = useMemo(() => {
+    return allCollegesForSearch.length > 0 ? allCollegesForSearch : [];
+  }, [allCollegesForSearch]);
   
   // Advanced search hook - initialized with ALL colleges, not just current page
-  // Only initialize if we have colleges data and not in modal
-  useAdvancedSearch(allCollegesForSearch.length > 0 && !isModalOpen ? allCollegesForSearch : []);
+  useAdvancedSearch(searchData);
 
   // Unified search integration
-  // Only initialize if we have colleges data and not in modal
-  useUnifiedSearch(allCollegesForSearch.length > 0 && !isModalOpen ? allCollegesForSearch : [], { contentType: 'colleges' });
+  useUnifiedSearch(searchData, { contentType: 'colleges' });
 
 
   // Handle opening college details modal
@@ -120,7 +131,7 @@ const Colleges = () => {
     // scrollPositionRef.current = 0;
   }, []);
 
-  // Load colleges from backend with chunked loading
+  // Load colleges from backend with optimized loading
   const loadColleges = useCallback(async (newFilters = {}, newPage = 1, isAppend = false) => {
     // Don't load default colleges if there's an active search
     if (currentSearchQuery && currentSearchQuery.trim() !== '') {
@@ -128,32 +139,20 @@ const Colleges = () => {
       return;
     }
     
-    // Rate limiting check
-    const rateLimit = securityService.checkRateLimit('colleges_api', 20, 60000); // 20 requests per minute
-    if (!rateLimit.allowed) {
-      console.warn('🚨 Rate limit exceeded for colleges API');
-      securityService.logSecurityEvent('RATE_LIMIT_EXCEEDED', {
-        endpoint: 'colleges_api',
-        remaining: rateLimit.remaining,
-        resetTime: rateLimit.resetTime
-      });
-      return;
-    }
-    
     try {
-      setIsLoading(true);
+      // Use different loading states based on whether we're appending or replacing
+      if (isAppend) {
+        setIsLoadingMore(true);
+      } else {
+        setIsLoading(true);
+      }
       console.log('🔍 Loading colleges with filters:', newFilters, 'page:', newPage, 'append:', isAppend);
       
-      // Use smaller chunks for better performance
-      const chunkSize = 12; // Load 12 colleges at a time instead of 24
+      // Use optimal chunk size for fast loading
+      const chunkSize = 24; // Load 24 colleges at a time for fast initial load
       
-      // Use cache service for better performance
-      const response = await cacheService.cacheApiCall(
-        () => apiService.getColleges(newFilters, newPage, chunkSize),
-        'colleges',
-        { filters: JSON.stringify(newFilters), page: newPage, limit: chunkSize },
-        5 * 60 * 1000 // 5 minutes cache
-      );
+      // Direct API call for faster loading (cache is handled by browser)
+      const response = await apiService.getColleges(newFilters, newPage, chunkSize);
       
       console.log('🔍 API Response:', response);
       console.log('🔍 API Response keys:', Object.keys(response));
@@ -196,71 +195,86 @@ const Colleges = () => {
         setColleges([]);
       }
     } finally {
+      // Reset both loading states
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
   }, [currentSearchQuery]); // Remove pagination.limit dependency
 
-  // Check API connection status
-  const checkApiStatus = async () => {
-    try {
-      const status = await apiService.getApiStatus();
-      console.log('API Status:', status.status);
-    } catch (error) {
-      console.error('API Status check failed:', error);
-    }
-  };
+  // Note: API status check removed for faster loading
 
-  // Load all colleges for search index (without pagination)
-  const loadAllCollegesForSearch = async () => {
+  // Load all colleges for search index (hybrid approach - progressive loading)
+  const loadAllCollegesForSearch = useCallback(async () => {
+    // Prevent multiple simultaneous loads
+    if (searchIndexLoading || searchIndexLoaded) {
+      console.log('🔍 Search index already loading or loaded, skipping...');
+      return;
+    }
+    
     try {
-      console.log('🔍 Loading all colleges for search index...');
+      setSearchIndexLoading(true);
+      setSearchIndexProgress(0);
+      console.log('🔍 Loading all colleges for search index (hybrid approach)...');
       
       // First, get the total count
       const countResponse = await apiService.getColleges({}, 1, 1);
       const totalColleges = countResponse.pagination?.totalItems || 2401;
       console.log(`🔍 Total colleges in database: ${totalColleges}`);
       
-      // Load ALL colleges in batches if needed
-      if (totalColleges <= 1000) {
-        const response = await apiService.getColleges({}, 1, totalColleges);
-        if (response && response.data) {
-          console.log(`🔍 Loaded ${response.data.length} colleges for search index`);
-          setAllCollegesForSearch(response.data);
-        }
-      } else {
-        // Load in batches of 1000
-        let allColleges = [];
-        const batchSize = 1000;
-        const totalBatches = Math.ceil(totalColleges / batchSize);
-        
-        console.log(`🔍 Loading ${totalColleges} colleges in ${totalBatches} batches...`);
-        
-        for (let batch = 1; batch <= totalBatches; batch++) {
-          const response = await apiService.getColleges({}, batch, batchSize);
-          if (response && response.data) {
-            allColleges = [...allColleges, ...response.data];
-            console.log(`🔍 Batch ${batch}/${totalBatches}: Loaded ${response.data.length} colleges (Total: ${allColleges.length})`);
-          }
-        }
-        
-        console.log(`🔍 Final: Loaded ${allColleges.length} colleges for search index`);
-        setAllCollegesForSearch(allColleges);
+      // Load ALL colleges in optimized parallel chunks for complete search coverage
+      const chunkSize = 500; // Larger chunks for fewer parallel requests (faster)
+      const totalChunks = Math.ceil(totalColleges / chunkSize);
+      console.log(`🔍 Loading ${totalColleges} colleges in ${totalChunks} parallel chunks of ${chunkSize}...`);
+      
+      // Create parallel promises for all chunks
+      const chunkPromises = [];
+      for (let chunk = 1; chunk <= totalChunks; chunk++) {
+        const promise = apiService.getColleges({}, chunk, chunkSize)
+          .then(response => {
+            if (response && response.data) {
+              console.log(`🔍 Chunk ${chunk}/${totalChunks}: Loaded ${response.data.length} colleges`);
+              // Update progress
+              setSearchIndexProgress(prev => Math.min(prev + (100 / totalChunks), 100));
+              return response.data;
+            }
+            return [];
+          })
+          .catch(error => {
+            console.error(`Failed to load chunk ${chunk}:`, error);
+            return [];
+          });
+        chunkPromises.push(promise);
       }
+      
+      // Wait for all chunks to load in parallel
+      const chunkResults = await Promise.all(chunkPromises);
+      
+      // Combine all results
+      const allColleges = chunkResults.flat();
+      console.log(`🔍 Final: Loaded ${allColleges.length} colleges for complete search index`);
+      setAllCollegesForSearch(allColleges);
+      setSearchIndexLoading(false);
+      setSearchIndexProgress(100);
+      setSearchIndexComplete(true);
+      setSearchIndexLoaded(true);
+      
+      // Hide completion message after 3 seconds
+      setTimeout(() => {
+        setSearchIndexComplete(false);
+      }, 3000);
+      
     } catch (error) {
       console.error('Failed to load all colleges for search:', error);
+      setSearchIndexLoading(false);
+      // Don't set searchIndexLoaded to true on error, so it can retry
     }
-  };
+  }, [searchIndexLoading, searchIndexLoaded]);
 
-  // Load available filters from backend
+  // Load available filters from backend (optimized)
   const loadFilters = async () => {
     try {
-      // Use cache service for filters (longer TTL since filters don't change often)
-      const filterData = await cacheService.cacheApiCall(
-        () => apiService.getCollegeFilters(),
-        'college-filters',
-        {},
-        30 * 60 * 1000 // 30 minutes cache
-      );
+      // Direct API call for faster loading (browser handles caching)
+      const filterData = await apiService.getCollegeFilters();
       console.log('🔍 Initial filters loaded:', filterData);
       // Set filters with proper structure for the component
       setFilters({
@@ -274,45 +288,51 @@ const Colleges = () => {
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsLoaded(true);
-    }, 100); // Reduced from 200ms to 100ms for snappier feel
+    }, 50); // Further reduced for even snappier feel
     return () => clearTimeout(timer);
   }, []);
 
-  // Backend integration with parallel chunked loading
+  // Note: Cache clearing removed for faster loading - browser cache is sufficient
+
+  // Backend integration - ultra-fast loading
   useEffect(() => {
+    // Prevent double initialization
+    if (isInitialized.current) {
+      return;
+    }
+    
     const initializeData = async () => {
       try {
-        console.log('🚀 Starting parallel chunked data loading...');
+        console.log('🚀 Starting ultra-fast data loading...');
         const startTime = performance.now();
         
-        // Load critical data first (API status + filters + first page of colleges)
-        const criticalDataPromise = Promise.all([
-          checkApiStatus(),
+        // Load colleges first for instant display
+        await loadColleges();
+        console.log('✅ Colleges loaded, page is now interactive');
+        
+        // Load background data immediately for faster performance
+        Promise.all([
           loadFilters(),
-          loadColleges()
-        ]);
-        
-        // Load search data in parallel (non-blocking)
-        const searchDataPromise = loadAllCollegesForSearch();
-        
-        // Wait for critical data first
-        await criticalDataPromise;
-        console.log('✅ Critical data loaded, page is now interactive');
-        
-        // Load search data in background
-        searchDataPromise.then(() => {
-          console.log('✅ Search data loaded in background');
+          loadAllCollegesForSearch(),
+          // Preload next page for faster infinite scroll
+          apiService.getColleges({}, 2, 24).then(response => {
+            if (response && response.data) {
+              console.log('🚀 Preloaded next page of colleges for faster infinite scroll');
+            }
+          }).catch(error => {
+            console.log('Preload failed (non-critical):', error);
+          })
+        ]).then(() => {
+          console.log('✅ Background data loaded');
         }).catch(error => {
-          console.error('Search data loading failed (non-critical):', error);
-        });
-        
-        // Warm up cache with common queries (non-blocking)
-        cacheService.warmUpCache(apiService).catch(error => {
-          console.error('Cache warm-up failed (non-critical):', error);
+          console.error('Background data loading failed (non-critical):', error);
         });
         
         const endTime = performance.now();
-        console.log(`🚀 Parallel loading completed in ${Math.round(endTime - startTime)}ms`);
+        console.log(`🚀 Ultra-fast loading completed in ${Math.round(endTime - startTime)}ms`);
+        
+        // Mark as initialized
+        isInitialized.current = true;
         
       } catch (error) {
         console.error('Failed to initialize data:', error);
@@ -320,7 +340,7 @@ const Colleges = () => {
     };
 
     initializeData();
-  }, [loadColleges]);
+  }, [loadColleges, loadAllCollegesForSearch]); // Include dependencies but use ref to prevent double execution
 
   // Debug: Monitor filters state changes
   useEffect(() => {
@@ -378,116 +398,16 @@ const Colleges = () => {
 
   // Load more colleges function for infinite scroll
   const loadMoreColleges = useCallback(() => {
-    if (isLoading || !pagination.hasNext) return;
-    
-    // Save scroll position before loading
-    const currentScrollY = window.scrollY;
-    console.log('🔄 Saving scroll position before load:', currentScrollY);
-    scrollPositionRef.current = currentScrollY;
-    
-    // Don't proceed if modal is open
-    if (isModalOpen) {
-      console.log('🔄 Infinite scroll blocked: modal is open');
+    if (isLoading || isLoadingMore || !pagination.hasNext || isModalOpen) {
+      console.log('🔄 Load more blocked:', { isLoading, isLoadingMore, hasNext: pagination.hasNext, isModalOpen });
       return;
     }
     
     const nextPage = pagination.page + 1;
     console.log('🔄 Loading more colleges, page:', nextPage);
     loadColleges(appliedFilters, nextPage, true); // Append mode
-  }, [isLoading, pagination.hasNext, pagination.page, appliedFilters, loadColleges, isModalOpen]);
+  }, [isLoading, isLoadingMore, pagination.hasNext, pagination.page, appliedFilters, loadColleges, isModalOpen]);
 
-  // Debounced scroll handler to prevent multiple rapid triggers
-  const [isScrollDebounced, setIsScrollDebounced] = useState(false);
-  
-  // Ref to track scroll position during data loading
-  const scrollPositionRef = useRef(0);
-
-  // Infinite scroll handler - optimized for search-focused usage
-  const handleScroll = useCallback(() => {
-    if (isLoading || !pagination.hasNext || isScrollDebounced || isModalOpen) {
-      console.log('🔄 Scroll blocked:', { isLoading, hasNext: pagination.hasNext, isScrollDebounced, isModalOpen });
-      return;
-    }
-    
-    const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
-    const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
-    
-    console.log('🔄 Scroll check:', { 
-      scrollPercentage: Math.round(scrollPercentage * 100), 
-      currentPage: pagination.page,
-      hasNext: pagination.hasNext,
-      collegesCount: colleges.length
-    });
-    
-    // Load more when user scrolls to 80% of the page (less aggressive loading)
-    if (scrollPercentage > 0.8) {
-      console.log('🔄 Infinite scroll triggered, loading next chunk...');
-      setIsScrollDebounced(true);
-      loadMoreColleges();
-      
-      // Reset debounce after 3 seconds
-      setTimeout(() => {
-        setIsScrollDebounced(false);
-      }, 3000);
-    }
-  }, [isLoading, pagination.hasNext, pagination.page, isScrollDebounced, loadMoreColleges, colleges.length, isModalOpen]);
-
-  // Throttled scroll handler to prevent excessive processing
-  const throttledHandleScroll = useCallback(() => {
-    let timeoutId;
-    return () => {
-      if (timeoutId) return;
-      timeoutId = setTimeout(() => {
-        handleScroll();
-        timeoutId = null;
-      }, 200); // Increased throttle to 200ms for better performance
-    };
-  }, [handleScroll]);
-
-  // Add scroll listener for infinite scroll
-  useEffect(() => {
-    const throttledScroll = throttledHandleScroll();
-    window.addEventListener('scroll', throttledScroll, { passive: true });
-    return () => window.removeEventListener('scroll', throttledScroll);
-  }, [throttledHandleScroll, isModalOpen]);
-
-  // Restore scroll position after colleges update (for infinite scroll)
-  useEffect(() => {
-    // Only restore scroll if we have a saved position and modal is not open
-    if (scrollPositionRef.current > 0 && !isModalOpen && !isLoading) {
-      console.log('📍 Restoring scroll position:', scrollPositionRef.current);
-      
-      let attempts = 0;
-      const maxAttempts = 10;
-      
-      // Wait for DOM to be fully updated with new cards
-      const restoreScroll = () => {
-        attempts++;
-        const currentScrollHeight = document.documentElement.scrollHeight;
-        console.log('📍 Attempt', attempts, 'Current scroll height:', currentScrollHeight, 'Target:', scrollPositionRef.current);
-        
-        // If the scroll height has increased significantly, it means new cards are rendered
-        if (currentScrollHeight > scrollPositionRef.current + 100 || attempts >= maxAttempts) {
-          console.log('📍 Actually scrolling to:', scrollPositionRef.current);
-          window.scrollTo(0, scrollPositionRef.current);
-          scrollPositionRef.current = 0; // Reset after restoration
-        } else {
-          // If not enough height yet, wait a bit more
-          setTimeout(restoreScroll, 100);
-        }
-      };
-      
-      // Start the restoration process
-      setTimeout(restoreScroll, 150);
-    }
-  }, [colleges, isModalOpen, isLoading]);
-
-  // Clear scroll position when modal opens to prevent interference
-  useEffect(() => {
-    if (isModalOpen) {
-      scrollPositionRef.current = 0;
-    }
-  }, [isModalOpen]);
 
 
 
@@ -569,7 +489,7 @@ const Colleges = () => {
                 {isAuthenticated ? (
                   <UserPopup />
                 ) : (
-                  <GoogleSignIn text="signin" size="medium" width={120} />
+                  <GoogleSignIn text="Sign In" size="medium" width={120} />
                 )}
               </div>
             </div>
@@ -709,6 +629,51 @@ const Colleges = () => {
                   showAdvancedFeatures={false}
                   showPerformanceMetrics={true}
                 />
+                
+                {/* Search Index Loading Progress Indicator */}
+                {searchIndexLoading && (
+                  <motion.div
+                    className="mt-4 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium text-blue-700 dark:text-blue-300">
+                        🔍 Building complete search index...
+                      </span>
+                      <span className="text-xs text-blue-600 dark:text-blue-400">
+                        {Math.round(searchIndexProgress)}%
+                      </span>
+                    </div>
+                    <div className="w-full bg-blue-200 dark:bg-blue-800 rounded-full h-2">
+                      <div 
+                        className="bg-blue-600 dark:bg-blue-400 h-2 rounded-full transition-all duration-300 ease-out"
+                        style={{ width: `${searchIndexProgress}%` }}
+                      ></div>
+                    </div>
+                    <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                      Loading all 2401 colleges for comprehensive search results
+                    </p>
+                  </motion.div>
+                )}
+                
+                {/* Search Index Completion Message */}
+                {searchIndexComplete && (
+                  <motion.div
+                    className="mt-4 p-3 rounded-lg bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <div className="flex items-center">
+                      <span className="text-sm font-medium text-green-700 dark:text-green-300">
+                        ✅ Complete search index ready! All 2401 colleges loaded for comprehensive search results.
+                      </span>
+            </div>
+                  </motion.div>
+                )}
             </motion.div>
 
             {/* API Status and Search Results Indicator */}
@@ -748,26 +713,35 @@ const Colleges = () => {
               transition={{ duration: 0.2, delay: 0.4 }}
             >
               {isLoading ? (
-                // Beautiful loading animation
+                // Beautiful loading animation for initial load
                 <div className="col-span-full flex justify-center items-center py-16">
                   <BeautifulLoader size="large" showText={true} text="Loading colleges..." />
                 </div>
               ) : colleges.length > 0 ? (
-                colleges.map((college, index) => (
-                  <motion.div
-                    key={`college-${college.id}-${index}`}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
-                    transition={{ delay: 0.45 + index * 0.05, duration: 0.2 }}
-                  >
+                <>
+                  {/* Existing college cards */}
+                  {colleges.map((college, index) => (
                     <CollegeCard 
+                      key={`college-${college.id}-${index}`}
                       college={college} 
                       index={index}
                       courses={[]}
                       onOpenModal={handleOpenModal}
                     />
-                  </motion.div>
-                ))
+                  ))}
+                  
+                  {/* Skeleton cards for loading more */}
+                  {isLoadingMore && (
+                    <>
+                      {Array.from({ length: 6 }).map((_, skeletonIndex) => (
+                        <CollegeCardSkeleton 
+                          key={`skeleton-${skeletonIndex}`} 
+                          index={skeletonIndex}
+                        />
+                      ))}
+                    </>
+                  )}
+                </>
               ) : (
                 // No colleges found
                 <div className="col-span-full text-center py-12">
@@ -782,6 +756,29 @@ const Colleges = () => {
               )}
             </motion.div>
 
+            {/* Infinite Scroll Trigger - loads more colleges when user reaches 80% of current content */}
+            {colleges.length > 0 && pagination.hasNext && (
+              <InfiniteScrollTrigger
+                onLoadMore={loadMoreColleges}
+                hasMore={pagination.hasNext}
+                isLoading={isLoadingMore}
+                threshold={0.8}
+                rootMargin="200px"
+              >
+                {/* Loading indicator is now handled by skeleton cards in the grid */}
+              </InfiniteScrollTrigger>
+            )}
+
+            {/* End of content indicator */}
+            {colleges.length > 0 && !pagination.hasNext && (
+              <div className="col-span-full text-center py-8">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300">
+                  <GraduationCap className="w-4 h-4" />
+                  <span className="text-sm font-medium">You've reached the end! All colleges loaded.</span>
+                </div>
+              </div>
+            )}
+
             {/* Enhanced Pagination */}
             {pagination.totalPages > 1 && (
               <motion.div
@@ -791,12 +788,12 @@ const Colleges = () => {
                 transition={{ delay: 0.5, duration: 0.2 }}
               >
                 {/* Loading indicator for pagination */}
-                {isLoading && (
+                {(isLoading || isLoadingMore) && (
                   <div className={`text-sm flex items-center gap-2 ${
                     isDarkMode ? 'text-white/70' : 'text-gray-600'
                   }`}>
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white/70"></div>
-                    Loading colleges...
+                    {isLoading ? 'Loading colleges...' : 'Loading more colleges...'}
                   </div>
                 )}
                 
@@ -811,16 +808,16 @@ const Colleges = () => {
                   <div className="flex justify-center">
                     <button
                       onClick={loadMoreColleges}
-                      disabled={isLoading}
+                      disabled={isLoading || isLoadingMore}
                       className={`px-8 py-3 rounded-lg font-medium transition-all duration-200 ${
-                        isLoading
+                        (isLoading || isLoadingMore)
                           ? 'opacity-50 cursor-not-allowed'
                           : isDarkMode
                           ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl'
                           : 'bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 shadow-lg hover:shadow-xl'
                       }`}
                     >
-                      {isLoading ? (
+                      {(isLoading || isLoadingMore) ? (
                         <div className="flex items-center gap-2">
                           <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                           Loading...

@@ -7,9 +7,9 @@ export const GOOGLE_CREDENTIALS = {
   auth_uri: "https://accounts.google.com/o/oauth2/auth",
   token_uri: "https://oauth2.googleapis.com/token",
   auth_provider_x509_cert_url: "https://www.googleapis.com/oauth2/v1/certs",
-  client_secret: "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", // This should be moved to backend-only
+  // client_secret: moved to backend for security - NEVER expose in frontend
   redirect_uris: [
-    "http://localhost:8787/api/auth/google/callback", // Cloudflare Worker dev port
+    "https://neetlogiq-backend.neetlogiq.workers.dev/api/auth/google/callback", // Production backend
     "http://localhost:4000/api/auth/google/callback",
     "https://neetlogiq.com/api/auth/google/callback",
     "https://neetlogiq.pages.dev/api/auth/google/callback"
@@ -25,4 +25,4 @@ export const GOOGLE_CREDENTIALS = {
 
 // Note: The redirect_uris and javascript_origins are configured for our application which runs on:
 // Frontend: http://localhost:3000
-// Cloudflare Worker: http://localhost:8787
+// Cloudflare Worker: https://neetlogiq-backend.neetlogiq.workers.dev

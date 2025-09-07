@@ -107,7 +107,7 @@ class ApiService {
   }
 
   async getCourseFilters() {
-    return this.apiCall('/courses/filters');
+    return this.apiCall('/api/courses/filters');
   }
 
   async searchCourses(query, filters = {}) {
@@ -144,22 +144,22 @@ class ApiService {
     queryParams.append('page', page);
     queryParams.append('limit', limit);
     
-    return this.apiCall(`/cutoffs?${queryParams.toString()}`);
+    return this.apiCall(`/api/cutoffs?${queryParams.toString()}`);
   }
 
   // BMAD Analytics API
   async getBMADAnalytics() {
-    return this.apiCall('/bmad/analytics');
+    return this.apiCall('/api/bmad/analytics');
   }
 
   async getBMADPerformance() {
-    return this.apiCall('/bmad/performance');
+    return this.apiCall('/api/bmad/performance');
   }
 
   // Health check
   async healthCheck() {
     try {
-      const response = await fetch(`${this.baseURL}/health`);
+      const response = await fetch(`${this.baseURL}/api/health`);
       return response.ok;
     } catch (error) {
       return false;

@@ -20,6 +20,16 @@ export const useUnifiedSearch = (collegesData = [], options = {}) => {
 
   // Initialize search engine
   useEffect(() => {
+    // Only initialize if we haven't already initialized
+    if (isInitialized) {
+      return;
+    }
+    
+    // Only initialize if we have data
+    if (!collegesData || collegesData.length === 0) {
+      return;
+    }
+
     const initializeSearchEngine = async () => {
       try {
         setIsLoading(true);
