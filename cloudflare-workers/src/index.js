@@ -450,7 +450,7 @@ class AdvancedSearchService {
         
         const results = [];
         const searchFields = options.fields || ['name', 'state', 'city'];
-        const lowerQuery = query.toLowerCase();
+  const lowerQuery = query.toLowerCase();
         
         for (const item of data) {
           let score = 0;
@@ -871,13 +871,13 @@ router.get('/api/search', async (request, env) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
     
-  } catch (error) {
+    } catch (error) {
     console.error('Search error:', error);
     return new Response(JSON.stringify({
       error: 'Internal server error',
       message: error.message
     }), {
-      status: 500,
+        status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
@@ -903,7 +903,7 @@ router.get('/api/advanced-search', async (request, env) => {
       });
     }
 
-    const url = new URL(request.url);
+  const url = new URL(request.url);
     const query = url.searchParams.get('q');
     
     // Validate search query
@@ -1151,7 +1151,7 @@ router.get('/api/search/fts5/courses', async (request, env) => {
     const query = url.searchParams.get('q');
     const page = parseInt(url.searchParams.get('page')) || 1;
     const limit = parseInt(url.searchParams.get('limit')) || 24;
-    const offset = (page - 1) * limit;
+  const offset = (page - 1) * limit;
     
     if (!query) {
       return new Response(JSON.stringify({
@@ -1381,8 +1381,8 @@ router.get('/api/typesense/search/courses', async (request, env) => {
     };
 
     const results = await typesenseIntegration.searchCourses(query, {
-      page,
-      limit,
+        page,
+        limit,
       filters
     });
 
@@ -1441,7 +1441,7 @@ router.post('/api/typesense/index/colleges', async (request, env) => {
       error: 'Indexing failed', 
       message: error.message 
     }), { 
-      status: 500, 
+      status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
     });
   }
@@ -1755,7 +1755,7 @@ async function fallbackToCollegesSearch(query, env) {
     });
     
     const conditions = [`(${searchConditions.join(' OR ')})`];
-    const params = [];
+  const params = [];
     searchTerms.forEach(term => {
       const searchTerm = `%${term}%`;
       params.push(searchTerm, searchTerm, searchTerm);
@@ -2141,6 +2141,7 @@ router.get('/api/colleges', async (request, env) => {
     const state = url.searchParams.get('state');
     const collegeType = url.searchParams.get('college_type');
     const managementType = url.searchParams.get('management_type');
+    const stream = url.searchParams.get('stream');
     const page = parseInt(url.searchParams.get('page')) || 1;
     const limit = parseInt(url.searchParams.get('limit')) || 24; // Default to 24 colleges per page for proper pagination
     
@@ -2195,6 +2196,11 @@ router.get('/api/colleges', async (request, env) => {
     if (managementType) {
       conditions.push('management_type = ?');
       params.push(managementType);
+    }
+    
+    if (stream) {
+      conditions.push('college_type = ?');
+      params.push(stream);
     }
     
     // Build WHERE clause
@@ -2253,7 +2259,7 @@ router.get('/api/colleges', async (request, env) => {
         hasPrev: page > 1
       },
       filters: {
-        applied: { search, state, college_type: collegeType, management_type: managementType },
+        applied: { search, state, college_type: collegeType, management_type: managementType, stream },
         available: {}
       },
       search: search,
@@ -2341,7 +2347,7 @@ router.get('/api/courses', async (request, env) => {
     params.push(stream);
   }
 
-                     if (search) {
+  if (search) {
             // Use FTS5 for better search performance
             whereClause += ' AND (c.course_name LIKE ? OR c.stream LIKE ? OR c.program LIKE ?)';
             const searchTerm = `%${search}%`;
@@ -2777,8 +2783,8 @@ router.get('/api/colleges/filters', async (request, env) => {
     
     return new Response(JSON.stringify({
       states: states.results?.map(r => r.state) || [],
-      college_types: types.results?.map(r => r.college_type) || [],
-      management_types: managementTypes.results?.map(r => r.management_type) || []
+      collegeTypes: types.results?.map(r => r.college_type) || [],
+      managementTypes: managementTypes.results?.map(r => r.management_type) || []
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
@@ -2800,6 +2806,29 @@ router.options('*', () => {
   return new Response(null, {
     status: 200,
     headers: corsHeaders
+  });
+});
+
+// Root route handler
+router.get('/', async (request, env) => {
+  return new Response(JSON.stringify({
+    message: 'NeetLogIQ API Server',
+    version: '1.0.0',
+    status: 'active',
+    endpoints: {
+      health: '/api/health',
+      colleges: '/api/colleges',
+      courses: '/api/courses',
+      search: '/api/search',
+      filters: '/api/colleges/filters'
+    },
+    documentation: 'https://neetlogiq.com',
+    timestamp: new Date().toISOString()
+  }), {
+    headers: { 
+      ...corsHeaders, 
+      'Content-Type': 'application/json' 
+    }
   });
 });
 

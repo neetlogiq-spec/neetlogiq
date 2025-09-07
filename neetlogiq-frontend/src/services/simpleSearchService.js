@@ -30,7 +30,7 @@ class SimpleSearchService {
         return true;
       } else {
         // Load college data from Cloudflare Worker with high limit
-        const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://neetlogiq-backend.neetlogiq.workers.dev'}/api/colleges?limit=1000`);
+        const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8787'}/api/colleges?limit=1000`);
         const data = await response.json();
         
         if (data.data && Array.isArray(data.data)) {

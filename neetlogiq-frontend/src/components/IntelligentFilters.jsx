@@ -33,11 +33,11 @@ const IntelligentFilters = ({
     if (value) {
       newFilters[filterType] = value;
       
-      // Intelligent synchronization logic for Stream, State, College Type
+      // Intelligent synchronization logic for Stream, State, Management Type
       if (filterType === 'stream') {
-        // When stream changes, reset state and college_type to show synchronized options
+        // When stream changes, reset state and management_type to show synchronized options
         delete newFilters.state;
-        delete newFilters.college_type;
+        delete newFilters.management_type;
       }
     } else {
       delete newFilters[filterType];
@@ -87,7 +87,7 @@ const IntelligentFilters = ({
     // Map filter types to backend response keys
     const filterTypeMap = {
       'states': 'states',
-      'collegeTypes': 'collegeTypes',
+      'managementTypes': 'managementTypes',
       'streams': 'streams'
     };
     
@@ -100,9 +100,9 @@ const IntelligentFilters = ({
     return result;
   };
 
-  // Get filter count (only count Stream, State, College Type)
+  // Get filter count (only count Stream, State, Management Type)
   const getFilterCount = () => {
-    const validFilters = ['stream', 'state', 'college_type'];
+    const validFilters = ['stream', 'state', 'management_type'];
     return Object.keys(appliedFilters || {}).filter(key => 
       validFilters.includes(key) && appliedFilters[key]
     ).length;
@@ -188,7 +188,7 @@ const IntelligentFilters = ({
             if (!value) return null;
             const label = key === 'stream' ? 'Stream' : 
                          key === 'state' ? 'State' : 
-                         key === 'college_type' ? 'Type' : key;
+                         key === 'management_type' ? 'Management' : key;
             return (
               <span key={key} className="inline-block mr-3">
                 <span className="font-medium">{label}:</span> {value}
@@ -274,7 +274,7 @@ const IntelligentFilters = ({
                 </div>
               </div>
 
-              {/* Line 2: State, College Type (Synchronized with Stream) */}
+              {/* Line 2: State, Management Type (Synchronized with Stream) */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {/* State Filter */}
                 <div className="space-y-2">
@@ -299,22 +299,22 @@ const IntelligentFilters = ({
                   </select>
                 </div>
 
-                {/* College Type Filter */}
+                {/* Management Type Filter */}
                 <div className="space-y-2">
                   <label className={`text-sm font-medium ${
                     isDarkMode ? 'text-white/90' : 'text-gray-700'
-                  }`}>College Type</label>
+                  }`}>Management Type</label>
                   <select
-                    value={localFilters.college_type || ''}
-                    onChange={(e) => handleFilterChange('college_type', e.target.value)}
+                    value={localFilters.management_type || ''}
+                    onChange={(e) => handleFilterChange('management_type', e.target.value)}
                     className={`w-full px-4 py-2 rounded-lg focus:outline-none ${
                       isDarkMode 
                         ? 'bg-white/10 border border-white/20 text-white focus:border-primary-400' 
                         : 'bg-gray-100/80 border border-gray-300/50 text-gray-700 focus:border-blue-400'
                     }`}
                   >
-                    <option value="">All Types</option>
-                    {getAvailableOptions('collegeTypes').map((type) => (
+                    <option value="">All Management Types</option>
+                    {getAvailableOptions('managementTypes').map((type) => (
                       <option key={type} value={type}>
                         {type}
                       </option>

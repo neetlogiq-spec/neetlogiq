@@ -533,6 +533,7 @@ const Colleges = () => {
             >
                               <UnifiedSearchBar
                   placeholder="Search medical colleges with unified AI intelligence..."
+                  collegesData={colleges}
                   onSearchResults={async (searchResult) => {
                     console.log("🔍 Unified search results received:", searchResult);
                     
@@ -625,7 +626,6 @@ const Colleges = () => {
                   }}
                   debounceMs={300}
                   contentType="colleges"
-                  collegesData={allCollegesForSearch}
                   showAdvancedFeatures={false}
                   showPerformanceMetrics={true}
                 />

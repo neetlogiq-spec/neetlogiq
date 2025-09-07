@@ -25,10 +25,8 @@ export const useUnifiedSearch = (collegesData = [], options = {}) => {
       return;
     }
     
-    // Only initialize if we have data
-    if (!collegesData || collegesData.length === 0) {
-      return;
-    }
+    // Initialize even with empty data (for cutoffs page)
+    // The search engine can handle empty data gracefully
 
     const initializeSearchEngine = async () => {
       try {

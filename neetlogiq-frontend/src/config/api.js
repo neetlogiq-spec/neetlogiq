@@ -1,7 +1,7 @@
 // API Configuration for NeetLogIQ
 const API_CONFIG = {
-  // Use environment variable for API URL, fallback to production backend
-  BASE_URL: process.env.REACT_APP_API_URL || 'https://neetlogiq-backend.neetlogiq.workers.dev',
+  // Use environment variable for API URL, fallback to local development backend
+  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:8787',
   ENDPOINTS: {
     COLLEGES: '/api/colleges',
     COURSES: '/api/courses',

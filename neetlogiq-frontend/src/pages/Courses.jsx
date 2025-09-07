@@ -82,15 +82,18 @@ const Courses = () => {
       // Append or replace data based on isAppend flag
       if (isAppend && newPage > 1) {
         setCourses(prevCourses => {
-          // Filter out duplicates based on course.id
-          const existingIds = new Set(prevCourses.map(course => course.id));
-          const newCourses = validCourses.filter(course => !existingIds.has(course.id));
+          // Create unique identifier using course_name + stream combination
+          const existingKeys = new Set(prevCourses.map(course => `${course.course_name}-${course.stream}`));
+          const newCourses = validCourses.filter(course => !existingKeys.has(`${course.course_name}-${course.stream}`));
           console.log('📍 Adding new courses:', newCourses.length, 'Total will be:', prevCourses.length + newCourses.length);
+          console.log('📍 Existing courses:', prevCourses.length, 'New courses from API:', validCourses.length);
+          console.log('📍 Existing keys:', Array.from(existingKeys).slice(0, 5));
+          console.log('📍 New course keys:', validCourses.slice(0, 5).map(c => `${c.course_name}-${c.stream}`));
           return [...prevCourses, ...newCourses];
         });
         setFilteredCourses(prevCourses => {
-          const existingIds = new Set(prevCourses.map(course => course.id));
-          const newCourses = validCourses.filter(course => !existingIds.has(course.id));
+          const existingKeys = new Set(prevCourses.map(course => `${course.course_name}-${course.stream}`));
+          const newCourses = validCourses.filter(course => !existingKeys.has(`${course.course_name}-${course.stream}`));
           return [...prevCourses, ...newCourses];
         });
         
@@ -164,6 +167,15 @@ const Courses = () => {
 
   // Load more courses function for infinite scroll
   const loadMoreCourses = useCallback(() => {
+    console.log('🔄 Load more triggered:', { 
+      isLoading, 
+      isLoadingMore, 
+      hasNext: pagination.hasNext, 
+      currentPage: pagination.page,
+      totalPages: pagination.totalPages,
+      totalItems: pagination.totalItems
+    });
+    
     if (isLoading || isLoadingMore || !pagination.hasNext) {
       console.log('🔄 Load more blocked:', { isLoading, isLoadingMore, hasNext: pagination.hasNext });
       return;
@@ -171,8 +183,15 @@ const Courses = () => {
     
     const nextPage = pagination.page + 1;
     console.log('🔄 Loading more courses, page:', nextPage);
-    loadCourses({}, nextPage, true); // Append mode
-  }, [isLoading, isLoadingMore, pagination.hasNext, pagination.page, loadCourses]);
+    
+    // Preserve current stream filter when loading more courses
+    const currentFilters = {};
+    if (selectedStream && selectedStream !== 'all') {
+      currentFilters.stream = selectedStream;
+    }
+    
+    loadCourses(currentFilters, nextPage, true); // Append mode with current filters
+  }, [isLoading, isLoadingMore, pagination.hasNext, pagination.page, loadCourses, selectedStream]);
 
 
   // Update filtered courses when courses change (but not during search)
@@ -195,16 +214,6 @@ const Courses = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handlePageChange = (newPage) => {
-    // Preserve current stream filter when changing pages
-    const currentFilters = {};
-    if (selectedStream && selectedStream !== 'all') {
-      currentFilters.stream = selectedStream;
-    }
-    loadCourses(currentFilters, newPage);
-    // Scroll to top when changing page
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
 
 
   // Handle opening colleges modal
@@ -410,7 +419,7 @@ const Courses = () => {
               <UnifiedSearchBar
                 placeholder="Search medical courses with AI-powered intelligence..."
                 contentType="courses"
-                colleges={colleges}
+                collegesData={colleges}
                 showSuggestions={false}
                 onSearchResults={async (searchResult) => {
                   console.log("🔍 Unified search results for courses:", searchResult);
@@ -658,7 +667,7 @@ const Courses = () => {
                     
                     return (
                       <motion.div
-                        key={`${course.course_name}-${course.stream}-${course.level}-${index}`}
+                        key={`${course.course_name}-${course.stream}`}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 10 }}
                         transition={{ delay: 0.35 + index * 0.03, duration: 0.2 }}
@@ -796,257 +805,6 @@ const Courses = () => {
               </div>
             )}
 
-            {/* Enhanced Pagination */}
-            {pagination.totalPages > 1 && (
-              <motion.div
-                className="flex flex-col items-center gap-4 mb-12"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: isLoaded ? 1 : 0 }}
-                transition={{ duration: 0.2, delay: 0.4 }}
-              >
-                {/* Loading indicator for pagination */}
-                {isLoading && (
-                  <div className={`text-sm flex items-center gap-2 ${
-                    isDarkMode ? 'text-white/70' : 'text-gray-600'
-                  }`}>
-                    <div className={`animate-spin rounded-full h-4 w-4 border-b-2 ${
-                      isDarkMode ? 'border-white/70' : 'border-gray-600'
-                    }`}></div>
-                    Loading courses...
-                  </div>
-                )}
-                {/* Pagination Info */}
-                <div className={`text-sm text-center ${
-                  isDarkMode ? 'text-white/70' : 'text-gray-600'
-                }`}>
-                  <div className="mb-1">
-                    Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.totalItems)} of {pagination.totalItems} courses
-                  </div>
-                  <div className={`text-xs ${
-                    isDarkMode ? 'text-white/50' : 'text-gray-500'
-                  }`}>
-                    Page {pagination.page} of {pagination.totalPages} • {pagination.limit} courses per page
-                  </div>
-                </div>
-                
-                {/* Pagination Controls */}
-                <div className="flex justify-center items-center gap-2">
-                  {/* First Page */}
-                  <button
-                    onClick={() => handlePageChange(1)}
-                    disabled={pagination.page <= 1}
-                    className={`px-3 py-2 backdrop-blur-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm ${
-                      isDarkMode 
-                        ? 'bg-white/10 text-white hover:bg-white/20' 
-                        : 'bg-gray-100/80 text-gray-700 hover:bg-gray-200/80'
-                    }`}
-                  >
-                    First
-                  </button>
-                  
-                  {/* Previous Page */}
-                  <button
-                    onClick={() => handlePageChange(pagination.page - 1)}
-                    disabled={pagination.page <= 1}
-                    className={`px-4 py-2 backdrop-blur-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
-                      isDarkMode 
-                        ? 'bg-white/10 text-white hover:bg-white/20' 
-                        : 'bg-gray-100/80 text-gray-700 hover:bg-gray-200/80'
-                    }`}
-                  >
-                    Previous
-                  </button>
-                  
-                  {/* Page Numbers */}
-                  <div className="flex gap-1 flex-wrap justify-center max-w-md">
-                    {(() => {
-                      const pages = [];
-                      const totalPages = pagination.totalPages;
-                      const currentPage = pagination.page;
-                      
-                      // Always show first page
-                      pages.push(
-                        <button
-                          key={1}
-                          onClick={() => handlePageChange(1)}
-                          className={`px-3 py-2 rounded-lg transition-colors text-sm ${
-                            currentPage === 1
-                              ? isDarkMode 
-                                ? 'bg-white/30 text-white'
-                                : 'bg-blue-500 text-white'
-                              : isDarkMode
-                                ? 'bg-white/10 text-white/70 hover:bg-white/20'
-                                : 'bg-gray-100/80 text-gray-700 hover:bg-gray-200/80'
-                          }`}
-                        >
-                          1
-                        </button>
-                      );
-                      
-                      // Show ellipsis if we're far from the beginning
-                      if (currentPage > 4) {
-                        pages.push(
-                          <span key="ellipsis1" className="px-2 py-2 text-white/50 text-sm">
-                            ...
-                          </span>
-                        );
-                      }
-                      
-                      // Show pages around current page
-                      const startPage = Math.max(2, currentPage - 2);
-                      const endPage = Math.min(totalPages - 1, currentPage + 2);
-                      
-                      for (let i = startPage; i <= endPage; i++) {
-                        if (i !== 1 && i !== totalPages) {
-                          pages.push(
-                            <button
-                              key={i}
-                              onClick={() => handlePageChange(i)}
-                              className={`px-3 py-2 rounded-lg transition-colors text-sm ${
-                                i === currentPage
-                                  ? 'bg-white/30 text-white'
-                                  : 'bg-white/10 text-white/70 hover:bg-white/20'
-                              }`}
-                            >
-                              {i}
-                            </button>
-                          );
-                        }
-                      }
-                      
-                      // Show ellipsis if we're far from the end
-                      if (currentPage < totalPages - 3) {
-                        pages.push(
-                          <span key="ellipsis2" className="px-2 py-2 text-white/50 text-sm">
-                            ...
-                          </span>
-                        );
-                      }
-                      
-                      // Always show last page (if more than 1 page)
-                      if (totalPages > 1) {
-                        pages.push(
-                          <button
-                            key={totalPages}
-                            onClick={() => handlePageChange(totalPages)}
-                            className={`px-3 py-2 rounded-lg transition-colors text-sm ${
-                              totalPages === currentPage
-                                ? 'bg-white/30 text-white'
-                                : 'bg-white/10 text-white/70 hover:bg-white/20'
-                            }`}
-                          >
-                            {totalPages}
-                          </button>
-                        );
-                      }
-                      
-                      return pages;
-                    })()}
-                  </div>
-                  
-                  {/* Next Page */}
-                  <button
-                    onClick={() => handlePageChange(pagination.page + 1)}
-                    disabled={pagination.page >= pagination.totalPages}
-                    className={`px-4 py-2 backdrop-blur-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors ${
-                      isDarkMode 
-                        ? 'bg-white/10 text-white hover:bg-white/20' 
-                        : 'bg-gray-100/80 text-gray-700 hover:bg-gray-200/80'
-                    }`}
-                  >
-                    Next
-                  </button>
-                  
-                  {/* Last Page */}
-                  <button
-                    onClick={() => handlePageChange(pagination.totalPages)}
-                    disabled={pagination.page >= pagination.totalPages}
-                    className={`px-3 py-2 backdrop-blur-sm rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm ${
-                      isDarkMode 
-                        ? 'bg-white/10 text-white hover:bg-white/20' 
-                        : 'bg-gray-100/80 text-gray-700 hover:bg-gray-200/80'
-                    }`}
-                  >
-                    Last
-                  </button>
-                </div>
-                
-                {/* Page Size Selector */}
-                <div className={`flex items-center gap-2 text-sm ${
-                  isDarkMode ? 'text-white/70' : 'text-gray-600'
-                }`}>
-                  <span>Show:</span>
-                  <select
-                    value={pagination.limit}
-                    onChange={(e) => {
-                      const newLimit = parseInt(e.target.value);
-                      setPagination(prev => ({ ...prev, limit: newLimit, page: 1 }));
-                      // Preserve stream filter when changing page size
-                      const currentFilters = {};
-                      if (selectedStream && selectedStream !== 'all') {
-                        currentFilters.stream = selectedStream;
-                      }
-                      loadCourses(currentFilters, 1);
-                    }}
-                    className={`px-2 py-1 backdrop-blur-sm rounded border focus:outline-none ${
-                      isDarkMode 
-                        ? 'bg-white/10 text-white border-white/20 focus:border-white/40' 
-                        : 'bg-gray-100/80 text-gray-700 border-gray-300/50 focus:border-blue-400'
-                    }`}
-                  >
-                    <option value={12}>12</option>
-                    <option value={24}>24</option>
-                    <option value={48}>48</option>
-                    <option value={96}>96</option>
-                  </select>
-                  <span>per page</span>
-                </div>
-                
-                {/* Jump to Page */}
-                <div className={`flex items-center gap-2 text-sm ${
-                  isDarkMode ? 'text-white/70' : 'text-gray-600'
-                }`}>
-                  <span>Jump to:</span>
-                  <input
-                    type="number"
-                    min="1"
-                    max={pagination.totalPages}
-                    placeholder="Page"
-                    className={`w-20 px-2 py-1 backdrop-blur-sm rounded border focus:outline-none ${
-                      isDarkMode 
-                        ? 'bg-white/10 text-white border-white/20 focus:border-white/40 placeholder-white/50' 
-                        : 'bg-gray-100/80 text-gray-700 border-gray-300/50 focus:border-blue-400 placeholder-gray-500'
-                    }`}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') {
-                        const pageNum = parseInt(e.target.value);
-                        if (pageNum >= 1 && pageNum <= pagination.totalPages) {
-                          handlePageChange(pageNum);
-                          e.target.value = '';
-                        }
-                      }
-                    }}
-                  />
-                  <button
-                    onClick={(e) => {
-                      const input = e.target.previousElementSibling;
-                      const pageNum = parseInt(input.value);
-                      if (pageNum >= 1 && pageNum <= pagination.totalPages) {
-                        handlePageChange(pageNum);
-                        input.value = '';
-                      }
-                    }}
-                    className={`px-3 py-1 backdrop-blur-sm rounded border transition-colors text-xs ${
-                      isDarkMode 
-                        ? 'bg-white/10 text-white border-white/20 hover:bg-white/20' 
-                        : 'bg-gray-100/80 text-gray-700 border-gray-300/50 hover:bg-gray-200/80'
-                    }`}
-                  >
-                    Go
-                  </button>
-                </div>
-              </motion.div>
-            )}
 
 
           </div>

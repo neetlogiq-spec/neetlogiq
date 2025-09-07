@@ -274,6 +274,7 @@ const Cutoffs = () => {
               <UnifiedSearchBar
                 placeholder="Search cutoffs with AI-powered intelligence..."
                 contentType="cutoffs"
+                collegesData={[]}
                 onSearchResults={(searchResult) => {
                   console.log("🔍 Unified search results for cutoffs:", searchResult);
                   

@@ -27,7 +27,7 @@ class BMADAI {
       this.userProfile = userProfile;
       
       // Call the real backend API for AI recommendations
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://neetlogiq-backend.neetlogiq.workers.dev'}/api/ai/recommendations`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8787'}/api/ai/recommendations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
