@@ -361,7 +361,7 @@ const Courses = () => {
                 {isAuthenticated ? (
                   <UserPopup />
                 ) : (
-                  <GoogleSignIn text="Sign In" size="medium" width={120} />
+                  <GoogleSignIn text="Sign In" size="medium" width={100} />
                 )}
               </div>
             </div>

@@ -19,7 +19,7 @@ const GoogleSignIn = ({
   };
 
   const getButtonStyles = () => {
-    const baseStyles = "relative flex items-center justify-center gap-3 px-6 py-3 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed";
+    const baseStyles = "relative flex items-center justify-center gap-2 px-6 py-3 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap";
     
     switch (variant) {
       case "outline":
@@ -60,9 +60,9 @@ const GoogleSignIn = ({
   const getPadding = () => {
     switch (size) {
       case "small":
-        return "px-4 py-2";
+        return "px-3 py-1.5";
       case "medium":
-        return "px-5 py-2.5";
+        return "px-4 py-2";
       case "large":
         return "px-6 py-3";
       default:

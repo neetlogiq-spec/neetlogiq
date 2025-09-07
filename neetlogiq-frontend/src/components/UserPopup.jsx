@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { User, LogOut, Settings, ChevronDown } from 'lucide-react';
+import { User, LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -109,23 +109,6 @@ const UserPopup = () => {
 
             {/* Menu Items */}
             <div className="py-2">
-              {/* Profile/Settings Option */}
-              <button
-                onClick={() => {
-                  setIsOpen(false);
-                  // Add profile/settings functionality here
-                  console.log('Profile/Settings clicked');
-                }}
-                className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
-                  isDarkMode 
-                    ? 'text-gray-700 hover:bg-gray-100' 
-                    : 'text-gray-700 hover:bg-gray-100'
-                }`}
-              >
-                <Settings className="w-4 h-4" />
-                <span className="text-sm font-medium">Profile Settings</span>
-              </button>
-
               {/* Logout Option */}
               <button
                 onClick={() => {

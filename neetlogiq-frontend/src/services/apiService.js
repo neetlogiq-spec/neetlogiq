@@ -128,7 +128,7 @@ class ApiService {
   }
 
   async getCoursesByCollege(collegeId) {
-    return this.apiCall(`/api/courses?college_id=${collegeId}`);
+    return this.apiCall(`/api/courses?college_id=${collegeId}&limit=1000`);
   }
 
   // Cutoffs API
