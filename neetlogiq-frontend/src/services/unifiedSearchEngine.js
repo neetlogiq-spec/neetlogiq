@@ -273,7 +273,7 @@ class UnifiedSearchEngine {
     const contentType = options.contentType || 'colleges';
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8787'}/api/ai-search?q=${encodeURIComponent(query)}&type=${contentType}`);
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://neetlogiq-backend.neetlogiq.workers.dev'}/api/ai-search?q=${encodeURIComponent(query)}&type=${contentType}`);
       if (response.ok) {
         const data = await response.json();
         return {
@@ -331,7 +331,7 @@ class UnifiedSearchEngine {
     // const contentType = options.contentType || 'colleges'; // Available for future use
     
     try {
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'http://localhost:8787'}/api/colleges/regex-search?pattern=${encodeURIComponent(query)}&limit=${options.limit || 50}`);
+      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://neetlogiq-backend.neetlogiq.workers.dev'}/api/colleges/regex-search?pattern=${encodeURIComponent(query)}&limit=${options.limit || 50}`);
       if (response.ok) {
         const data = await response.json();
         return {

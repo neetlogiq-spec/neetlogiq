@@ -179,7 +179,7 @@ const BMADStatus = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
           <div>
             <span className="font-medium text-gray-700">API Base URL:</span>
-            <span className="ml-2 text-gray-600">http://localhost:8787</span>
+            <span className="ml-2 text-gray-600">https://neetlogiq-backend.neetlogiq.workers.dev</span>
           </div>
           <div>
             <span className="font-medium text-gray-700">Integration Type:</span>

@@ -12,7 +12,7 @@ import UnifiedSearchEngine from './unifiedSearchEngine.js';
 
 class UnifiedSearchService {
   constructor() {
-    this.baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:8787';
+    this.baseUrl = process.env.REACT_APP_API_URL || 'https://neetlogiq-backend.neetlogiq.workers.dev';
     this.searchCache = new Map();
     this.cacheTimeout = 30000; // 30 seconds
     this.requestTimeout = 10000; // 10 seconds

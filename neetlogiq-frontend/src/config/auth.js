@@ -14,7 +14,7 @@ export const GOOGLE_CONFIG = {
 
 // Cloudflare Worker API configuration
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://localhost:8787',
+  BASE_URL: process.env.REACT_APP_API_URL || 'https://neetlogiq-backend.neetlogiq.workers.dev',
   ENDPOINTS: {
     AUTH: '/api/auth',
     USER: '/api/user',
