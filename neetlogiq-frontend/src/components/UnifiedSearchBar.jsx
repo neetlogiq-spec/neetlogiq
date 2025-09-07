@@ -37,7 +37,6 @@ const UnifiedSearchBar = ({
     isInitialized,
     isLoading,
     error,
-    performanceMetrics,
     getSuggestions
   } = useUnifiedSearch(collegesData, { contentType });
 
