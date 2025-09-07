@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useRef, useCallback, useEffect } from 'react';
-import { Search, X, BrainCircuit, Zap, Loader2 } from 'lucide-react';
+import { Search, X, Zap, Loader2 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { useUnifiedSearch } from '../hooks/useUnifiedSearch';
 
@@ -179,20 +179,6 @@ const UnifiedSearchBar = ({
     return <Search className="w-4 h-4 text-gray-400" />;
   };
 
-  // Get performance metrics display
-  const getPerformanceDisplay = () => {
-    if (!showPerformanceMetrics || !performanceMetrics) return null;
-    
-    return (
-      <div className="text-xs text-gray-500 mt-1">
-        <span>Avg: {performanceMetrics.averageResponseTime?.toFixed(0)}ms</span>
-        <span className="mx-2">•</span>
-        <span>Success: {(performanceMetrics.successRate * 100)?.toFixed(0)}%</span>
-        <span className="mx-2">•</span>
-        <span>Cache: {performanceMetrics.cacheHitRate || 0}</span>
-      </div>
-    );
-  };
 
   return (
     <div className={`relative ${className}`}>
