@@ -191,7 +191,7 @@ const Courses = () => {
     }
     
     loadCourses(currentFilters, nextPage, true); // Append mode with current filters
-  }, [isLoading, isLoadingMore, pagination.hasNext, pagination.page, loadCourses, selectedStream]);
+  }, [isLoading, isLoadingMore, pagination.hasNext, pagination.page, pagination.totalPages, pagination.totalItems, loadCourses, selectedStream]);
 
 
   // Update filtered courses when courses change (but not during search)
