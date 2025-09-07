@@ -13,6 +13,7 @@ import {
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
 import BMADStatus from '../components/BMADStatus';
+import SecurityTestPanel from '../components/SecurityTestPanel';
 
 const Admin = () => {
   const [isLoaded, setIsLoaded] = useState(false);
@@ -210,7 +211,7 @@ const Admin = () => {
               transition={{ duration: 0.3, delay: 0.6 }}
             >
               <div className="flex flex-wrap gap-2 mb-6">
-                {['dashboard', 'users', 'colleges', 'courses', 'data', 'settings'].map((tab) => (
+                {['dashboard', 'users', 'colleges', 'courses', 'data', 'security', 'settings'].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setActiveTab(tab)}
@@ -350,6 +351,21 @@ const Admin = () => {
                     <BarChart3 className="w-16 h-16 text-white/40 mx-auto mb-4" />
                     <h3 className="text-xl font-semibold text-white mb-2">Data Analytics</h3>
                     <p className="text-white/60">View platform statistics and performance metrics</p>
+                  </div>
+                )}
+
+                {activeTab === 'security' && (
+                  <div className="space-y-6">
+                    <div className="text-center mb-8">
+                      <Shield className="w-16 h-16 text-white/40 mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold text-white mb-2">Security Testing Panel</h3>
+                      <p className="text-white/60">Test and validate security features and input validation</p>
+                    </div>
+                    
+                    {/* Security Test Panel */}
+                    <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/20 p-6">
+                      <SecurityTestPanel />
+                    </div>
                   </div>
                 )}
 

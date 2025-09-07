@@ -124,11 +124,11 @@ class ApiService {
   }
 
   async getCourseById(id) {
-    return this.apiCall(`/courses/${id}`);
+    return this.apiCall(`/api/courses/${id}`);
   }
 
   async getCoursesByCollege(collegeId) {
-    return this.apiCall(`/courses?college_id=${collegeId}`);
+    return this.apiCall(`/api/courses?college_id=${collegeId}`);
   }
 
   // Cutoffs API

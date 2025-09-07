@@ -13,7 +13,7 @@ const Colleges = lazy(() => import('./pages/Colleges'));
 const Courses = lazy(() => import('./pages/Courses'));
 const Cutoffs = lazy(() => import('./pages/Cutoffs'));
 const AboutUs = lazy(() => import('./pages/AboutUs'));
-const Admin = lazy(() => import('./pages/Admin'));
+// const Admin = lazy(() => import('./pages/Admin')); // Temporarily disabled
 const SearchDemo = lazy(() => import('./pages/SearchDemo'));
 const LoadingDemo = lazy(() => import('./components/LoadingDemo'));
 const AuthTest = lazy(() => import('./pages/AuthTest'));
@@ -100,12 +100,12 @@ const App = () => {
                   </ProtectedRoute>
                 } />
                 
-                {/* Admin Routes - Authentication required */}
-                <Route path="/neetlogiq-admin" element={
+                {/* Admin Routes - Temporarily hidden until proper authentication is implemented */}
+                {/* <Route path="/neetlogiq-admin" element={
                   <ProtectedRoute>
                     <Admin />
                   </ProtectedRoute>
-                } />
+                } /> */}
                 
                 {/* Demo/Test Routes - Authentication required */}
                 <Route path="/search-demo" element={

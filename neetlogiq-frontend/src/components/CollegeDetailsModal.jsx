@@ -22,9 +22,20 @@ const CollegeDetailsModal = ({ isOpen, onClose, college, courses = [], isLoading
   // Lock body scroll when modal is open
   useScrollLock(isOpen);
 
-  console.log('🔍 CollegeDetailsModal render:', { isOpen, college: college?.name, courses: courses?.length });
+  console.log('🔍 CollegeDetailsModal render:', { 
+    isOpen, 
+    college: college?.name, 
+    courses: courses?.length,
+    coursesArray: courses,
+    collegeId: college?.id,
+    isOpenType: typeof isOpen,
+    collegeType: typeof college
+  });
 
-  if (!isOpen || !college) return null;
+  if (!isOpen || !college) {
+    console.log('🔍 Modal not rendering because:', { isOpen, hasCollege: !!college });
+    return null;
+  }
 
   const getManagementBadgeColor = (management) => {
     switch (management?.toUpperCase()) {
@@ -65,8 +76,9 @@ const CollegeDetailsModal = ({ isOpen, onClose, college, courses = [], isLoading
   };
 
   return (
-    <AnimatePresence>
-      <motion.div
+    <AnimatePresence mode="wait">
+      {isOpen && (
+        <motion.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -83,12 +95,12 @@ const CollegeDetailsModal = ({ isOpen, onClose, college, courses = [], isLoading
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 10 }}
           transition={{ type: "spring", damping: 25, stiffness: 500, duration: 0.3 }}
+          onClick={(e) => e.stopPropagation()}
           className={`relative w-full max-w-6xl max-h-[90vh] overflow-hidden rounded-2xl shadow-2xl ${
             isDarkMode 
               ? 'bg-gray-800 border border-gray-700' 
               : 'bg-white border border-gray-200'
           }`}
-          onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
           <div className={`p-6 border-b ${
@@ -537,6 +549,7 @@ const CollegeDetailsModal = ({ isOpen, onClose, college, courses = [], isLoading
           </div>
         </motion.div>
       </motion.div>
+      )}
     </AnimatePresence>
   );
 };

@@ -1,4 +1,4 @@
-import React, { useState, memo, useEffect } from 'react';
+import React, { memo } from 'react';
 import { motion } from 'framer-motion';
 import { 
   MapPin, 
@@ -6,21 +6,14 @@ import {
   GraduationCap
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
-import CollegeDetailsModal from './CollegeDetailsModal';
 
 const ResponsiveCollegeCard = ({ 
   college, 
   index, 
   courses = [], 
-  onFetchCourses 
+  onOpenModal
 }) => {
   const { isDarkMode } = useTheme();
-  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
-
-  // Debug modal state changes
-  useEffect(() => {
-    console.log('🔍 Modal state changed:', { isDetailsModalOpen, college: college?.name });
-  }, [isDetailsModalOpen, college?.name]);
 
 
   const getCollegeTypeColor = (type) => {
@@ -109,10 +102,8 @@ const ResponsiveCollegeCard = ({
               e.preventDefault();
               e.stopPropagation();
               console.log('🔍 Button clicked, opening modal for college:', college.name);
-              setIsDetailsModalOpen(true);
-              if (onFetchCourses) {
-                console.log('🔍 Fetching courses for college:', college.id);
-                onFetchCourses();
+              if (onOpenModal) {
+                onOpenModal(college);
               }
             }}
             className="w-full bg-gradient-to-r from-blue-500 to-purple-600 text-white px-4 py-2 rounded-lg text-center font-medium hover:from-blue-600 hover:to-purple-700 transition-all duration-200 flex items-center justify-center"
@@ -124,14 +115,6 @@ const ResponsiveCollegeCard = ({
       </div>
       </motion.div>
 
-      {/* College Details Modal */}
-      <CollegeDetailsModal
-        isOpen={isDetailsModalOpen}
-        onClose={() => setIsDetailsModalOpen(false)}
-        college={college}
-        courses={courses}
-        isLoading={false}
-      />
     </>
   );
 };

@@ -3,17 +3,19 @@
 // Template: react-page
 // Date: 2025-08-28
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion } from 'framer-motion';
 import { Building2, GraduationCap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import IntelligentFilters from '../components/IntelligentFilters';
 import ResponsiveHeader from '../components/ResponsiveHeader';
 import CollegeCard from '../components/ResponsiveCollegeCard';
+import CollegeDetailsModal from '../components/CollegeDetailsModal';
 import UnifiedSearchBar from '../components/UnifiedSearchBar';
 import BlurredOverlay from '../components/BlurredOverlay';
 import apiService from '../services/apiService';
 import cacheService from '../services/cacheService';
+import securityService from '../services/securityService';
 import { useAdvancedSearch } from '../hooks/useAdvancedSearch';
 import { useUnifiedSearch } from '../hooks/useUnifiedSearch';
 import BeautifulLoader from '../components/BeautifulLoader';
@@ -33,7 +35,6 @@ const Colleges = () => {
   const { isDarkMode } = useTheme();
   const [isAICommandPaletteOpen, setIsAICommandPaletteOpen] = useState(false);
 
-  const [collegeCourses, setCollegeCourses] = useState({});
 
 
   
@@ -44,6 +45,16 @@ const Colleges = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [currentSearchQuery, setCurrentSearchQuery] = useState('');
   // const [isSearching, setIsSearching] = useState(false); // Removed unused state
+
+  // Modal state management
+  const [selectedCollege, setSelectedCollege] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedCollegeCourses, setSelectedCollegeCourses] = useState([]);
+
+  // Debug courses state changes
+  useEffect(() => {
+    console.log('🔍 selectedCollegeCourses changed:', selectedCollegeCourses.length, 'courses');
+  }, [selectedCollegeCourses]);
 
   const [pagination, setPagination] = useState({
     page: 1,
@@ -63,11 +74,61 @@ const Colleges = () => {
   useUnifiedSearch(allCollegesForSearch, { contentType: 'colleges' });
 
 
+  // Handle opening college details modal
+  const handleOpenModal = useCallback(async (college) => {
+    console.log('🔍 Opening modal for college:', college.name);
+    setSelectedCollege(college);
+    
+    // Fetch courses for the selected college first
+    try {
+      console.log('🔍 Fetching courses for college ID:', college.id);
+      console.log('🔍 API URL will be:', `${process.env.REACT_APP_API_URL || 'https://neetlogiq-backend.neetlogiq.workers.dev'}/api/courses?college_id=${college.id}`);
+      
+      const response = await apiService.getCoursesByCollege(college.id);
+      console.log('📚 Full API response for college', college.id, ':', response);
+      
+      if (response && response.data && Array.isArray(response.data)) {
+        console.log('📚 Sample course data:', response.data[0]);
+        setSelectedCollegeCourses(response.data);
+        console.log('✅ Found', response.data.length, 'courses for college', college.id, ':', response.data);
+      } else {
+        console.log('⚠️ No courses data received for college', college.id, 'Response structure:', response);
+        setSelectedCollegeCourses([]);
+      }
+    } catch (error) {
+      console.error('❌ Failed to fetch courses for college', college.id, ':', error);
+      setSelectedCollegeCourses([]);
+    }
+    
+    // Open modal after courses are fetched
+    setIsModalOpen(true);
+  }, []);
+
+  // Handle closing college details modal
+  const handleCloseModal = useCallback(() => {
+    console.log('🔍 Closing modal');
+    setIsModalOpen(false);
+    setSelectedCollege(null);
+    setSelectedCollegeCourses([]);
+  }, []);
+
   // Load colleges from backend with chunked loading
   const loadColleges = useCallback(async (newFilters = {}, newPage = 1, isAppend = false) => {
     // Don't load default colleges if there's an active search
     if (currentSearchQuery && currentSearchQuery.trim() !== '') {
       console.log('🔍 Skipping loadColleges - active search in progress');
+      return;
+    }
+    
+    // Rate limiting check
+    const rateLimit = securityService.checkRateLimit('colleges_api', 20, 60000); // 20 requests per minute
+    if (!rateLimit.allowed) {
+      console.warn('🚨 Rate limit exceeded for colleges API');
+      securityService.logSecurityEvent('RATE_LIMIT_EXCEEDED', {
+        endpoint: 'colleges_api',
+        remaining: rateLimit.remaining,
+        resetTime: rateLimit.resetTime
+      });
       return;
     }
     
@@ -95,17 +156,30 @@ const Colleges = () => {
       
       // Append or replace data based on isAppend flag
       if (isAppend && newPage > 1) {
-        setColleges(prevColleges => [...prevColleges, ...(response.data || [])]);
+        setColleges(prevColleges => {
+          // Filter out duplicates based on college.id
+          const existingIds = new Set(prevColleges.map(college => college.id));
+          const newColleges = (response.data || []).filter(college => !existingIds.has(college.id));
+          console.log('📍 Adding new colleges:', newColleges.length, 'Total will be:', prevColleges.length + newColleges.length);
+          return [...prevColleges, ...newColleges];
+        });
+        
+        // Update pagination to reflect the new page
+        setPagination(prevPagination => ({
+          ...prevPagination,
+          page: newPage,
+          hasNext: response.pagination?.hasNext || false,
+          totalItems: response.pagination?.totalItems || prevPagination.totalItems
+        }));
       } else {
         setColleges(response.data || []);
+        setPagination(response.pagination || {
+          page: newPage,
+          limit: chunkSize,
+          totalPages: 1,
+          totalItems: 0
+        });
       }
-      
-      setPagination(response.pagination || {
-        page: newPage,
-        limit: chunkSize,
-        totalPages: 1,
-        totalItems: 0
-      });
       
       // Note: API response doesn't include filters, they are managed separately
     } catch (error) {
@@ -298,100 +372,108 @@ const Colleges = () => {
   const loadMoreColleges = useCallback(() => {
     if (isLoading || !pagination.hasNext) return;
     
-    const nextPage = Math.floor(colleges.length / 12) + 1;
+    // Save scroll position before loading
+    const currentScrollY = window.scrollY;
+    console.log('🔄 Saving scroll position before load:', currentScrollY);
+    scrollPositionRef.current = currentScrollY;
+    
+    const nextPage = pagination.page + 1;
     console.log('🔄 Loading more colleges, page:', nextPage);
     loadColleges(appliedFilters, nextPage, true); // Append mode
-  }, [isLoading, pagination.hasNext, colleges.length, appliedFilters, loadColleges]);
+  }, [isLoading, pagination.hasNext, pagination.page, appliedFilters, loadColleges]);
+
+  // Debounced scroll handler to prevent multiple rapid triggers
+  const [isScrollDebounced, setIsScrollDebounced] = useState(false);
+  
+  // Ref to track scroll position during data loading
+  const scrollPositionRef = useRef(0);
 
   // Infinite scroll handler - optimized for search-focused usage
   const handleScroll = useCallback(() => {
-    if (isLoading || !pagination.hasNext) return;
+    if (isLoading || !pagination.hasNext || isScrollDebounced) {
+      console.log('🔄 Scroll blocked:', { isLoading, hasNext: pagination.hasNext, isScrollDebounced });
+      return;
+    }
     
     const { scrollTop, scrollHeight, clientHeight } = document.documentElement;
     const scrollPercentage = (scrollTop + clientHeight) / scrollHeight;
     
-    // Load more when user scrolls to 70% of the page (more aggressive loading)
-    if (scrollPercentage > 0.7) {
+    console.log('🔄 Scroll check:', { 
+      scrollPercentage: Math.round(scrollPercentage * 100), 
+      currentPage: pagination.page,
+      hasNext: pagination.hasNext,
+      collegesCount: colleges.length
+    });
+    
+    // Load more when user scrolls to 80% of the page (less aggressive loading)
+    if (scrollPercentage > 0.8) {
       console.log('🔄 Infinite scroll triggered, loading next chunk...');
+      setIsScrollDebounced(true);
       loadMoreColleges();
+      
+      // Reset debounce after 3 seconds
+      setTimeout(() => {
+        setIsScrollDebounced(false);
+      }, 3000);
     }
-  }, [isLoading, pagination.hasNext, loadMoreColleges]);
+  }, [isLoading, pagination.hasNext, pagination.page, isScrollDebounced, loadMoreColleges, colleges.length]);
+
+  // Throttled scroll handler to prevent excessive processing
+  const throttledHandleScroll = useCallback(() => {
+    let timeoutId;
+    return () => {
+      if (timeoutId) return;
+      timeoutId = setTimeout(() => {
+        handleScroll();
+        timeoutId = null;
+      }, 200); // Increased throttle to 200ms for better performance
+    };
+  }, [handleScroll]);
 
   // Add scroll listener for infinite scroll
   useEffect(() => {
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, [handleScroll]);
+    const throttledScroll = throttledHandleScroll();
+    window.addEventListener('scroll', throttledScroll, { passive: true });
+    return () => window.removeEventListener('scroll', throttledScroll);
+  }, [throttledHandleScroll]);
 
-
-
-
-
-
-
-
-  const fetchCollegeCourses = async (collegeId) => {
-    if (collegeCourses[collegeId]) return; // Already fetched
-    
-    try {
-      console.log(`🔍 Fetching courses for college ID: ${collegeId}`);
+  // Restore scroll position after colleges update (for infinite scroll)
+  useEffect(() => {
+    if (scrollPositionRef.current > 0) {
+      console.log('📍 Restoring scroll position:', scrollPositionRef.current);
       
-      // Use the specific college courses endpoint with higher limit
-      const response = await fetch(`${process.env.REACT_APP_API_URL || 'https://neetlogiq-backend.neetlogiq.workers.dev'}/api/courses?college_id=${collegeId}&limit=100`);
+      let attempts = 0;
+      const maxAttempts = 10;
       
-      if (response.ok) {
-        const data = await response.json();
-        console.log(`📚 Courses data for college ${collegeId}:`, data);
-        console.log(`📚 Sample course data:`, data.data?.[0]);
+      // Wait for DOM to be fully updated with new cards
+      const restoreScroll = () => {
+        attempts++;
+        const currentScrollHeight = document.documentElement.scrollHeight;
+        console.log('📍 Attempt', attempts, 'Current scroll height:', currentScrollHeight, 'Target:', scrollPositionRef.current);
         
-        // The API returns { data: [...], pagination: {...} }
-        const courses = data.data || [];
-        
-        if (courses && courses.length > 0) {
-          // Transform the courses data to match expected format
-          // Note: Local backend returns college data as courses, so we need to handle both cases
-          const transformedCourses = courses.map(course => ({
-            id: course.id || course.college_id || course.course_name,
-            name: course.course_name || course.name || course.college_name,
-            specialization: course.branch || course.specialization || course.college_type,
-            level: course.level || course.college_type,
-            course_type: course.stream || course.course_type || course.college_type,
-            duration: course.duration || 'N/A',
-            total_seats: course.total_seats || 0,
-            college_name: course.college_name || course.name
-          }));
-          
-          console.log(`✅ Found ${transformedCourses.length} courses for college ${collegeId}:`, transformedCourses);
-          
-          setCollegeCourses(prev => ({
-            ...prev,
-            [collegeId]: transformedCourses
-          }));
+        // If the scroll height has increased significantly, it means new cards are rendered
+        if (currentScrollHeight > scrollPositionRef.current + 100 || attempts >= maxAttempts) {
+          console.log('📍 Actually scrolling to:', scrollPositionRef.current);
+          window.scrollTo(0, scrollPositionRef.current);
+          scrollPositionRef.current = 0; // Reset after restoration
         } else {
-          console.log(`⚠️ No courses found for college ${collegeId}`);
-          setCollegeCourses(prev => ({
-            ...prev,
-            [collegeId]: []
-          }));
+          // If not enough height yet, wait a bit more
+          setTimeout(restoreScroll, 100);
         }
-      } else {
-        console.error(`❌ Failed to fetch courses for college ${collegeId}:`, response.status, response.statusText);
-        // Set empty array to avoid repeated failed requests
-        setCollegeCourses(prev => ({
-          ...prev,
-          [collegeId]: []
-        }));
-      }
-    } catch (error) {
-      console.error(`❌ Error fetching courses for college ${collegeId}:`, error);
+      };
       
-      // Set empty array instead of mock data to show real API status
-      setCollegeCourses(prev => ({
-        ...prev,
-        [collegeId]: []
-      }));
+      // Start the restoration process
+      setTimeout(restoreScroll, 150);
     }
-  };
+  }, [colleges]);
+
+
+
+
+
+
+
+
 
   return (
     <BlurredOverlay>
@@ -511,6 +593,20 @@ const Colleges = () => {
                   placeholder="Search medical colleges with unified AI intelligence..."
                   onSearchResults={async (searchResult) => {
                     console.log("🔍 Unified search results received:", searchResult);
+                    
+                    // Security validation
+                    if (searchResult && searchResult.query) {
+                      const validation = securityService.validateSearchInput(searchResult.query);
+                      if (!validation.isValid) {
+                        console.warn('🚨 Invalid search query blocked:', validation.error);
+                        securityService.logSecurityEvent('INVALID_SEARCH_QUERY', {
+                          query: searchResult.query,
+                          error: validation.error
+                        });
+                        return;
+                      }
+                    }
+                    
                     if (searchResult && searchResult.results && searchResult.results.length > 0) {
                       console.log("🔍 Setting colleges to unified search results:", searchResult.results.length, "colleges");
                       setColleges(searchResult.results);
@@ -637,7 +733,7 @@ const Colleges = () => {
               ) : colleges.length > 0 ? (
                 colleges.map((college, index) => (
                   <motion.div
-                    key={college.id}
+                    key={`college-${college.id}-${index}`}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
                     transition={{ delay: 0.45 + index * 0.05, duration: 0.2 }}
@@ -645,8 +741,8 @@ const Colleges = () => {
                     <CollegeCard 
                       college={college} 
                       index={index}
-                      courses={collegeCourses[college.id] || []}
-                      onFetchCourses={() => fetchCollegeCourses(college.id)}
+                      courses={[]}
+                      onOpenModal={handleOpenModal}
                     />
                   </motion.div>
                 ))
@@ -749,6 +845,17 @@ const Colleges = () => {
           onClose={() => setIsAICommandPaletteOpen(false)}
         />
     </div>
+
+    {/* College Details Modal */}
+    <CollegeDetailsModal
+      isOpen={isModalOpen}
+      onClose={handleCloseModal}
+      college={selectedCollege}
+      courses={selectedCollegeCourses}
+      isLoading={false}
+    />
+
+    {/* Security Test Panel */}
     </BlurredOverlay>
   );
 };

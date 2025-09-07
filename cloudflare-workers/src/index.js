@@ -2,6 +2,7 @@
 import { Router } from 'itty-router';
 import BMADIntegration from './bmad-integration.js';
 import TypesenseIntegration from './typesense-integration.js';
+import securityMiddleware from './securityMiddleware.js';
 
 // Initialize router
 const router = Router();
@@ -22,11 +23,18 @@ let vectorizeServicesAvailable = false;
 const EMBEDDING_MODEL = '@cf/baai/bge-base-en-v1.5';
 const LLM_MODEL = '@cf/qwen/qwen1.5-0.5b-chat'; // A fast model for generating insights
 
-// CORS headers
+// CORS headers with enhanced security
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Indexer-Auth',
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none';"
 };
 
 // Comprehensive city aliases system (from original implementation)
@@ -693,8 +701,48 @@ const advancedSearchService = new AdvancedSearchService();
 // Enhanced search endpoint with FTS5-like optimization
 router.get('/api/search', async (request, env) => {
   try {
+    // Security validation
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    const rateLimit = securityMiddleware.checkRateLimit(ip);
+    if (!rateLimit.allowed) {
+      return new Response(JSON.stringify({ 
+        error: 'Rate limit exceeded',
+        message: 'Too many requests. Please try again later.'
+      }), { 
+        status: 429, 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json',
+          'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
+        } 
+      });
+    }
+
     const url = new URL(request.url);
     const query = url.searchParams.get('q');
+    
+    // Validate search query
+    if (query) {
+      const validation = securityMiddleware.validateInput(query);
+      if (!validation.isValid) {
+        securityMiddleware.logSecurityEvent('INVALID_SEARCH_QUERY', {
+          query,
+          error: validation.error,
+          ip
+        }, request);
+        
+        return new Response(JSON.stringify({ 
+          error: 'Invalid search query',
+          message: validation.error
+        }), { 
+          status: 400, 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        });
+      }
+    }
     const type = url.searchParams.get('type') || 'all';
     const limit = parseInt(url.searchParams.get('limit')) || 10;
     
@@ -838,8 +886,48 @@ router.get('/api/search', async (request, env) => {
 // Advanced search endpoint using the advanced search service
 router.get('/api/advanced-search', async (request, env) => {
   try {
+    // Security validation
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    const rateLimit = securityMiddleware.checkRateLimit(ip);
+    if (!rateLimit.allowed) {
+      return new Response(JSON.stringify({ 
+        error: 'Rate limit exceeded',
+        message: 'Too many requests. Please try again later.'
+      }), { 
+        status: 429, 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json',
+          'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
+        } 
+      });
+    }
+
     const url = new URL(request.url);
     const query = url.searchParams.get('q');
+    
+    // Validate search query
+    if (query) {
+      const validation = securityMiddleware.validateInput(query);
+      if (!validation.isValid) {
+        securityMiddleware.logSecurityEvent('INVALID_ADVANCED_SEARCH_QUERY', {
+          query,
+          error: validation.error,
+          ip
+        }, request);
+        
+        return new Response(JSON.stringify({ 
+          error: 'Invalid search query',
+          message: validation.error
+        }), { 
+          status: 400, 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        });
+      }
+    }
     const type = url.searchParams.get('type') || 'all';
     const limit = parseInt(url.searchParams.get('limit')) || 50;
     const threshold = parseFloat(url.searchParams.get('threshold')) || 0.3;
@@ -2008,8 +2096,48 @@ function createInsightPrompt(query, matches) {
 // Colleges endpoint
 router.get('/api/colleges', async (request, env) => {
   try {
+    // Security validation
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    const rateLimit = securityMiddleware.checkRateLimit(ip);
+    if (!rateLimit.allowed) {
+      return new Response(JSON.stringify({ 
+        error: 'Rate limit exceeded',
+        message: 'Too many requests. Please try again later.'
+      }), { 
+        status: 429, 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json',
+          'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
+        } 
+      });
+    }
+
     const url = new URL(request.url);
     const search = url.searchParams.get('search');
+    
+    // Validate search parameter
+    if (search) {
+      const validation = securityMiddleware.validateInput(search);
+      if (!validation.isValid) {
+        securityMiddleware.logSecurityEvent('INVALID_COLLEGES_SEARCH', {
+          search,
+          error: validation.error,
+          ip
+        }, request);
+        
+        return new Response(JSON.stringify({ 
+          error: 'Invalid search parameter',
+          message: validation.error
+        }), { 
+          status: 400, 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        });
+      }
+    }
     const state = url.searchParams.get('state');
     const collegeType = url.searchParams.get('college_type');
     const managementType = url.searchParams.get('management_type');
@@ -2153,8 +2281,48 @@ router.get('/api/colleges', async (request, env) => {
 // Courses endpoint - Original design with colleges arrays
 router.get('/api/courses', async (request, env) => {
   try {
+    // Security validation
+    const ip = request.headers.get('CF-Connecting-IP') || 'unknown';
+    const rateLimit = securityMiddleware.checkRateLimit(ip);
+    if (!rateLimit.allowed) {
+      return new Response(JSON.stringify({ 
+        error: 'Rate limit exceeded',
+        message: 'Too many requests. Please try again later.'
+      }), { 
+        status: 429, 
+        headers: { 
+          ...corsHeaders, 
+          'Content-Type': 'application/json',
+          'Retry-After': Math.ceil((rateLimit.resetTime - Date.now()) / 1000).toString()
+        } 
+      });
+    }
+
     const url = new URL(request.url);
     const collegeId = url.searchParams.get('college_id');
+    
+    // Validate college_id parameter
+    if (collegeId) {
+      const validation = securityMiddleware.validateInput(collegeId);
+      if (!validation.isValid) {
+        securityMiddleware.logSecurityEvent('INVALID_COLLEGE_ID', {
+          collegeId,
+          error: validation.error,
+          ip
+        }, request);
+        
+        return new Response(JSON.stringify({ 
+          error: 'Invalid college ID',
+          message: validation.error
+        }), { 
+          status: 400, 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json' 
+          } 
+        });
+      }
+    }
     const stream = url.searchParams.get('stream');
     const search = url.searchParams.get('search');
     const page = parseInt(url.searchParams.get('page')) || 1;
