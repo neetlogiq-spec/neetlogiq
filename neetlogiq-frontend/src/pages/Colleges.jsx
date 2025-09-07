@@ -50,6 +50,7 @@ const Colleges = () => {
   const [selectedCollege, setSelectedCollege] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedCollegeCourses, setSelectedCollegeCourses] = useState([]);
+  const [isModalLoading, setIsModalLoading] = useState(false);
 
   // Debug courses state changes
   useEffect(() => {
@@ -68,18 +69,22 @@ const Colleges = () => {
   
   
   // Advanced search hook - initialized with ALL colleges, not just current page
-  useAdvancedSearch(allCollegesForSearch);
+  // Only initialize if we have colleges data and not in modal
+  useAdvancedSearch(allCollegesForSearch.length > 0 ? allCollegesForSearch : []);
 
   // Unified search integration
-  useUnifiedSearch(allCollegesForSearch, { contentType: 'colleges' });
+  // Only initialize if we have colleges data and not in modal
+  useUnifiedSearch(allCollegesForSearch.length > 0 ? allCollegesForSearch : [], { contentType: 'colleges' });
 
 
   // Handle opening college details modal
   const handleOpenModal = useCallback(async (college) => {
     console.log('🔍 Opening modal for college:', college.name);
     setSelectedCollege(college);
+    setIsModalLoading(true);
+    setIsModalOpen(true);
     
-    // Fetch courses for the selected college first
+    // Fetch courses for the selected college
     try {
       console.log('🔍 Fetching courses for college ID:', college.id);
       console.log('🔍 API URL will be:', `${process.env.REACT_APP_API_URL || 'https://neetlogiq-backend.neetlogiq.workers.dev'}/api/courses?college_id=${college.id}`);
@@ -98,10 +103,9 @@ const Colleges = () => {
     } catch (error) {
       console.error('❌ Failed to fetch courses for college', college.id, ':', error);
       setSelectedCollegeCourses([]);
+    } finally {
+      setIsModalLoading(false);
     }
-    
-    // Open modal after courses are fetched
-    setIsModalOpen(true);
   }, []);
 
   // Handle closing college details modal
@@ -110,6 +114,10 @@ const Colleges = () => {
     setIsModalOpen(false);
     setSelectedCollege(null);
     setSelectedCollegeCourses([]);
+    setIsModalLoading(false);
+    
+    // Reset scroll position ref to prevent interference with modal close
+    scrollPositionRef.current = 0;
   }, []);
 
   // Load colleges from backend with chunked loading
@@ -439,7 +447,8 @@ const Colleges = () => {
 
   // Restore scroll position after colleges update (for infinite scroll)
   useEffect(() => {
-    if (scrollPositionRef.current > 0) {
+    // Don't restore scroll if modal is open
+    if (scrollPositionRef.current > 0 && !isModalOpen) {
       console.log('📍 Restoring scroll position:', scrollPositionRef.current);
       
       let attempts = 0;
@@ -465,7 +474,7 @@ const Colleges = () => {
       // Start the restoration process
       setTimeout(restoreScroll, 150);
     }
-  }, [colleges]);
+  }, [colleges, isModalOpen]);
 
 
 
@@ -852,7 +861,7 @@ const Colleges = () => {
       onClose={handleCloseModal}
       college={selectedCollege}
       courses={selectedCollegeCourses}
-      isLoading={false}
+      isLoading={isModalLoading}
     />
 
     {/* Security Test Panel */}
