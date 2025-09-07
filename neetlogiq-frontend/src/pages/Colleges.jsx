@@ -70,11 +70,11 @@ const Colleges = () => {
   
   // Advanced search hook - initialized with ALL colleges, not just current page
   // Only initialize if we have colleges data and not in modal
-  useAdvancedSearch(allCollegesForSearch.length > 0 ? allCollegesForSearch : []);
+  useAdvancedSearch(allCollegesForSearch.length > 0 && !isModalOpen ? allCollegesForSearch : []);
 
   // Unified search integration
   // Only initialize if we have colleges data and not in modal
-  useUnifiedSearch(allCollegesForSearch.length > 0 ? allCollegesForSearch : [], { contentType: 'colleges' });
+  useUnifiedSearch(allCollegesForSearch.length > 0 && !isModalOpen ? allCollegesForSearch : [], { contentType: 'colleges' });
 
 
   // Handle opening college details modal
@@ -116,8 +116,8 @@ const Colleges = () => {
     setSelectedCollegeCourses([]);
     setIsModalLoading(false);
     
-    // Reset scroll position ref to prevent interference with modal close
-    scrollPositionRef.current = 0;
+    // Don't reset scroll position ref - let the user stay where they were
+    // scrollPositionRef.current = 0;
   }, []);
 
   // Load colleges from backend with chunked loading
@@ -385,10 +385,16 @@ const Colleges = () => {
     console.log('🔄 Saving scroll position before load:', currentScrollY);
     scrollPositionRef.current = currentScrollY;
     
+    // Don't proceed if modal is open
+    if (isModalOpen) {
+      console.log('🔄 Infinite scroll blocked: modal is open');
+      return;
+    }
+    
     const nextPage = pagination.page + 1;
     console.log('🔄 Loading more colleges, page:', nextPage);
     loadColleges(appliedFilters, nextPage, true); // Append mode
-  }, [isLoading, pagination.hasNext, pagination.page, appliedFilters, loadColleges]);
+  }, [isLoading, pagination.hasNext, pagination.page, appliedFilters, loadColleges, isModalOpen]);
 
   // Debounced scroll handler to prevent multiple rapid triggers
   const [isScrollDebounced, setIsScrollDebounced] = useState(false);
@@ -398,8 +404,8 @@ const Colleges = () => {
 
   // Infinite scroll handler - optimized for search-focused usage
   const handleScroll = useCallback(() => {
-    if (isLoading || !pagination.hasNext || isScrollDebounced) {
-      console.log('🔄 Scroll blocked:', { isLoading, hasNext: pagination.hasNext, isScrollDebounced });
+    if (isLoading || !pagination.hasNext || isScrollDebounced || isModalOpen) {
+      console.log('🔄 Scroll blocked:', { isLoading, hasNext: pagination.hasNext, isScrollDebounced, isModalOpen });
       return;
     }
     
@@ -424,7 +430,7 @@ const Colleges = () => {
         setIsScrollDebounced(false);
       }, 3000);
     }
-  }, [isLoading, pagination.hasNext, pagination.page, isScrollDebounced, loadMoreColleges, colleges.length]);
+  }, [isLoading, pagination.hasNext, pagination.page, isScrollDebounced, loadMoreColleges, colleges.length, isModalOpen]);
 
   // Throttled scroll handler to prevent excessive processing
   const throttledHandleScroll = useCallback(() => {
@@ -443,12 +449,12 @@ const Colleges = () => {
     const throttledScroll = throttledHandleScroll();
     window.addEventListener('scroll', throttledScroll, { passive: true });
     return () => window.removeEventListener('scroll', throttledScroll);
-  }, [throttledHandleScroll]);
+  }, [throttledHandleScroll, isModalOpen]);
 
   // Restore scroll position after colleges update (for infinite scroll)
   useEffect(() => {
-    // Don't restore scroll if modal is open
-    if (scrollPositionRef.current > 0 && !isModalOpen) {
+    // Only restore scroll if we have a saved position and modal is not open
+    if (scrollPositionRef.current > 0 && !isModalOpen && !isLoading) {
       console.log('📍 Restoring scroll position:', scrollPositionRef.current);
       
       let attempts = 0;
@@ -474,7 +480,14 @@ const Colleges = () => {
       // Start the restoration process
       setTimeout(restoreScroll, 150);
     }
-  }, [colleges, isModalOpen]);
+  }, [colleges, isModalOpen, isLoading]);
+
+  // Clear scroll position when modal opens to prevent interference
+  useEffect(() => {
+    if (isModalOpen) {
+      scrollPositionRef.current = 0;
+    }
+  }, [isModalOpen]);
 
 
 
