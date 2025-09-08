@@ -2188,7 +2188,11 @@ router.get('/api/colleges', async (request, env) => {
     params.push(state);
   }
 
-    if (collegeType) {
+    // Handle college_type filter - stream takes precedence over collegeType
+    if (stream) {
+      conditions.push('college_type = ?');
+      params.push(stream);
+    } else if (collegeType) {
       conditions.push('college_type = ?');
       params.push(collegeType);
     }
@@ -2196,11 +2200,6 @@ router.get('/api/colleges', async (request, env) => {
     if (managementType) {
       conditions.push('management_type = ?');
       params.push(managementType);
-    }
-    
-    if (stream) {
-      conditions.push('college_type = ?');
-      params.push(stream);
     }
     
     // Build WHERE clause
@@ -2330,6 +2329,7 @@ router.get('/api/courses', async (request, env) => {
       }
     }
     const stream = url.searchParams.get('stream');
+    const branch = url.searchParams.get('branch');
     const search = url.searchParams.get('search');
     const page = parseInt(url.searchParams.get('page')) || 1;
     const limit = parseInt(url.searchParams.get('limit')) || 20;
@@ -2345,6 +2345,87 @@ router.get('/api/courses', async (request, env) => {
            if (stream && stream !== 'all') {
              whereClause += ' AND c.stream = ?';
     params.push(stream);
+  }
+
+  if (branch && branch !== 'all') {
+    // Map branch values to course patterns based on stream
+    let branchPatterns = [];
+    
+    if (stream && stream !== 'all') {
+      // If stream is specified, use stream-specific patterns
+      switch (stream) {
+        case 'MEDICAL':
+          switch (branch) {
+            case 'UG':
+              branchPatterns = ['%MBBS%'];
+              break;
+            case 'DIPLOMA':
+              branchPatterns = ['%DIPLOMA%', '%DIP%'];
+              break;
+            case 'PG':
+              branchPatterns = ['%MD%', '%MS%'];
+              break;
+            case 'SS':
+              branchPatterns = ['%DM%', '%MCH%'];
+              break;
+          }
+          break;
+        case 'DENTAL':
+          switch (branch) {
+            case 'UG':
+              branchPatterns = ['%BDS%'];
+              break;
+            case 'DIPLOMA':
+              branchPatterns = ['%DIPLOMA%', '%DIP%'];
+              break;
+            case 'PG':
+            case 'SS':
+              // Dental PG courses are specialty courses (not BDS)
+              branchPatterns = ['%SURGERY%', '%PATHOLOGY%', '%RADIOLOGY%', '%MEDICINE%', '%ENDODONTICS%', '%ORTHODONTICS%', '%PROSTHODONTICS%', '%PERIODONTICS%', '%PEDODONTICS%', '%ORAL%', '%MAXILLOFACIAL%', '%CONSERVATIVE%'];
+              break;
+          }
+          break;
+        case 'DNB':
+          // DNB courses are all PG level, so UG doesn't apply
+          switch (branch) {
+            case 'DIPLOMA':
+              branchPatterns = ['%DIPLOMA%', '%DIP%'];
+              break;
+            case 'PG':
+            case 'SS':
+              branchPatterns = ['%NBEMS%']; // DNB courses have NBEMS in their names
+              break;
+          }
+          break;
+      }
+    } else {
+      // If no stream specified, use general patterns for all streams
+      switch (branch) {
+        case 'UG':
+          branchPatterns = ['%MBBS%', '%BDS%'];
+          break;
+        case 'DIPLOMA':
+          branchPatterns = ['%DIPLOMA%', '%DIP%'];
+          break;
+        case 'PG':
+          branchPatterns = ['%MD%', '%MS%', '%MDS%', '%NBEMS%'];
+          break;
+        case 'SS':
+          branchPatterns = ['%DM%', '%MCH%', '%MDS%', '%NBEMS%'];
+          break;
+      }
+    }
+    
+    if (branchPatterns.length > 0) {
+      // Create OR conditions for all patterns
+      const patternConditions = branchPatterns.map(() => '(c.course_name LIKE ? OR c.program LIKE ?)').join(' OR ');
+      whereClause += ` AND (${patternConditions})`;
+      
+      // Add parameters for each pattern (both course_name and program)
+      branchPatterns.forEach(pattern => {
+        params.push(pattern, pattern);
+      });
+    }
   }
 
   if (search) {
@@ -2464,6 +2545,15 @@ router.get('/api/courses', async (request, env) => {
         totalItems,
         hasNext: page < totalPages,
         hasPrev: page > 1
+      },
+      filters: {
+        applied: { 
+          search, 
+          stream, 
+          branch, 
+          college_id: collegeId 
+        },
+        available: {}
       }
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
