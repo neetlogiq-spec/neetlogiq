@@ -28,6 +28,7 @@ const Courses = () => {
   const { isDarkMode } = useTheme();
 
   const [selectedStream, setSelectedStream] = useState('all');
+  const [selectedBranch, setSelectedBranch] = useState('all');
   const [courses, setCourses] = useState([]);
   const [filteredCourses, setFilteredCourses] = useState([]);
   const [colleges, setColleges] = useState([]);
@@ -184,14 +185,17 @@ const Courses = () => {
     const nextPage = pagination.page + 1;
     console.log('🔄 Loading more courses, page:', nextPage);
     
-    // Preserve current stream filter when loading more courses
+    // Preserve current filters when loading more courses
     const currentFilters = {};
     if (selectedStream && selectedStream !== 'all') {
       currentFilters.stream = selectedStream;
     }
+    if (selectedBranch && selectedBranch !== 'all') {
+      currentFilters.branch = selectedBranch;
+    }
     
     loadCourses(currentFilters, nextPage, true); // Append mode with current filters
-  }, [isLoading, isLoadingMore, pagination.hasNext, pagination.page, pagination.totalPages, pagination.totalItems, loadCourses, selectedStream]);
+  }, [isLoading, isLoadingMore, pagination.hasNext, pagination.page, pagination.totalPages, pagination.totalItems, loadCourses, selectedStream, selectedBranch]);
 
 
   // Update filtered courses when courses change (but not during search)
@@ -209,8 +213,23 @@ const Courses = () => {
 
   const handleStreamChange = (stream) => {
     setSelectedStream(stream);
-    loadCourses({ stream: stream }, 1);
+    const filters = { stream: stream === 'all' ? null : stream };
+    if (selectedBranch !== 'all') {
+      filters.branch = selectedBranch;
+    }
+    loadCourses(filters, 1);
     // Scroll to top when changing stream
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleBranchChange = (branch) => {
+    setSelectedBranch(branch);
+    const filters = { branch: branch === 'all' ? null : branch };
+    if (selectedStream !== 'all') {
+      filters.stream = selectedStream;
+    }
+    loadCourses(filters, 1);
+    // Scroll to top when changing branch
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -253,6 +272,14 @@ const Courses = () => {
     { value: 'MEDICAL', label: 'Medical' },
     { value: 'DENTAL', label: 'Dental' },
     { value: 'DNB', label: 'DNB' }
+  ];
+
+  const branches = [
+    { value: 'all', label: 'All Branches' },
+    { value: 'UG', label: 'UG (Undergraduate)' },
+    { value: 'DIPLOMA', label: 'Diploma' },
+    { value: 'PG', label: 'PG (MD/MS/MD&MS)' },
+    { value: 'SS', label: 'SS (Super Specialty)' }
   ];
 
   return (
@@ -539,46 +566,98 @@ const Courses = () => {
               />
             </motion.div>
 
-            {/* Stream Filters */}
+            {/* Stream and Branch Filters */}
             <motion.div
-              className="flex flex-wrap gap-4 justify-center mb-16"
+              className="flex flex-col gap-8 mb-16"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 15 }}
               transition={{ duration: 0.2, delay: 0.25 }}
             >
-              {streams.map((stream) => (
-                <button
-                  key={stream.value}
-                  onClick={() => handleStreamChange(stream.value)}
-                  className={`px-6 py-3 rounded-xl font-medium transition-all ${
-                    selectedStream === stream.value
-                      ? stream.value === 'MEDICAL' 
-                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
-                        : stream.value === 'DENTAL'
-                        ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg'
-                        : stream.value === 'DNB'
-                        ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg'
-                        : 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg'
-                      : stream.value === 'MEDICAL'
-                      ? isDarkMode 
-                        ? 'bg-blue-500/20 backdrop-blur-sm text-blue-200 border border-blue-400/30 hover:bg-blue-500/30 hover:text-blue-100'
-                        : 'bg-blue-100 text-blue-800 border border-blue-300 hover:bg-blue-200 hover:text-blue-900'
-                      : stream.value === 'DENTAL'
-                      ? isDarkMode 
-                        ? 'bg-green-500/20 backdrop-blur-sm text-green-200 border border-green-400/30 hover:bg-green-500/30 hover:text-green-100'
-                        : 'bg-green-100 text-green-800 border border-green-300 hover:bg-green-200 hover:text-green-900'
-                      : stream.value === 'DNB'
-                      ? isDarkMode 
-                        ? 'bg-purple-500/20 backdrop-blur-sm text-purple-200 border border-purple-400/30 hover:bg-purple-500/30 hover:text-purple-100'
-                        : 'bg-purple-100 text-purple-800 border border-purple-300 hover:bg-purple-200 hover:text-purple-900'
-                      : isDarkMode 
-                        ? 'bg-white/10 backdrop-blur-sm text-white/80 hover:bg-white/20 hover:text-white'
-                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
-                  }`}
-                >
-                  {stream.label}
-                </button>
-              ))}
+              {/* Stream Filters */}
+              <div className="text-center">
+                <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-300">Filter by Stream</h3>
+                <div className="flex flex-wrap gap-4 justify-center">
+                  {streams.map((stream) => (
+                    <button
+                      key={stream.value}
+                      onClick={() => handleStreamChange(stream.value)}
+                      className={`px-6 py-3 rounded-xl font-medium transition-all ${
+                        selectedStream === stream.value
+                          ? stream.value === 'MEDICAL' 
+                            ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white shadow-lg'
+                            : stream.value === 'DENTAL'
+                            ? 'bg-gradient-to-r from-green-500 to-green-600 text-white shadow-lg'
+                            : stream.value === 'DNB'
+                            ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white shadow-lg'
+                            : 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg'
+                          : stream.value === 'MEDICAL'
+                          ? isDarkMode 
+                            ? 'bg-blue-500/20 backdrop-blur-sm text-blue-200 border border-blue-400/30 hover:bg-blue-500/30 hover:text-blue-100'
+                            : 'bg-blue-100 text-blue-800 border border-blue-300 hover:bg-blue-200 hover:text-blue-900'
+                          : stream.value === 'DENTAL'
+                          ? isDarkMode 
+                            ? 'bg-green-500/20 backdrop-blur-sm text-green-200 border border-green-400/30 hover:bg-green-500/30 hover:text-green-100'
+                            : 'bg-green-100 text-green-800 border border-green-300 hover:bg-green-200 hover:text-green-900'
+                          : stream.value === 'DNB'
+                          ? isDarkMode 
+                            ? 'bg-purple-500/20 backdrop-blur-sm text-purple-200 border border-purple-400/30 hover:bg-purple-500/30 hover:text-purple-100'
+                            : 'bg-purple-100 text-purple-800 border border-purple-300 hover:bg-purple-200 hover:text-purple-900'
+                          : isDarkMode 
+                            ? 'bg-white/10 backdrop-blur-sm text-white/80 hover:bg-white/20 hover:text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
+                      }`}
+                    >
+                      {stream.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Branch Filters */}
+              <div className="text-center">
+                <h3 className="text-lg font-semibold mb-4 text-gray-700 dark:text-gray-300">Filter by Branch</h3>
+                <div className="flex flex-wrap gap-4 justify-center">
+                  {branches.map((branch) => (
+                    <button
+                      key={branch.value}
+                      onClick={() => handleBranchChange(branch.value)}
+                      className={`px-6 py-3 rounded-xl font-medium transition-all ${
+                        selectedBranch === branch.value
+                          ? branch.value === 'UG' 
+                            ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg'
+                            : branch.value === 'DIPLOMA'
+                            ? 'bg-gradient-to-r from-teal-500 to-teal-600 text-white shadow-lg'
+                            : branch.value === 'PG'
+                            ? 'bg-gradient-to-r from-indigo-500 to-indigo-600 text-white shadow-lg'
+                            : branch.value === 'SS'
+                            ? 'bg-gradient-to-r from-pink-500 to-pink-600 text-white shadow-lg'
+                            : 'bg-gradient-to-r from-primary-500 to-secondary-500 text-white shadow-lg'
+                          : branch.value === 'UG'
+                          ? isDarkMode 
+                            ? 'bg-orange-500/20 backdrop-blur-sm text-orange-200 border border-orange-400/30 hover:bg-orange-500/30 hover:text-orange-100'
+                            : 'bg-orange-100 text-orange-800 border border-orange-300 hover:bg-orange-200 hover:text-orange-900'
+                          : branch.value === 'DIPLOMA'
+                          ? isDarkMode 
+                            ? 'bg-teal-500/20 backdrop-blur-sm text-teal-200 border border-teal-400/30 hover:bg-teal-500/30 hover:text-teal-100'
+                            : 'bg-teal-100 text-teal-800 border border-teal-300 hover:bg-teal-200 hover:text-teal-900'
+                          : branch.value === 'PG'
+                          ? isDarkMode 
+                            ? 'bg-indigo-500/20 backdrop-blur-sm text-indigo-200 border border-indigo-400/30 hover:bg-indigo-500/30 hover:text-indigo-100'
+                            : 'bg-indigo-100 text-indigo-800 border border-indigo-300 hover:bg-indigo-200 hover:text-indigo-900'
+                          : branch.value === 'SS'
+                          ? isDarkMode 
+                            ? 'bg-pink-500/20 backdrop-blur-sm text-pink-200 border border-pink-400/30 hover:bg-pink-500/30 hover:text-pink-100'
+                            : 'bg-pink-100 text-pink-800 border border-pink-300 hover:bg-pink-200 hover:text-pink-900'
+                          : isDarkMode 
+                            ? 'bg-white/10 backdrop-blur-sm text-white/80 hover:bg-white/20 hover:text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 hover:text-gray-900'
+                      }`}
+                    >
+                      {branch.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </motion.div>
 
             {/* Search Status */}
