@@ -5,6 +5,7 @@ import uFuzzy from '@leeoniya/ufuzzy';
 import fuzzysort from 'fuzzysort';
 import * as tf from '@tensorflow/tfjs';
 import apiService from './apiService';
+import cacheService from './cacheService';
 
 class AdvancedSearchService {
   constructor() {
@@ -22,7 +23,7 @@ class AdvancedSearchService {
     this.retryDelay = 1000;
   }
 
-  // Initialize all search services
+  // Initialize all search services with caching
   async initialize(collegesData) {
     try {
       console.log('🚀 Initializing Advanced Search Service...');
@@ -34,6 +35,21 @@ class AdvancedSearchService {
       }
 
       console.log(`📊 Initializing with ${this.collegesData.length} colleges...`);
+      
+      // Check if search index is cached
+      const cacheKey = `searchIndex_${this.collegesData.length}_${this.getDataHash()}`;
+      const cachedIndex = cacheService.get('searchIndex', { key: cacheKey });
+      
+      if (cachedIndex && cachedIndex.data) {
+        console.log('🎯 Loading search index from cache...');
+        await this.loadFromCache(cachedIndex.data);
+        this.isInitialized = true;
+        this.initializationProgress = 100;
+        console.log('✅ Search index loaded from cache successfully!');
+        return { success: true, message: 'Search index loaded from cache' };
+      }
+      
+      console.log('🔨 Building new search index...');
       
       // Initialize simple search index
       await this.initializeSimpleIndex();
@@ -68,6 +84,12 @@ class AdvancedSearchService {
       this.initializationProgress = 100;
       
       this.isInitialized = true;
+      
+      // Cache the search index
+      const indexData = this.serializeForCache();
+      cacheService.set('searchIndex', indexData, { key: cacheKey });
+      console.log('💾 Search index cached successfully!');
+      
       console.log('✅ Advanced Search Service initialized successfully!');
       
       return { success: true, message: 'Advanced Search Service initialized successfully' };
@@ -75,6 +97,59 @@ class AdvancedSearchService {
     } catch (error) {
       console.error('❌ Failed to initialize Advanced Search Service:', error);
       return { success: false, error: error.message };
+    }
+  }
+
+  // Generate hash for data to detect changes
+  getDataHash() {
+    const dataString = JSON.stringify(this.collegesData.map(c => ({ id: c.id, name: c.name })));
+    let hash = 0;
+    for (let i = 0; i < dataString.length; i++) {
+      const char = dataString.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash).toString(36);
+  }
+
+  // Serialize search index for caching
+  serializeForCache() {
+    return {
+      simpleIndex: this.simpleIndex,
+      fuseIndex: this.fuseIndex ? this.fuseIndex.toJSON() : null,
+      flexSearchIndex: this.flexSearchIndex ? this.flexSearchIndex.export() : null,
+      uFuzzyIndex: this.uFuzzyIndex,
+      fuzzysortIndex: this.fuzzysortIndex,
+      aliasesCache: Array.from(this.aliasesCache.entries()),
+      collegesData: this.collegesData,
+      timestamp: Date.now()
+    };
+  }
+
+  // Load search index from cache
+  async loadFromCache(cachedData) {
+    try {
+      this.simpleIndex = cachedData.simpleIndex;
+      this.collegesData = cachedData.collegesData;
+      this.aliasesCache = new Map(cachedData.aliasesCache);
+      
+      // Rebuild complex indexes from serialized data
+      if (cachedData.fuseIndex) {
+        this.fuseIndex = Fuse.parseIndex(cachedData.fuseIndex);
+      }
+      
+      if (cachedData.flexSearchIndex) {
+        this.flexSearchIndex = new FlexSearch.Index();
+        this.flexSearchIndex.import(cachedData.flexSearchIndex);
+      }
+      
+      this.uFuzzyIndex = cachedData.uFuzzyIndex;
+      this.fuzzysortIndex = cachedData.fuzzysortIndex;
+      
+      console.log('✅ Search index loaded from cache successfully');
+    } catch (error) {
+      console.error('❌ Failed to load search index from cache:', error);
+      throw error;
     }
   }
 

@@ -37,6 +37,46 @@ const corsHeaders = {
   'Content-Security-Policy': "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' https:; frame-ancestors 'none';"
 };
 
+// Cache configuration for different data types
+const cacheConfig = {
+  colleges: { ttl: 3600000 }, // 1 hour - colleges don't change often
+  courses: { ttl: 1800000 },  // 30 minutes - courses might change more frequently
+  filters: { ttl: 1800000 },  // 30 minutes - filter data is relatively static
+  searchIndex: { ttl: 7200000 }, // 2 hours - search index is expensive to build
+  cutoffs: { ttl: 86400000 }, // 24 hours - cutoff data changes rarely
+  health: { ttl: 300000 },    // 5 minutes - health checks
+  static: { ttl: 86400000 }   // 24 hours - static content
+};
+
+// Cache helper functions
+const getCacheHeaders = (dataType, isPublic = true) => {
+  const config = cacheConfig[dataType] || cacheConfig.static;
+  const maxAge = Math.floor(config.ttl / 1000); // Convert to seconds
+  
+  return {
+    'Cache-Control': isPublic 
+      ? `public, max-age=${maxAge}, s-maxage=${maxAge}`
+      : `private, max-age=${maxAge}`,
+    'ETag': `"${Date.now()}-${Math.random().toString(36).substr(2, 9)}"`,
+    'Last-Modified': new Date().toUTCString(),
+    'Expires': new Date(Date.now() + config.ttl).toUTCString()
+  };
+};
+
+// Enhanced response helper with caching
+const createCachedResponse = (data, dataType, isPublic = true, status = 200) => {
+  const cacheHeaders = getCacheHeaders(dataType, isPublic);
+  
+  return new Response(JSON.stringify(data), {
+    status,
+    headers: {
+      ...corsHeaders,
+      ...cacheHeaders,
+      'Content-Type': 'application/json'
+    }
+  });
+};
+
 // Comprehensive city aliases system (from original implementation)
 const cityAliases = {
   // Major metropolitan cities
@@ -1587,14 +1627,109 @@ router.get('/api/debug/search', async (request, env) => {
 });
 
 router.get('/api/health', async (request, env) => {
-  return new Response(JSON.stringify({
+  return createCachedResponse({
     status: 'healthy',
     timestamp: new Date().toISOString(),
     server: 'cloudflare-worker',
     port: '8787'
-  }), {
-    headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-  });
+  }, 'health', true);
+});
+
+// Batch API endpoint for combining multiple requests
+router.post('/api/batch', async (request, env) => {
+  try {
+    const { requests } = await request.json();
+    
+    if (!Array.isArray(requests) || requests.length === 0) {
+      return new Response(JSON.stringify({
+        error: 'Invalid request format',
+        message: 'Expected array of requests'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Limit batch size to prevent abuse
+    if (requests.length > 10) {
+      return new Response(JSON.stringify({
+        error: 'Batch size exceeded',
+        message: 'Maximum 10 requests per batch'
+      }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const results = [];
+    
+    for (const req of requests) {
+      try {
+        const { endpoint, params = {} } = req;
+        const url = new URL(`https://neetlogiq-backend.neetlogiq.workers.dev${endpoint}`);
+        
+        // Add query parameters
+        Object.entries(params).forEach(([key, value]) => {
+          if (value !== null && value !== undefined) {
+            url.searchParams.append(key, value);
+          }
+        });
+
+        // Create a mock request for internal processing
+        const mockRequest = new Request(url.toString(), {
+          method: 'GET',
+          headers: request.headers
+        });
+
+        // Route to appropriate handler
+        let response;
+        if (endpoint.startsWith('/api/colleges') && !endpoint.includes('/filters')) {
+          response = await router.handle(mockRequest, env);
+        } else if (endpoint.startsWith('/api/courses')) {
+          response = await router.handle(mockRequest, env);
+        } else if (endpoint.startsWith('/api/colleges/filters')) {
+          response = await router.handle(mockRequest, env);
+        } else {
+          response = new Response(JSON.stringify({
+            error: 'Unsupported endpoint',
+            message: `Endpoint ${endpoint} not supported in batch requests`
+          }), {
+            status: 400,
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+          });
+        }
+
+        const data = await response.json();
+        results.push({
+          endpoint,
+          status: response.status,
+          data: response.ok ? data : { error: data.error || 'Unknown error' }
+        });
+      } catch (error) {
+        results.push({
+          endpoint: req.endpoint,
+          status: 500,
+          data: { error: 'Internal error', message: error.message }
+        });
+      }
+    }
+
+    return createCachedResponse({
+      results,
+      batchSize: results.length,
+      timestamp: new Date().toISOString()
+    }, 'static', true);
+
+  } catch (error) {
+    console.error('Error processing batch request:', error);
+    return new Response(JSON.stringify({
+      error: 'Internal server error',
+      message: error.message
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
 });
 
 // AI Search Endpoints
@@ -2247,7 +2382,7 @@ router.get('/api/colleges', async (request, env) => {
     // Generate AI recommendations if available
     const aiRecommendations = (bmadIntegration && aiServicesAvailable) ? bmadIntegration.aiRecommendations : [];
     
-    return new Response(JSON.stringify({
+    return createCachedResponse({
       data: optimizedColleges,
       pagination: {
         page,
@@ -2267,9 +2402,7 @@ router.get('/api/colleges', async (request, env) => {
         recommendations: aiRecommendations,
         performance: aiServicesAvailable ? await bmadIntegration?.monitorPerformance() : {}
       }
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    }, 'colleges', true);
     
   } catch (error) {
     console.error('Error fetching colleges:', error);
@@ -2536,7 +2669,7 @@ router.get('/api/courses', async (request, env) => {
           const paginationOffset = (page - 1) * limit;
           const paginatedCourses = courses.slice(paginationOffset, paginationOffset + limit);
     
-    return new Response(JSON.stringify({
+    return createCachedResponse({
       data: paginatedCourses,
       pagination: {
         page,
@@ -2555,9 +2688,7 @@ router.get('/api/courses', async (request, env) => {
         },
         available: {}
       }
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    }, 'courses', true);
     
   } catch (error) {
     console.error('Error fetching courses:', error);
@@ -2871,13 +3002,11 @@ router.get('/api/colleges/filters', async (request, env) => {
       env.DB.prepare('SELECT DISTINCT management_type FROM colleges WHERE management_type IS NOT NULL ORDER BY management_type').all()
     ]);
     
-    return new Response(JSON.stringify({
+    return createCachedResponse({
       states: states.results?.map(r => r.state) || [],
       collegeTypes: types.results?.map(r => r.college_type) || [],
       managementTypes: managementTypes.results?.map(r => r.management_type) || []
-    }), {
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-    });
+    }, 'filters', true);
     
   } catch (error) {
     console.error('Error fetching filters:', error);

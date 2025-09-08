@@ -1,137 +1,193 @@
-// Cache Service for NeetLogIQ Performance Optimization
+// Client-side caching service for NeetLogIQ
+// Implements localStorage and sessionStorage caching with TTL support
+
 class CacheService {
   constructor() {
-    this.cache = new Map();
-    this.defaultTTL = 5 * 60 * 1000; // 5 minutes
-    this.maxSize = 100; // Maximum number of cached items
+    this.prefix = 'neetlogiq_';
+    this.defaultTTL = {
+      colleges: 60 * 60 * 1000, // 1 hour
+      courses: 30 * 60 * 1000,  // 30 minutes
+      filters: 30 * 60 * 1000,  // 30 minutes
+      searchIndex: 2 * 60 * 60 * 1000, // 2 hours
+      cutoffs: 24 * 60 * 60 * 1000, // 24 hours
+      static: 24 * 60 * 60 * 1000 // 24 hours
+    };
   }
 
-  // Generate cache key from parameters
-  generateKey(prefix, params = {}) {
-    const sortedParams = Object.keys(params)
+  // Generate cache key
+  getCacheKey(type, params = {}) {
+    const paramString = Object.keys(params)
       .sort()
       .map(key => `${key}=${params[key]}`)
       .join('&');
-    return `${prefix}:${sortedParams}`;
+    return `${this.prefix}${type}_${paramString}`;
+  }
+
+  // Check if cache entry is valid
+  isValid(entry) {
+    if (!entry || !entry.timestamp) return false;
+    return Date.now() - entry.timestamp < entry.ttl;
   }
 
   // Get cached data
-  get(key) {
-    const item = this.cache.get(key);
-    if (!item) return null;
-
-    // Check if expired
-    if (Date.now() > item.expiresAt) {
-      this.cache.delete(key);
+  get(type, params = {}) {
+    try {
+      const key = this.getCacheKey(type, params);
+      const cached = localStorage.getItem(key);
+      
+      if (!cached) return null;
+      
+      const entry = JSON.parse(cached);
+      
+      if (this.isValid(entry)) {
+        console.log(`🎯 Cache HIT for ${type}:`, params);
+        return entry.data;
+      } else {
+        // Remove expired entry
+        localStorage.removeItem(key);
+        console.log(`⏰ Cache EXPIRED for ${type}:`, params);
+        return null;
+      }
+    } catch (error) {
+      console.error('Cache get error:', error);
       return null;
     }
-
-    return item.data;
   }
 
   // Set cached data
-  set(key, data, ttl = this.defaultTTL) {
-    // Remove oldest items if cache is full
-    if (this.cache.size >= this.maxSize) {
-      const firstKey = this.cache.keys().next().value;
-      this.cache.delete(firstKey);
-    }
-
-    this.cache.set(key, {
+  set(type, data, params = {}, customTTL = null) {
+    const key = this.getCacheKey(type, params);
+    const ttl = customTTL || this.defaultTTL[type] || this.defaultTTL.static;
+    
+    const entry = {
       data,
-      expiresAt: Date.now() + ttl,
-      createdAt: Date.now()
-    });
+      timestamp: Date.now(),
+      ttl,
+      type,
+      params
+    };
+    
+    try {
+      localStorage.setItem(key, JSON.stringify(entry));
+      console.log(`💾 Cache SET for ${type}:`, params, `TTL: ${ttl}ms`);
+    } catch (error) {
+      console.error('Cache set error:', error);
+      // If localStorage is full, clear old entries
+      this.clearOldEntries();
+      try {
+        localStorage.setItem(key, JSON.stringify(entry));
+      } catch (retryError) {
+        console.error('Cache set retry failed:', retryError);
+      }
+    }
   }
 
-  // Clear specific cache entry
-  delete(key) {
-    this.cache.delete(key);
+  // Clear old cache entries
+  clearOldEntries() {
+    try {
+      const keys = Object.keys(localStorage);
+      const now = Date.now();
+      
+      keys.forEach(key => {
+        if (key.startsWith(this.prefix)) {
+          try {
+            const entry = JSON.parse(localStorage.getItem(key));
+            if (entry && entry.timestamp && now - entry.timestamp > entry.ttl) {
+              localStorage.removeItem(key);
+              console.log(`🗑️ Cleared expired cache: ${key}`);
+            }
+          } catch (error) {
+            // Remove corrupted entries
+            localStorage.removeItem(key);
+          }
+        }
+      });
+    } catch (error) {
+      console.error('Clear old entries error:', error);
+    }
   }
 
   // Clear all cache
   clear() {
-    this.cache.clear();
+    try {
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith(this.prefix)) {
+          localStorage.removeItem(key);
+        }
+      });
+      console.log('🧹 Cleared all cache');
+    } catch (error) {
+      console.error('Clear cache error:', error);
+    }
+  }
+
+  // Clear specific type
+  clearType(type) {
+    try {
+      const keys = Object.keys(localStorage);
+      keys.forEach(key => {
+        if (key.startsWith(`${this.prefix}${type}_`)) {
+          localStorage.removeItem(key);
+        }
+      });
+      console.log(`🧹 Cleared cache for type: ${type}`);
+    } catch (error) {
+      console.error('Clear type cache error:', error);
+    }
   }
 
   // Get cache statistics
   getStats() {
-    const now = Date.now();
-    const items = Array.from(this.cache.values());
-    
-    return {
-      totalItems: this.cache.size,
-      expiredItems: items.filter(item => now > item.expiresAt).length,
-      validItems: items.filter(item => now <= item.expiresAt).length,
-      oldestItem: Math.min(...items.map(item => item.createdAt)),
-      newestItem: Math.max(...items.map(item => item.createdAt))
-    };
-  }
-
-  // Cache API responses with automatic key generation
-  async cacheApiCall(apiCall, prefix, params = {}, ttl = this.defaultTTL) {
-    const key = this.generateKey(prefix, params);
-    
-    // Try to get from cache first
-    const cached = this.get(key);
-    if (cached) {
-      console.log(`📦 Cache HIT for ${key}`);
-      return cached;
-    }
-
-    console.log(`📦 Cache MISS for ${key}, making API call`);
-    
     try {
-      const data = await apiCall();
-      this.set(key, data, ttl);
-      return data;
+      const keys = Object.keys(localStorage);
+      const cacheKeys = keys.filter(key => key.startsWith(this.prefix));
+      const now = Date.now();
+      
+      let validEntries = 0;
+      let expiredEntries = 0;
+      let totalSize = 0;
+      
+      cacheKeys.forEach(key => {
+        try {
+          const entry = JSON.parse(localStorage.getItem(key));
+          totalSize += localStorage.getItem(key).length;
+          
+          if (this.isValid(entry)) {
+            validEntries++;
+          } else {
+            expiredEntries++;
+          }
+        } catch (error) {
+          // Skip corrupted entries
+        }
+      });
+      
+      return {
+        totalEntries: cacheKeys.length,
+        validEntries,
+        expiredEntries,
+        totalSize: `${Math.round(totalSize / 1024)}KB`,
+        types: this.getTypeStats(cacheKeys)
+      };
     } catch (error) {
-      console.error(`API call failed for ${key}:`, error);
-      throw error;
-    }
-  }
-
-  // Preload data for better performance
-  async preloadData(apiCalls, ttl = this.defaultTTL) {
-    const promises = apiCalls.map(({ apiCall, prefix, params }) => 
-      this.cacheApiCall(apiCall, prefix, params, ttl)
-    );
-
-    try {
-      const results = await Promise.all(promises);
-      console.log(`🚀 Preloaded ${results.length} data sets`);
-      return results;
-    } catch (error) {
-      console.error('Preload failed:', error);
-      throw error;
+      console.error('Get cache stats error:', error);
+      return null;
     }
   }
 
-  // Warm up cache with common queries
-  async warmUpCache(apiService) {
-    const commonQueries = [
-      { query: 'MBBS', type: 'courses' },
-      { query: 'BDS', type: 'courses' },
-      { query: 'Karnataka', type: 'colleges' },
-      { query: 'Maharashtra', type: 'colleges' },
-      { query: 'Delhi', type: 'colleges' }
-    ];
-
-    const preloadCalls = commonQueries.map(({ query, type }) => ({
-      apiCall: () => apiService.advancedSearch(query, { type, limit: 20 }),
-      prefix: 'advanced-search',
-      params: { query, type, limit: 20 }
-    }));
-
-    try {
-      await this.preloadData(preloadCalls, 10 * 60 * 1000); // 10 minutes TTL for warm-up
-      console.log('🔥 Cache warmed up successfully');
-    } catch (error) {
-      console.error('Cache warm-up failed:', error);
-    }
+  // Get statistics by type
+  getTypeStats(keys) {
+    const stats = {};
+    keys.forEach(key => {
+      const type = key.split('_')[1];
+      stats[type] = (stats[type] || 0) + 1;
+    });
+    return stats;
   }
 }
 
-// Create and export singleton instance
+// Create singleton instance
 const cacheService = new CacheService();
+
 export default cacheService;

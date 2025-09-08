@@ -1,13 +1,18 @@
 // API Service for NeetLogIQ Cloudflare Worker Integration
 import { getApiUrl, getBaseUrl } from '../config/api';
+import cacheService from './cacheService';
+import cachePerformanceService from './cachePerformanceService';
 
 class ApiService {
   constructor() {
     this.baseURL = getBaseUrl();
   }
 
-  // Generic API call method with BMAD integration
+  // Generic API call method with BMAD integration and performance monitoring
   async apiCall(endpoint, options = {}) {
+    const startTime = performance.now();
+    let success = true;
+    
     try {
       const url = getApiUrl(endpoint);
       console.log('🌐 API Call URL:', url);
@@ -20,6 +25,7 @@ class ApiService {
       });
 
       if (!response.ok) {
+        success = false;
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
@@ -32,15 +38,34 @@ class ApiService {
         console.log('🤖 BMAD optimization detected:', bmadOptimized);
       }
       
+      // Record performance metrics
+      const responseTime = performance.now() - startTime;
+      cachePerformanceService.recordApiCall(endpoint, responseTime, success);
+      
       return data;
     } catch (error) {
+      success = false;
+      const responseTime = performance.now() - startTime;
+      cachePerformanceService.recordApiCall(endpoint, responseTime, success);
       console.error(`API call failed for ${endpoint}:`, error);
       throw error;
     }
   }
 
-  // Colleges API
+  // Colleges API with caching and performance monitoring
   async getColleges(filters = {}, page = 1, limit = 24) {
+    const cacheParams = { ...filters, page, limit };
+    const startTime = performance.now();
+    
+    // Try to get from cache first
+    const cached = cacheService.get('colleges', cacheParams);
+    if (cached) {
+      const responseTime = performance.now() - startTime;
+      cachePerformanceService.recordCacheHit('colleges', responseTime);
+      return cached;
+    }
+    
+    // If not in cache, make API call
     const queryParams = new URLSearchParams();
     
     // Add filters
@@ -54,10 +79,30 @@ class ApiService {
     queryParams.append('page', page);
     queryParams.append('limit', limit);
     
-    return this.apiCall(`/api/colleges?${queryParams.toString()}`);
+    const data = await this.apiCall(`/api/colleges?${queryParams.toString()}`);
+    
+    // Cache the result
+    cacheService.set('colleges', data, cacheParams);
+    
+    const responseTime = performance.now() - startTime;
+    cachePerformanceService.recordCacheMiss('colleges', responseTime);
+    
+    return data;
   }
 
   async getCollegeFilters(currentFilters = {}) {
+    const cacheParams = { ...currentFilters };
+    const startTime = performance.now();
+    
+    // Try to get from cache first
+    const cached = cacheService.get('filters', cacheParams);
+    if (cached) {
+      const responseTime = performance.now() - startTime;
+      cachePerformanceService.recordCacheHit('filters', responseTime);
+      return cached;
+    }
+    
+    // If not in cache, make API call
     const queryParams = new URLSearchParams();
     
     // Add current filters as query parameters
@@ -67,7 +112,15 @@ class ApiService {
       }
     });
     
-    return this.apiCall(`/api/colleges/filters?${queryParams.toString()}`);
+    const data = await this.apiCall(`/api/colleges/filters?${queryParams.toString()}`);
+    
+    // Cache the result
+    cacheService.set('filters', data, cacheParams);
+    
+    const responseTime = performance.now() - startTime;
+    cachePerformanceService.recordCacheMiss('filters', responseTime);
+    
+    return data;
   }
 
   async searchColleges(query, page = 1, limit = 24) {
@@ -88,8 +141,17 @@ class ApiService {
     return this.apiCall(`/api/colleges/${collegeId}/programs`);
   }
 
-  // Courses API
+  // Courses API with caching
   async getCourses(filters = {}, page = 1, limit = 20) {
+    const cacheParams = { ...filters, page, limit };
+    
+    // Try to get from cache first
+    const cached = cacheService.get('courses', cacheParams);
+    if (cached) {
+      return cached;
+    }
+    
+    // If not in cache, make API call
     const queryParams = new URLSearchParams();
     
     // Add filters
@@ -103,11 +165,38 @@ class ApiService {
     queryParams.append('page', page);
     queryParams.append('limit', limit);
     
-    return this.apiCall(`/api/courses?${queryParams.toString()}`);
+    const data = await this.apiCall(`/api/courses?${queryParams.toString()}`);
+    
+    // Cache the result
+    cacheService.set('courses', data, cacheParams);
+    
+    return data;
   }
 
   async getCourseFilters() {
     return this.apiCall('/api/courses/filters');
+  }
+
+  // Batch API for combining multiple requests
+  async batchRequest(requests) {
+    const cacheKey = `batch_${JSON.stringify(requests)}`;
+    
+    // Try to get from cache first
+    const cached = cacheService.get('static', { batch: cacheKey });
+    if (cached) {
+      return cached;
+    }
+    
+    // If not in cache, make batch API call
+    const data = await this.apiCall('/api/batch', {
+      method: 'POST',
+      body: JSON.stringify({ requests })
+    });
+    
+    // Cache the result
+    cacheService.set('static', data, { batch: cacheKey });
+    
+    return data;
   }
 
   async searchCourses(query, filters = {}) {

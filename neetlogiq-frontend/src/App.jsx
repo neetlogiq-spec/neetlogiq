@@ -6,9 +6,11 @@ import ProtectedRoute from './components/ProtectedRoute';
 import BackToTopButton from './components/BackToTopButton';
 import AICommandPalette from './components/AICommandPalette';
 import BeautifulLoader from './components/BeautifulLoader';
+import performanceOptimizer from './services/performanceOptimizer';
 
 // Lazy load page components for better performance
-const LandingPage = lazy(() => import('./pages/LandingPage'));
+const LandingPage = lazy(() => import('./pages/FastLandingPage'));
+const OriginalLandingPage = lazy(() => import('./pages/LandingPage'));
 const Colleges = lazy(() => import('./pages/Colleges'));
 const Courses = lazy(() => import('./pages/Courses'));
 const Cutoffs = lazy(() => import('./pages/Cutoffs'));
@@ -23,12 +25,15 @@ const VortexDemo = lazy(() => import('./components/VortexDemo'));
 const App = () => {
   const [isAICommandPaletteOpen, setIsAICommandPaletteOpen] = useState(false);
 
-  // Clear old cache on app load (only once)
+  // Initialize performance optimizations
   useEffect(() => {
-    const clearOldCache = async () => {
-      console.log('App loaded - checking for old cache...');
+    const initializeApp = async () => {
+      console.log('🚀 Initializing NeetLogIQ app...');
       
-      // Clear all caches on first load
+      // Initialize performance optimizations
+      await performanceOptimizer.initialize();
+      
+      // Clear old cache on first load
       if ('caches' in window) {
         const cacheNames = await caches.keys();
         for (let cacheName of cacheNames) {
@@ -38,9 +43,16 @@ const App = () => {
           }
         }
       }
+      
+      // Optimize for mobile
+      performanceOptimizer.optimizeForMobile();
+      
+      // Log performance metrics
+      const metrics = performanceOptimizer.getPerformanceMetrics();
+      console.log('📊 Performance metrics:', metrics);
     };
 
-    clearOldCache();
+    initializeApp();
   }, []);
 
   // Keyboard shortcut for AI Command Palette (Ctrl+K or Cmd+K)
@@ -81,6 +93,7 @@ const App = () => {
               <Routes>
                 {/* Public Routes - No authentication required */}
                 <Route path="/" element={<LandingPage />} />
+                <Route path="/original" element={<OriginalLandingPage />} />
                 <Route path="/about" element={<AboutUs />} />
                 
                 {/* Protected Routes with blur overlay for unauthenticated users */}
