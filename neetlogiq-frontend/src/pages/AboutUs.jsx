@@ -386,7 +386,7 @@ const AboutUs = () => {
           animate={{ opacity: isLoaded ? 1 : 0 }}
           transition={{ duration: 0.2, delay: 0.6 }}
         >
-          <p>&copy; 2024 NeetLogIQ. All rights reserved. Built with ❤️ for medical aspirants.</p>
+          <p>&copy; 2025 NeetLogIQ. All rights reserved. Built with ❤️ for medical aspirants.</p>
         </motion.footer>
         </div>
     </div>

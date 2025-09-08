@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { GraduationCap, MapPin, TrendingUp, Shield, Zap, Brain, Target, BookOpen, BarChart3 } from 'lucide-react';
+import { GraduationCap, MapPin, TrendingUp, Shield, Zap } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import GoogleSignIn from '../components/GoogleSignIn';
 import UserPopup from '../components/UserPopup';
@@ -12,7 +12,7 @@ import ResponsiveHeader from '../components/ResponsiveHeader';
 
 const FastLandingPage = () => {
   const [isLoaded, setIsLoaded] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { isDarkMode } = useTheme();
 
   useEffect(() => {
@@ -158,6 +158,32 @@ const FastLandingPage = () => {
         {/* Main Content */}
         <main className="flex-1 flex items-center justify-center px-4 sm:px-8 pt-8">
           <div className="text-center max-w-4xl">
+            {/* Welcome Message */}
+            {isAuthenticated && user?.givenName && (
+              <motion.div
+                className={`text-2xl md:text-3xl font-semibold mb-4 transition-colors duration-300 ${
+                  isDarkMode ? 'text-blue-300' : 'text-blue-600'
+                }`}
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -20 }}
+                transition={{ duration: 0.3, delay: 0.05 }}
+              >
+                Welcome {user.givenName} to
+              </motion.div>
+            )}
+
+            {/* Latest Update Info */}
+            <motion.div
+              className={`text-sm md:text-base mb-6 px-4 py-2 rounded-lg inline-block transition-colors duration-300 ${
+                isDarkMode ? 'bg-green-900/30 text-green-300 border border-green-700' : 'bg-green-100 text-green-800 border border-green-200'
+              }`}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -10 }}
+              transition={{ duration: 0.3, delay: 0.08 }}
+            >
+              📅 Latest Update: 1st September 2025 - Fresh data and enhanced features!
+            </motion.div>
+
             {/* Main Title */}
             <motion.h1
               className={`text-6xl md:text-8xl font-bold mb-6 transition-colors duration-300 ${
