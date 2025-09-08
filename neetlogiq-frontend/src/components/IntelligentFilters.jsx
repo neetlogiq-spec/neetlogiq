@@ -88,7 +88,7 @@ const IntelligentFilters = ({
     const filterTypeMap = {
       'states': 'states',
       'managementTypes': 'managementTypes',
-      'streams': 'streams'
+      'streams': 'collegeTypes'  // Backend returns collegeTypes for streams
     };
     
     const backendKey = filterTypeMap[filterType];
