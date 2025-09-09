@@ -6,7 +6,8 @@ import GoogleSignIn from '../components/GoogleSignIn';
 import UserPopup from '../components/UserPopup';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../context/ThemeContext';
-import LightweightVortex from '../components/LightweightVortex';
+import { Vortex } from '../components/ui/vortex';
+import { LightVortex } from '../components/ui/LightVortex';
 import ThemeToggle from '../components/ThemeToggle';
 import ResponsiveHeader from '../components/ResponsiveHeader';
 
@@ -50,29 +51,39 @@ const FastLandingPage = () => {
 
   return (
     <div className="min-h-screen relative overflow-hidden transition-all duration-500">
-      {/* Lightweight Background */}
+      {/* Dynamic Background based on theme */}
       {isDarkMode ? (
-        <LightweightVortex
-          particleCount={30}
+        <Vortex
+          className="fixed inset-0 z-0"
+          particleCount={800}
           baseHue={280}
           rangeHue={120}
-          baseSpeed={0.05}
-          rangeSpeed={0.3}
-          baseRadius={0.5}
-          rangeRadius={1.5}
+          baseSpeed={0.2}
+          rangeSpeed={2.0}
+          baseRadius={1}
+          rangeRadius={3}
           backgroundColor="#000000"
-        />
+          containerClassName="fixed inset-0"
+        >
+          {/* Subtle overlay for text readability without blocking particles */}
+          <div className="absolute inset-0 bg-black/20 z-10"></div>
+        </Vortex>
       ) : (
-        <LightweightVortex
-          particleCount={20}
+        <LightVortex
+          className="fixed inset-0 z-0"
+          particleCount={400}
           baseHue={200}
           rangeHue={80}
-          baseSpeed={0.03}
-          rangeSpeed={0.2}
+          baseSpeed={0.12}
+          rangeSpeed={1.5}
           baseRadius={1}
-          rangeRadius={2}
+          rangeRadius={2.5}
           backgroundColor="#ffffff"
-        />
+          containerClassName="fixed inset-0"
+        >
+          {/* Subtle overlay for text readability */}
+          <div className="absolute inset-0 bg-white/10 z-10"></div>
+        </LightVortex>
       )}
 
       {/* Content */}

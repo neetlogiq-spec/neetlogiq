@@ -69,7 +69,7 @@ const createCachedResponse = (data, dataType, isPublic = true, status = 200) => 
   
   return new Response(JSON.stringify(data), {
     status,
-    headers: {
+  headers: {
       ...corsHeaders,
       ...cacheHeaders,
       'Content-Type': 'application/json'
@@ -2561,7 +2561,7 @@ router.get('/api/courses', async (request, env) => {
     }
   }
 
-  if (search) {
+    if (search) {
             // Use FTS5 for better search performance
             whereClause += ' AND (c.course_name LIKE ? OR c.stream LIKE ? OR c.program LIKE ?)';
             const searchTerm = `%${search}%`;
