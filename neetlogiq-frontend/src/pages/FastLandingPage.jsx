@@ -24,10 +24,10 @@ const FastLandingPage = () => {
   }, []);
 
   const stats = [
-    { icon: GraduationCap, value: '2,400+', label: 'Colleges Covered', color: 'text-blue-400' },
-    { icon: MapPin, value: '28', label: 'States Covered', color: 'text-green-400' },
-    { icon: Shield, value: 'Growing', label: 'Database', color: 'text-purple-400' },
-    { icon: TrendingUp, value: '24/7', label: 'Support Available', color: 'text-orange-400' }
+    { icon: GraduationCap, value: '2,400+', label: 'Colleges Covered', gradient: 'from-blue-400 to-blue-600' },
+    { icon: MapPin, value: '28', label: 'States Covered', gradient: 'from-green-400 to-green-600' },
+    { icon: Shield, value: 'Growing', label: 'Database', gradient: 'from-purple-400 to-purple-600' },
+    { icon: TrendingUp, value: '24/7', label: 'Support Available', gradient: 'from-orange-400 to-orange-600' }
   ];
 
   const features = [
@@ -172,17 +172,6 @@ const FastLandingPage = () => {
               </motion.div>
             )}
 
-            {/* Latest Update Info */}
-            <motion.div
-              className={`text-sm md:text-base mb-6 px-4 py-2 rounded-lg inline-block transition-colors duration-300 ${
-                isDarkMode ? 'bg-green-900/30 text-green-300 border border-green-700' : 'bg-green-100 text-green-800 border border-green-200'
-              }`}
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -10 }}
-              transition={{ duration: 0.3, delay: 0.08 }}
-            >
-              📅 Latest Update: 1st September 2025 - Fresh data and enhanced features!
-            </motion.div>
 
             {/* Main Title */}
             <motion.h1
@@ -231,6 +220,14 @@ const FastLandingPage = () => {
                   <span className="relative z-10">Browse Courses</span>
                   <div className="absolute inset-0 bg-gradient-to-r from-green-700 to-teal-700 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </Link>
+
+                <Link
+                  to="/cutoffs"
+                  className="group relative px-8 py-4 bg-gradient-to-r from-orange-600 to-red-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 min-w-[200px] text-center"
+                >
+                  <span className="relative z-10">Check Cutoffs</span>
+                  <div className="absolute inset-0 bg-gradient-to-r from-orange-700 to-red-700 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                </Link>
               </div>
             </motion.div>
 
@@ -243,7 +240,7 @@ const FastLandingPage = () => {
             >
               {stats.map((stat, index) => (
                 <div key={index} className="text-center">
-                  <div className={`text-3xl md:text-4xl font-bold mb-2 ${stat.color}`}>
+                  <div className={`text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}>
                     {stat.value}
                   </div>
                   <div className={`text-sm md:text-base ${
@@ -253,6 +250,18 @@ const FastLandingPage = () => {
                   </div>
                 </div>
               ))}
+            </motion.div>
+
+            {/* Latest Update Info */}
+            <motion.div
+              className={`text-sm md:text-base mb-16 px-4 py-2 rounded-lg inline-block transition-colors duration-300 ${
+                isDarkMode ? 'bg-green-900/30 text-green-300 border border-green-700' : 'bg-green-100 text-green-800 border border-green-200'
+              }`}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : -10 }}
+              transition={{ duration: 0.3, delay: 0.8 }}
+            >
+              📅 Latest Update: 1st September 2025 - Fresh data and enhanced features!
             </motion.div>
 
             {/* Features Section */}
