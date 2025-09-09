@@ -8,7 +8,7 @@ import { getFirestore } from "firebase/firestore";
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
   apiKey: "AIzaSyBoTOrLIfgMkfr3lMQQJd3f_ZWqfi-bFjk",
-  authDomain: "neetlogiq-15499.firebaseapp.com",
+  authDomain: "neetlogiq.com",
   projectId: "neetlogiq-15499",
   storageBucket: "neetlogiq-15499.firebasestorage.app",
   messagingSenderId: "100369453309",
