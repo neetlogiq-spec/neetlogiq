@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { GraduationCap, MapPin, TrendingUp, Shield, Zap, Brain, Target, BookOpen, BarChart3 } from 'lucide-react';
+import { GraduationCap, MapPin, TrendingUp, Shield, Zap, BookOpen, BarChart3 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import GoogleSignIn from '../components/GoogleSignIn';
 import UserPopup from '../components/UserPopup';
@@ -380,86 +380,6 @@ const LandingPage = () => {
               ))}
             </motion.div>
             
-            {/* BMAD AI Section */}
-            <motion.div
-              className="mt-16"
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 30 }}
-              transition={{ duration: 0.4, delay: 0.7 }}
-            >
-              <div className={`bg-gradient-to-r from-primary-500/20 to-secondary-500/20 backdrop-blur-sm p-8 rounded-3xl border transition-all duration-300 ${
-                isDarkMode 
-                  ? 'border-white/20' 
-                  : 'border-white/50 shadow-xl'
-              }`}>
-                <div className="text-center mb-8">
-                  <Brain className="w-20 h-20 text-primary-400 mx-auto mb-4" />
-                  <h3 className={`text-3xl font-bold mb-4 transition-colors duration-300 ${
-                    isDarkMode ? 'text-white' : 'text-gray-900'
-                  }`}>🤖 BMAD AI Intelligence</h3>
-                  <p className={`text-xl max-w-3xl mx-auto transition-colors duration-300 ${
-                    isDarkMode ? 'text-white/80' : 'text-gray-700'
-                  }`}>
-                    Experience the future of medical education guidance with our AI-powered recommendation system
-                  </p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                  <div className="text-center">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3 transition-all duration-300 ${
-                      isDarkMode ? 'bg-white/20' : 'bg-white/60 shadow-lg'
-                    }`}>
-                      <GraduationCap className="w-8 h-8 text-primary-400" />
-                    </div>
-                    <h4 className={`text-lg font-semibold mb-2 transition-colors duration-300 ${
-                      isDarkMode ? 'text-white' : 'text-gray-900'
-                    }`}>Smart College Matching</h4>
-                    <p className={`text-sm transition-colors duration-300 ${
-                      isDarkMode ? 'text-white/70' : 'text-gray-600'
-                    }`}>AI-powered college recommendations based on your score and preferences</p>
-                  </div>
-                  
-                  <div className="text-center">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3 transition-all duration-300 ${
-                      isDarkMode ? 'bg-white/20' : 'bg-white/60 shadow-lg'
-                    }`}>
-                      <Target className="w-8 h-8 text-primary-400" />
-                    </div>
-                    <h4 className={`text-lg font-semibold mb-2 transition-colors duration-300 ${
-                      isDarkMode ? 'text-white' : 'text-gray-900'
-                    }`}>Course Intelligence</h4>
-                    <p className={`text-sm transition-colors duration-300 ${
-                      isDarkMode ? 'text-white/70' : 'text-gray-600'
-                    }`}>Personalized course suggestions aligned with your career goals</p>
-                  </div>
-                  
-                  <div className="text-center">
-                    <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3 transition-all duration-300 ${
-                      isDarkMode ? 'bg-white/20' : 'bg-white/60 shadow-lg'
-                    }`}>
-                      <TrendingUp className="w-8 h-8 text-primary-400" />
-                    </div>
-                    <h4 className={`text-lg font-semibold mb-2 transition-colors duration-300 ${
-                      isDarkMode ? 'text-white' : 'text-gray-900'
-                    }`}>Career Path Analysis</h4>
-                    <p className={`text-sm transition-colors duration-300 ${
-                      isDarkMode ? 'text-white/70' : 'text-gray-600'
-                    }`}>AI-driven insights into medical career opportunities and trends</p>
-                  </div>
-                </div>
-                
-                <div className="text-center">
-                  <button className="bg-gradient-to-r from-primary-600 to-secondary-600 hover:from-primary-700 hover:to-secondary-700 text-white px-8 py-4 rounded-xl font-semibold text-lg transition-all transform hover:scale-105">
-                    🚀 Try BMAD AI Now
-                  </button>
-                  <p className={`text-sm mt-3 transition-colors duration-300 ${
-                    isDarkMode ? 'text-white/60' : 'text-gray-500'
-                  }`}>
-                    Click to experience AI-powered medical education guidance
-                  </p>
-                </div>
-              </div>
-            </motion.div>
           </div>
         </main>
 
