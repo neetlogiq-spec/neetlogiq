@@ -122,6 +122,9 @@ class PerformanceOptimizer {
           case 'unifiedSearchEngine':
             await import('../services/unifiedSearchEngine');
             break;
+          default:
+            console.log(`Unknown component: ${component}`);
+            break;
           case 'typesenseService':
             await import('../services/typesenseService');
             break;

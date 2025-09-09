@@ -14,9 +14,7 @@ class TypesenseService {
       const {
         page = 1,
         limit = 20,
-        filters = {},
-        sortBy = 'name',
-        sortOrder = 'asc'
+        filters = {}
       } = options;
 
       const cacheKey = `colleges_${query}_${page}_${JSON.stringify(filters)}`;
@@ -61,9 +59,7 @@ class TypesenseService {
       const {
         page = 1,
         limit = 20,
-        filters = {},
-        sortBy = 'course_name',
-        sortOrder = 'asc'
+        filters = {}
       } = options;
 
       const cacheKey = `courses_${query}_${page}_${JSON.stringify(filters)}`;
@@ -229,7 +225,6 @@ class TypesenseService {
       const {
         type = 'all',
         filters = {},
-        sortBy = 'relevance',
         page = 1,
         limit = 20
       } = options;

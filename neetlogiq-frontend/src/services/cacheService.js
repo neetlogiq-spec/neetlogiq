@@ -142,7 +142,6 @@ class CacheService {
     try {
       const keys = Object.keys(localStorage);
       const cacheKeys = keys.filter(key => key.startsWith(this.prefix));
-      const now = Date.now();
       
       let validEntries = 0;
       let expiredEntries = 0;
