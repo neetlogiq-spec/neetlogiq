@@ -679,7 +679,7 @@ const Colleges = () => {
       const credentials = btoa('Lone_wolf#12:Apx_gp_delta');
       console.log('🔍 Using credentials:', 'Lone_wolf#12:Apx_gp_delta');
       
-      const response = await fetch('/api/sector_xp_12/colleges', {
+      const response = await fetch('https://neetlogiq-backend.neetlogiq.workers.dev/api/colleges', {
         headers: {
           'Authorization': `Basic ${credentials}`,
           'Content-Type': 'application/json'
@@ -1189,9 +1189,8 @@ const Colleges = () => {
     try {
       setLoadingCourses(true);
       const credentials = btoa('Lone_wolf#12:Apx_gp_delta');
-      const response = await fetch(`/api/sector_xp_12/colleges/${collegeId}/courses`, {
+      const response = await fetch(`https://neetlogiq-backend.neetlogiq.workers.dev/api/courses?college_id=${collegeId}`, {
         headers: {
-          'Authorization': `Basic ${credentials}`,
           'Content-Type': 'application/json'
         }
       });
@@ -1414,7 +1413,7 @@ const Colleges = () => {
                     if (filters.min_seats) searchParams.append('min_seats', filters.min_seats);
                     if (filters.program) searchParams.append('program', filters.program);
                     
-                    const response = await fetch(`/api/sector_xp_12/admin/search/advanced?${searchParams.toString()}`);
+                    const response = await fetch(`https://neetlogiq-backend.neetlogiq.workers.dev/api/search?${searchParams.toString()}`);
                     if (response.ok) {
                       const data = await response.json();
                       if (data.success && data.data) {
@@ -2008,18 +2007,25 @@ const Colleges = () => {
                                 <div key={index} className="p-3 bg-gradient-to-r from-blue-50/50 to-purple-50/50 rounded-lg border border-blue-100/50 hover:border-blue-200/50 transition-colors">
                                   <div className="flex justify-between items-start">
                                     <div className="flex-1">
-                                      <h5 className="font-semibold text-gray-900 text-sm mb-1">{course.name}</h5>
-                                      {course.specialization && (
-                                        <p className="text-xs text-gray-600 mb-1">{course.specialization}</p>
-                                      )}
+                                      <h5 className="font-semibold text-gray-900 text-sm mb-1">
+                                        {course.course_name || course.name}
+                                      </h5>
+                                      <div className="flex items-center space-x-2 mb-1">
+                                        <span className="text-xs font-medium text-blue-600 bg-blue-100 px-2 py-1 rounded-full">
+                                          {course.course_name === 'BDS' ? 'BDS' : 
+                                           course.course_name.includes('MDS') ? 'MDS' :
+                                           course.course_name.includes('PG') ? 'PG Diploma' :
+                                           course.program === 'UG' ? 'BDS' :
+                                           course.program || 'N/A'}
+                                        </span>
+                                        {course.total_seats && (
+                                          <span className="text-xs text-gray-600">
+                                            {course.total_seats} seats
+                                          </span>
+                                        )}
+                                      </div>
                                     </div>
-                                    {course.seats && (
-                                      <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full font-medium border border-blue-200">
-                                        {course.seats} seats
-                                      </span>
-                                    )}
                                   </div>
-
                                 </div>
                               ))}
                             </div>

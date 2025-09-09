@@ -5,11 +5,7 @@ import {
   Building2, 
   MapPin, 
   Calendar, 
-  Users, 
   GraduationCap, 
-  Award,
-  Clock,
-  Shield,
   School,
   BookOpen
 } from 'lucide-react';
@@ -128,7 +124,7 @@ const CollegeDetailsModal = ({ isOpen, onClose, college, courses = [], isLoading
                     <span className={`text-sm ${
                       isDarkMode ? 'text-gray-300' : 'text-gray-600'
                     }`}>
-                      {college.state}, {college.district || 'N/A'}
+                      {college.state}{college.district ? `, ${college.district}` : ''}
                     </span>
                   </div>
                   
@@ -168,80 +164,65 @@ const CollegeDetailsModal = ({ isOpen, onClose, college, courses = [], isLoading
 
           {/* Content */}
           <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Left Column - Basic Information */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* Key Statistics */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className={`p-4 rounded-xl ${
+            <div className="space-y-6">
+              {/* Full Width Layout */}
+              <div className="space-y-6">
+                {/* Key Statistics - Expanded 3-column layout */}
+                <div className="grid grid-cols-3 gap-6">
+                  {/* Established - 1 column */}
+                  <div className={`p-6 rounded-xl ${
                     isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'
                   }`}>
-                    <div className="flex items-center mb-2">
-                      <Calendar className={`w-5 h-5 mr-2 ${
+                    <div className="flex items-center mb-3">
+                      <Calendar className={`w-6 h-6 mr-3 ${
                         isDarkMode ? 'text-blue-400' : 'text-blue-600'
                       }`} />
-                      <span className={`text-sm font-medium ${
+                      <span className={`text-lg font-semibold ${
                         isDarkMode ? 'text-gray-300' : 'text-gray-600'
                       }`}>Established</span>
                     </div>
-                    <p className={`text-xl font-bold ${
+                    <p className={`text-2xl font-bold ${
                       isDarkMode ? 'text-white' : 'text-gray-900'
                     }`}>
                       {college.establishment_year || 'N/A'}
                     </p>
                   </div>
 
-                  <div className={`p-4 rounded-xl ${
+                  {/* Courses - 1 column */}
+                  <div className={`p-6 rounded-xl ${
                     isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'
                   }`}>
-                    <div className="flex items-center mb-2">
-                      <Users className={`w-5 h-5 mr-2 ${
-                        isDarkMode ? 'text-green-400' : 'text-green-600'
-                      }`} />
-                      <span className={`text-sm font-medium ${
-                        isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                      }`}>Total Seats</span>
-                    </div>
-                    <p className={`text-xl font-bold ${
-                      isDarkMode ? 'text-white' : 'text-gray-900'
-                    }`}>
-                      {college.total_seats || 'N/A'}
-                    </p>
-                  </div>
-
-                  <div className={`p-4 rounded-xl ${
-                    isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'
-                  }`}>
-                    <div className="flex items-center mb-2">
-                      <GraduationCap className={`w-5 h-5 mr-2 ${
+                    <div className="flex items-center mb-3">
+                      <GraduationCap className={`w-6 h-6 mr-3 ${
                         isDarkMode ? 'text-purple-400' : 'text-purple-600'
                       }`} />
-                      <span className={`text-sm font-medium ${
+                      <span className={`text-lg font-semibold ${
                         isDarkMode ? 'text-gray-300' : 'text-gray-600'
                       }`}>Courses</span>
                     </div>
-                    <p className={`text-xl font-bold ${
+                    <p className={`text-2xl font-bold ${
                       isDarkMode ? 'text-white' : 'text-gray-900'
                     }`}>
                       {courses.length || 'N/A'}
                     </p>
                   </div>
 
-                  <div className={`p-4 rounded-xl ${
+                  {/* Affiliated University - 1 column (expanded) */}
+                  <div className={`p-6 rounded-xl ${
                     isDarkMode ? 'bg-gray-700/50' : 'bg-gray-50'
                   }`}>
-                    <div className="flex items-center mb-2">
-                      <Award className={`w-5 h-5 mr-2 ${
-                        isDarkMode ? 'text-yellow-400' : 'text-yellow-600'
+                    <div className="flex items-center mb-3">
+                      <School className={`w-6 h-6 mr-3 ${
+                        isDarkMode ? 'text-green-400' : 'text-green-600'
                       }`} />
-                      <span className={`text-sm font-medium ${
+                      <span className={`text-lg font-semibold ${
                         isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                      }`}>Code</span>
+                      }`}>Affiliated University</span>
                     </div>
-                    <p className={`text-lg font-bold ${
+                    <p className={`text-sm font-bold leading-relaxed ${
                       isDarkMode ? 'text-white' : 'text-gray-900'
                     }`}>
-                      {college.code || 'N/A'}
+                      {college.university || 'N/A'}
                     </p>
                   </div>
                 </div>
@@ -335,19 +316,60 @@ const CollegeDetailsModal = ({ isOpen, onClose, college, courses = [], isLoading
                     <div className="space-y-3">
                       {courses
                         .sort((a, b) => {
-                          // Prioritize UG courses (MBBS and BDS) first
-                          const courseA = (a.name || a.course_name || '').toUpperCase();
-                          const courseB = (b.name || b.course_name || '').toUpperCase();
+                          // Get course type for priority sorting (same logic as display)
+                          const getCourseType = (course) => {
+                            const courseName = (course.course_name || course.name || '').toUpperCase();
+                            const program = (course.program || '').toUpperCase();
+                            const stream = (course.stream || '').toUpperCase();
+                            
+                            // DIPLOMA courses (Postgraduate Diploma) - Check this FIRST for NBEMS-DIPLOMA
+                            if (courseName.includes('DIPLOMA') || courseName.includes('DIPLOMA -')) return 4;
+                            
+                            // UG courses (MBBS, BDS)
+                            if (courseName.includes('MBBS') || courseName === 'BDS') return 1;
+                            
+                            // MDS - Master of Dental Surgery (for dental postgraduate courses)
+                            if (courseName.includes('MDS')) return 2;
+                            
+                            // MD - Doctor of Medicine (Postgraduate)
+                            if (courseName.includes('MD -') || courseName.startsWith('MD ')) return 2;
+                            
+                            // MS - Master of Surgery (Postgraduate)
+                            if (courseName.includes('MS -') || courseName.startsWith('MS ')) return 2;
+                            
+                            // NBEMS courses (National Board of Examinations in Medical Sciences) - DNB
+                            if (courseName.includes('NBEMS')) return 3;
+                            
+                            // For dental courses (regardless of program level in API), check dental terms
+                            if (stream === 'DENTAL' && (courseName.includes('DENTISTRY') || courseName.includes('DENTAL') || 
+                                courseName.includes('ORTHODONTICS') || courseName.includes('PERIODONTOLOGY') ||
+                                courseName.includes('PROSTHODONTICS') || courseName.includes('ENDODONTICS') ||
+                                courseName.includes('ORAL') || courseName.includes('MAXILLOFACIAL') ||
+                                courseName.includes('PAEDIATRIC') || courseName.includes('CONSERVATIVE'))) {
+                              // Check seat count to determine if it's MDS or PG Diploma
+                              const seats = parseInt(course.total_seats) || 0;
+                              return seats > 3 ? 2 : 4; // MDS = 2, PG Diploma = 4
+                            }
+                            
+                            // PG courses (Postgraduate)
+                            if (courseName.includes('PG') || program === 'PG') return 2;
+                            
+                            // UG courses (Undergraduate)
+                            if (program === 'UG') return 1;
+                            
+                            // Default fallback
+                            return 5;
+                          };
                           
-                          // Check if course is UG (MBBS or BDS)
-                          const isUGA = courseA.includes('MBBS') || courseA.includes('BDS');
-                          const isUGB = courseB.includes('MBBS') || courseB.includes('BDS');
+                          const typeA = getCourseType(a);
+                          const typeB = getCourseType(b);
                           
-                          // UG courses come first
-                          if (isUGA && !isUGB) return -1;
-                          if (!isUGA && isUGB) return 1;
+                          // Sort by priority first
+                          if (typeA !== typeB) return typeA - typeB;
                           
                           // Within same category, sort alphabetically
+                          const courseA = (a.name || a.course_name || '').toUpperCase();
+                          const courseB = (b.name || b.course_name || '').toUpperCase();
                           return courseA.localeCompare(courseB);
                         })
                         .map((course, index) => (
@@ -362,41 +384,75 @@ const CollegeDetailsModal = ({ isOpen, onClose, college, courses = [], isLoading
                               : 'bg-green-50/40 border-green-200/60 hover:bg-green-50/60'
                           }`}
                         >
-                          <div className="flex items-center justify-between gap-4">
-                            {/* Course Name - Fixed width for alignment */}
+                          <div className="flex items-center justify-between gap-6">
+                            {/* Course Name - More space for longer names */}
                             <div className="flex-1 min-w-0">
-                              <h4 className={`text-sm font-semibold truncate ${
+                              <h4 className={`text-sm font-semibold ${
                                 isDarkMode ? 'text-white' : 'text-gray-900'
                               }`}>
                                 {course.name || course.course_name}
                               </h4>
                             </div>
                             
-                            {/* Duration - Fixed width for alignment */}
-                            <div className="flex items-center justify-center min-w-[80px]">
-                              {course.duration && course.duration !== 'N/A' ? (
-                                <div className="flex items-center space-x-1">
-                                  <Clock className={`w-3 h-3 ${
-                                    isDarkMode ? 'text-gray-400' : 'text-gray-500'
-                                  }`} />
-                                  <span className={`text-xs ${
-                                    isDarkMode ? 'text-gray-300' : 'text-gray-600'
-                                  }`}>
-                                    {course.duration}
-                                  </span>
-                                </div>
-                              ) : (
-                                <span className={`text-xs ${
-                                  isDarkMode ? 'text-gray-500' : 'text-gray-400'
-                                }`}>
-                                  N/A
+                            {/* Course Type - Compact badge */}
+                            <div className="flex items-center justify-center min-w-[70px]">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                                isDarkMode 
+                                  ? 'bg-blue-500/20 text-blue-300' 
+                                  : 'bg-blue-100 text-blue-800'
+                              }`}>
+                                {(() => {
+                                  const courseName = (course.course_name || course.name || '').toUpperCase();
+                                  const program = (course.program || '').toUpperCase();
+                                  const stream = (course.stream || '').toUpperCase();
+                                  
+                                  // DIPLOMA courses (Postgraduate Diploma) - Check this FIRST for NBEMS-DIPLOMA
+                                  if (courseName.includes('DIPLOMA') || courseName.includes('DIPLOMA -')) return 'DIPLOMA';
+                                  
+                                  // MBBS - Bachelor of Medicine, Bachelor of Surgery
+                                  if (courseName.includes('MBBS')) return 'MBBS';
+                                  
+                                  // BDS - Bachelor of Dental Surgery (only for the exact course name "BDS")
+                                  if (courseName === 'BDS') return 'BDS';
+                                  
+                                  // MDS - Master of Dental Surgery (for dental postgraduate courses)
+                                  if (courseName.includes('MDS')) return 'MDS';
+                                  
+                                  // MD - Doctor of Medicine (Postgraduate)
+                                  if (courseName.includes('MD -') || courseName.startsWith('MD ')) return 'MD';
+                                  
+                                  // MS - Master of Surgery (Postgraduate)
+                                  if (courseName.includes('MS -') || courseName.startsWith('MS ')) return 'MS';
+                                  
+                                  // NBEMS courses (National Board of Examinations in Medical Sciences) - DNB
+                                  if (courseName.includes('NBEMS')) return 'DNB';
+                                  
+                                  // For dental courses (regardless of program level in API), check dental terms
+                                  if (stream === 'DENTAL' && (courseName.includes('DENTISTRY') || courseName.includes('DENTAL') || 
+                                      courseName.includes('ORTHODONTICS') || courseName.includes('PERIODONTOLOGY') ||
+                                      courseName.includes('PROSTHODONTICS') || courseName.includes('ENDODONTICS') ||
+                                      courseName.includes('ORAL') || courseName.includes('MAXILLOFACIAL') ||
+                                      courseName.includes('PAEDIATRIC') || courseName.includes('CONSERVATIVE'))) {
+                                    // Check seat count to determine if it's MDS or PG Diploma
+                                    const seats = parseInt(course.total_seats) || 0;
+                                    return seats > 3 ? 'MDS' : 'PG Diploma';
+                                  }
+                                  
+                                  // PG courses (Postgraduate)
+                                  if (courseName.includes('PG') || program === 'PG') return 'PG';
+                                  
+                                  // UG courses (Undergraduate)
+                                  if (program === 'UG') return 'UG';
+                                  
+                                  // Fallback to program level
+                                  return program || 'N/A';
+                                })()}
                                 </span>
-                              )}
                             </div>
                             
-                            {/* Seats - Fixed width for alignment */}
-                            <div className="flex justify-end min-w-[80px]">
-                              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            {/* Seats - Compact badge */}
+                            <div className="flex justify-end min-w-[70px]">
+                              <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                                 isDarkMode
                                   ? 'bg-green-500/20 text-green-300'
                                   : 'bg-green-100 text-green-800'
@@ -432,101 +488,6 @@ const CollegeDetailsModal = ({ isOpen, onClose, college, courses = [], isLoading
                 </div>
               </div>
 
-              {/* Right Column - Additional Details */}
-              <div className="space-y-6">
-                {/* University Information */}
-                <div className={`p-4 rounded-xl ${
-                  isDarkMode ? 'bg-gray-700/30' : 'bg-gray-50'
-                }`}>
-                  <div className="flex items-center gap-2 mb-3">
-                    <School className={`w-5 h-5 ${
-                      isDarkMode ? 'text-blue-400' : 'text-blue-600'
-                    }`} />
-                    <h4 className={`text-sm font-semibold ${
-                      isDarkMode ? 'text-white' : 'text-gray-900'
-                    }`}>
-                      University
-                    </h4>
-                  </div>
-                  <div className="space-y-3">
-                    <div>
-                      <span className={`text-xs font-medium ${
-                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                      }`}>Affiliated University:</span>
-                      <p className={`text-sm font-medium ${
-                        isDarkMode ? 'text-white' : 'text-gray-900'
-                      }`}>
-                        {college.university || 'N/A'}
-                      </p>
-                    </div>
-                    
-                    {college.accreditation && (
-                      <div>
-                        <span className={`text-xs font-medium ${
-                          isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                        }`}>Accreditation:</span>
-                        <p className={`text-sm ${
-                          isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                        }`}>
-                          {college.accreditation}
-                        </p>
-                      </div>
-                    )}
-                    
-                    <div className="pt-2 border-t border-gray-300/20">
-                      <div className="flex items-center gap-2">
-                        <Shield className={`w-4 h-4 ${
-                          isDarkMode ? 'text-green-400' : 'text-green-600'
-                        }`} />
-                        <span className={`text-xs font-medium ${
-                          isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                        }`}>Status:</span>
-                        <span className={`text-xs px-2 py-1 rounded-full ${
-                          college.status === 'active' 
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                            : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
-                        }`}>
-                          {college.status || 'N/A'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Additional Information */}
-                <div className={`p-4 rounded-xl ${
-                  isDarkMode ? 'bg-gray-700/30' : 'bg-gray-50'
-                }`}>
-                  <h4 className={`text-sm font-semibold mb-3 ${
-                    isDarkMode ? 'text-white' : 'text-gray-900'
-                  }`}>
-                    Additional Details
-                  </h4>
-                  <div className="space-y-3">
-                    <div>
-                      <span className={`text-xs font-medium ${
-                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                      }`}>College Category:</span>
-                      <p className={`text-sm ${
-                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                      }`}>
-                        {college.college_type_category || 'N/A'}
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <span className={`text-xs font-medium ${
-                        isDarkMode ? 'text-gray-400' : 'text-gray-600'
-                      }`}>Status:</span>
-                      <p className={`text-sm ${
-                        isDarkMode ? 'text-gray-300' : 'text-gray-700'
-                      }`}>
-                        {college.status || 'N/A'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
 
